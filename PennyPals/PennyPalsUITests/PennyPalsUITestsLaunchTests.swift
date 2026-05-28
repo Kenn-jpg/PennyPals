@@ -2,7 +2,7 @@
 //  PennyPalsUITestsLaunchTests.swift
 //  PennyPalsUITests
 //
-//  Created by Keane Juan Suryanto on 28/05/26.
+//  Created by Kelompok 8 on 28/05/26.
 //
 
 import XCTest
