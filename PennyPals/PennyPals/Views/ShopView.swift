@@ -8,20 +8,11 @@
 import SwiftUI
 
 struct ShopView: View {
+    @StateObject private var shopVM = ShopViewModel()
+    @EnvironmentObject var authVM: AuthViewModel
+
     @State private var selectedCategory = "Eggs"
     let categories = ["Eggs", "Accessories", "Backgrounds", "Food"]
-
-    // Data dummy telur untuk Shop
-    let shopItems = [
-        ("Rosie", "#FFC9DE", "#FF94B8", 500),
-        ("Sprout", "#B8EBD0", "#5FCB97", 500),
-        ("Bloo", "#BFE0FF", "#5FA8E8", 500),
-        ("Sunny", "#FFE3A8", "#F2B441", 500),
-        ("Vio", "#D9C8FF", "#9B7CFF", 500),
-        ("Pip", "#FFD0B8", "#F2885F", 500),
-    ]
-
-    // Konfigurasi 2 kolom mengikuti Apple HIG
     let columns = [
         GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16),
     ]
@@ -29,121 +20,126 @@ struct ShopView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // MARK: - Header
                 HStack {
-                    Text("Shop")
-                        .font(.largeTitle.bold())
-                        .foregroundColor(.pennyText)
-
+                    Text("Shop").font(.largeTitle.bold()).foregroundColor(
+                        .pennyText
+                    )
                     Spacer()
+                    Label(
+                        "\(authVM.currentUser?.coins ?? 0)",
+                        systemImage: "bitcoinsign.circle.fill"
+                    ).font(.footnote.weight(.semibold)).padding(.horizontal, 10)
+                        .padding(.vertical, 6).background(
+                            .thinMaterial,
+                            in: Capsule()
+                        ).foregroundColor(.pennyText)
+                }.padding(.horizontal).padding(.top, 20).padding(.bottom, 16)
 
-                    // Badge Koin di Kanan Atas
-                    Label("1,240", systemImage: "bitcoinsign.circle.fill")
-                        .font(.footnote.weight(.semibold))
-                        .padding(.horizontal, 10).padding(.vertical, 6)
-                        .background(.thinMaterial, in: Capsule())
-                        .foregroundColor(.pennyText)
-                }
-                .padding(.horizontal)
-                .padding(.top, 20)
-                .padding(.bottom, 16)
-
-                // MARK: - Kategori (Bisa di-scroll)
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
                         ForEach(categories, id: \.self) { category in
                             Button(action: {
-                                withAnimation(
-                                    .spring(response: 0.3, dampingFraction: 0.7)
-                                ) {
+                                withAnimation(.spring()) {
                                     selectedCategory = category
                                 }
                             }) {
-                                Text(category)
-                                    .font(.subheadline.weight(.semibold))
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 10)
-                                    .background(
-                                        selectedCategory == category
-                                            ? Color.pennyPurple
-                                            : Color(hex: "#F3F0FF")
-                                    )
-                                    .foregroundColor(
-                                        selectedCategory == category
-                                            ? .white : .pennySecondaryText
-                                    )
-                                    .clipShape(Capsule())
+                                Text(category).font(
+                                    .subheadline.weight(.semibold)
+                                ).padding(.horizontal, 16).padding(
+                                    .vertical,
+                                    10
+                                )
+                                .background(
+                                    selectedCategory == category
+                                        ? Color.pennyPurple
+                                        : Color(hex: "#F3F0FF")
+                                ).foregroundColor(
+                                    selectedCategory == category
+                                        ? .white : .pennySecondaryText
+                                ).clipShape(Capsule())
                             }
                         }
-                    }
-                }
-                .padding(.bottom, 20)
-                .padding(.horizontal)
+                    }.padding(.horizontal)
+                }.padding(.bottom, 20)
 
-                // MARK: - Grid Daftar Item
                 ScrollView(showsIndicators: false) {
                     LazyVGrid(columns: columns, spacing: 16) {
-                        ForEach(shopItems, id: \.0) { item in
+                        ForEach(
+                            shopVM.shopItems.filter {
+                                $0.category == selectedCategory
+                            }
+                        ) { item in
                             VStack(spacing: 12) {
-                                // Komponen Telur
-                                EggView(color: item.1, spots: item.2, size: 70)
-                                    .padding(.vertical, 10)
-
+                                EggView(
+                                    color: item.colorHex ?? "#FFF",
+                                    spots: item.spotsHex ?? "#CCC",
+                                    size: 70
+                                ).padding(.vertical, 10)
                                 VStack(spacing: 4) {
-                                    Text(item.0)
-                                        .font(.headline)
+                                    Text(item.name).font(.headline)
                                         .foregroundColor(.pennyText)
-
-                                    // Harga dengan Ikon Koin
                                     HStack(spacing: 4) {
                                         Image(
                                             systemName:
                                                 "bitcoinsign.circle.fill"
-                                        )
-                                        .foregroundColor(Color(hex: "#F2885F"))
-                                        Text("\(item.3)")
-                                            .font(.subheadline.weight(.bold))
-                                            .foregroundColor(.pennyText)
+                                        ).foregroundColor(Color(hex: "#F2885F"))
+                                        Text("\(item.price)").font(
+                                            .subheadline.weight(.bold)
+                                        ).foregroundColor(.pennyText)
                                     }
                                 }
-
-                                // Tombol Beli
-                                Button(action: {}) {
-                                    Text("Buy")
-                                        .font(.footnote.weight(.bold))
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 10)
+                                Button(action: {
+                                    shopVM.purchaseItem(
+                                        item: item,
+                                        currentUserCoins: authVM.currentUser?
+                                            .coins ?? 0
+                                    )
+                                }) {
+                                    Text(
+                                        shopVM.unlockedItemIds.contains(
+                                            item.id ?? ""
+                                        ) ? "Owned" : "Buy"
+                                    ).font(.footnote.weight(.bold)).frame(
+                                        maxWidth: .infinity
+                                    ).padding(.vertical, 10)
                                         .background(Color(hex: "#F3F0FF"))
-                                        .foregroundColor(.pennyPurple)
-                                        .clipShape(
-                                            RoundedRectangle(
-                                                cornerRadius: 12,
-                                                style: .continuous
-                                            )
+                                        .foregroundColor(
+                                            shopVM.unlockedItemIds.contains(
+                                                item.id ?? ""
+                                            ) ? .gray : .pennyPurple
+                                        ).clipShape(
+                                            RoundedRectangle(cornerRadius: 12)
                                         )
-                                }
-                                .padding(.top, 4)
-                            }
-                            .padding(16)
-                            .background(Color(UIColor.systemBackground))
-                            .clipShape(
-                                RoundedRectangle(
-                                    cornerRadius: 24,
-                                    style: .continuous
+                                }.disabled(
+                                    shopVM.unlockedItemIds.contains(
+                                        item.id ?? ""
+                                    )
+                                ).padding(.top, 4)
+                            }.padding(16).background(
+                                Color(UIColor.systemBackground)
+                            ).clipShape(RoundedRectangle(cornerRadius: 24))
+                                .shadow(
+                                    color: .black.opacity(0.04),
+                                    radius: 8,
+                                    y: 4
                                 )
-                            )
-                            .shadow(
-                                color: .black.opacity(0.04),
-                                radius: 8,
-                                y: 4
-                            )
                         }
-                    }
-                    .padding(.horizontal)
-                    .padding(.bottom, 24)
+                    }.padding(.horizontal).padding(.bottom, 24)
                 }
             }
             .background(Color.pennyBackground.ignoresSafeArea())
+            .alert(
+                isPresented: Binding<Bool>(
+                    get: { shopVM.errorMessage != nil },
+                    set: { _ in shopVM.errorMessage = nil }
+                )
+            ) {
+                Alert(
+                    title: Text("Shop"),
+                    message: Text(shopVM.errorMessage ?? ""),
+                    dismissButton: .default(Text("OK"))
+                )
+            }
         }
     }
 }

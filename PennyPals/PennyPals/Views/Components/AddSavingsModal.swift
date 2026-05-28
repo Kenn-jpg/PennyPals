@@ -9,22 +9,28 @@ import SwiftUI
 
 struct AddSavingsModal: View {
     @Environment(\.dismiss) var dismiss
-    var onSave: () -> Void
+    var onSave: (Double) -> Void
+    @State private var amountString: String = ""
 
     var body: some View {
         VStack(spacing: 20) {
             Text("Add Savings").font(.headline)
-            Text("Simulate adding a deposit to make the pet happy.")
-                .font(.subheadline).foregroundColor(.pennySecondaryText)
-                .multilineTextAlignment(.center)
 
-            Button("Simulate Deposit") {
-                onSave()  // Panggil trigger di HomeView
-                dismiss()  // Tutup modal
+            TextField("Nominal Tabungan (Rp)", text: $amountString)
+                .keyboardType(.numberPad)
+                .padding()
+                .background(Color(UIColor.secondarySystemBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+
+            Button("Simpan Tabungan") {
+                if let amount = Double(amountString) {
+                    onSave(amount)
+                }
+                dismiss()
             }
             .buttonStyle(PennyPrimaryButtonStyle())
         }
         .padding(40)
-        .presentationDetents([.height(250)])  // Native bottom sheet HIG
+        .presentationDetents([.height(250)])
     }
 }

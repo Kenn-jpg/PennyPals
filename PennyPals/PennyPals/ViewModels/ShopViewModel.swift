@@ -15,7 +15,6 @@ class ShopViewModel: ObservableObject {
     @Published var shopItems: [ShopItemModel] = []
     @Published var unlockedItemIds: [String] = []
     @Published var errorMessage: String?
-    @Published var purchaseSuccess: Bool = false
 
     private var db = Firestore.firestore()
     private var userId: String? { Auth.auth().currentUser?.uid }
@@ -25,57 +24,55 @@ class ShopViewModel: ObservableObject {
         fetchUserInventory()
     }
 
-    // MARK: - Ambil Data Barang dari Firestore
     func fetchShopItems() {
-        db.collection("shopItems").getDocuments { snapshot, error in
-            Task { @MainActor in
-                if let error = error {
-                    self.errorMessage = error.localizedDescription
-                    return
+        // Fallback dummy data jika firestore kosong
+        self.shopItems = [
+            ShopItemModel(
+                id: "egg1",
+                name: "Rosie",
+                category: "Eggs",
+                price: 500,
+                colorHex: "#FFC9DE",
+                spotsHex: "#FF94B8"
+            ),
+            ShopItemModel(
+                id: "egg2",
+                name: "Sprout",
+                category: "Eggs",
+                price: 500,
+                colorHex: "#B8EBD0",
+                spotsHex: "#5FCB97"
+            ),
+        ]
+        db.collection("shopItems").getDocuments { snapshot, _ in
+            if let docs = snapshot?.documents, !docs.isEmpty {
+                self.shopItems = docs.compactMap {
+                    try? $0.data(as: ShopItemModel.self)
                 }
-
-                self.shopItems =
-                    snapshot?.documents.compactMap { document in
-                        try? document.data(as: ShopItemModel.self)
-                    } ?? []
             }
         }
     }
 
-    // MARK: - Ambil Inventaris Pengguna
     func fetchUserInventory() {
         guard let uid = userId else { return }
-
-        db.collection("inventories").whereField("userId", isEqualTo: uid)
-            .addSnapshotListener { snapshot, error in
-                Task { @MainActor in
-                    guard let document = snapshot?.documents.first else {
-                        return
-                    }
-                    let inventory = try? document.data(
-                        as: UserInventoryModel.self
-                    )
-                    self.unlockedItemIds = inventory?.unlockedItemIds ?? []
-                }
-            }
+        db.collection("inventories").document(uid).addSnapshotListener {
+            snapshot,
+            _ in
+            self.unlockedItemIds =
+                (try? snapshot?.data(as: UserInventoryModel.self))?
+                .unlockedItemIds ?? []
+        }
     }
 
-    // MARK: - Logika Pembelian
     func purchaseItem(item: ShopItemModel, currentUserCoins: Int) {
         guard let uid = userId, let itemId = item.id else { return }
 
         if currentUserCoins < item.price {
-            self.errorMessage = "Koin tidak cukup untuk membeli \(item.name)!"
-            return
-        }
-
-        if unlockedItemIds.contains(itemId) {
-            self.errorMessage = "Kamu sudah memiliki \(item.name)!"
+            self.errorMessage = "Koin tidak cukup!"
             return
         }
 
         let batch = db.batch()
-
         let userRef = db.collection("users").document(uid)
         batch.updateData(
             ["coins": currentUserCoins - item.price],
@@ -93,15 +90,7 @@ class ShopViewModel: ObservableObject {
         )
 
         batch.commit { error in
-            Task { @MainActor in
-                if let error = error {
-                    self.errorMessage =
-                        "Gagal membeli barang: \(error.localizedDescription)"
-                } else {
-                    self.purchaseSuccess = true
-                    self.errorMessage = "Berhasil membeli \(item.name)!"
-                }
-            }
+            if let err = error { self.errorMessage = err.localizedDescription }
         }
     }
 }

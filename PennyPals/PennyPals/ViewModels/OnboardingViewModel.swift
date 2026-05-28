@@ -13,16 +13,14 @@ import Foundation
 @MainActor
 class OnboardingViewModel: ObservableObject {
     private var db = Firestore.firestore()
-    private var userId: String? { Auth.auth().currentUser?.uid }
 
     func completeOnboarding(
         initialSavings: Double,
         eggType: String,
         petName: String
     ) async {
-        guard let uid = userId else { return }
+        guard let uid = Auth.auth().currentUser?.uid else { return }
 
-        // 1. Buat Pet Baru
         let newPet = PetModel(
             userId: uid,
             name: petName,
@@ -31,12 +29,10 @@ class OnboardingViewModel: ObservableObject {
             level: 1,
             mood: "hungry"
         )
-
-        // 2. Buat Wishlist/Goal Awal (Kosong, bisa diisi nanti)
         let initialGoal = GoalModel(
             userId: uid,
             itemName: "My First Goal",
-            targetAmount: 5_000_000,  // Default 5jt
+            targetAmount: 5_000_000,
             currentAmount: initialSavings,
             isCompleted: false
         )
@@ -44,8 +40,6 @@ class OnboardingViewModel: ObservableObject {
         do {
             try db.collection("pets").addDocument(from: newPet)
             try db.collection("goals").addDocument(from: initialGoal)
-
-            // Catat transaksi awal
             let initialTx = TransactionModel(
                 userId: uid,
                 amount: initialSavings,
@@ -53,9 +47,8 @@ class OnboardingViewModel: ObservableObject {
                 type: .deposit
             )
             try db.collection("transactions").addDocument(from: initialTx)
-
         } catch {
-            print("Error saving onboarding data: \(error.localizedDescription)")
+            print("Onboarding error: \(error.localizedDescription)")
         }
     }
 }
