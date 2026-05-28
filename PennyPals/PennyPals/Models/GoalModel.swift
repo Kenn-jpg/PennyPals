@@ -2,11 +2,11 @@
 //  GoalModel.swift
 //  PennyPals
 //
-//  Created by student on 28/05/26.
+//  Created by Kelompok 8 on 28/05/26.
 //
 
-import Foundation
 import FirebaseFirestore
+import Foundation
 
 struct GoalModel: Identifiable, Codable {
     @DocumentID var id: String?
