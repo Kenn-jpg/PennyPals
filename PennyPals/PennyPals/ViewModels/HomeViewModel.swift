@@ -76,10 +76,77 @@ class HomeViewModel: ObservableObject {
     }
     
     // MARK: - Penalty Mechanism
-    func checkDailyPenalty() {
-        // Logika untuk mengurangi XP jika user tidak menabung sesuai target waktu
-        // Fungsi ini bisa dipanggil setiap kali aplikasi dibuka (di onAppear)
-    }
+        func checkDailyPenalty() {
+            guard let uid = userId, let currentPet = pet else { return }
+            
+            // Ambil data user terbaru untuk mengecek nextPenaltyCheck
+            db.collection("users").document(uid).getDocument { [weak self] snapshot, error in
+                guard let self = self, let document = snapshot, let user = try? document.data(as: UserModel.self) else { return }
+                
+                let now = Date()
+                
+                // Cek apakah waktu sekarang sudah melewati batas deadline menabung pengguna
+                if now >= user.nextPenaltyCheck {
+                    
+                    // 1. Atur Logika Pengurangan XP
+                    let penaltyXP = 200 // Jumlah hukuman pengurangan XP (Bisa disesuaikan)
+                    var newXP = currentPet.xp - penaltyXP
+                    var newLevel = currentPet.level
+                    var newMood = "sad" // Pet berubah menjadi sedih karena diabaikan
+                    
+                    // 2. Logika Demote (Turun Level) jika XP di bawah 0
+                    if newXP < 0 {
+                        if newLevel > 1 {
+                            newLevel -= 1
+                            // XP mengambil sisa dari batas max level sebelumnya
+                            let maxXPForNewLevel = newLevel * 1000
+                            newXP = maxXPForNewLevel + newXP
+                        } else {
+                            // Mentok di level 1, XP tidak bisa lebih kecil dari 0
+                            newXP = 0
+                        }
+                    }
+                    
+                    // 3. Set ulang tenggat waktu penalti berikutnya (misal: beri toleransi 1 hari lagi ke depan)
+                    guard let nextCheck = Calendar.current.date(byAdding: .day, value: 1, to: now) else { return }
+                    
+                    // Gunakan Firebase Batch agar update data User dan Pet terjadi bersamaan
+                    let batch = self.db.batch()
+                    
+                    // Update Firestore - Koleksi Users: Reset streak karena bolong menabung
+                    let userRef = self.db.collection("users").document(uid)
+                    batch.updateData([
+                        "streak": 0,
+                        "isSafeFromPenalty": false,
+                        "nextPenaltyCheck": nextCheck
+                    ], forDocument: userRef)
+                    
+                    // Update Firestore - Koleksi Pets: Terapkan hukuman XP dan mood
+                    if let petId = currentPet.id {
+                        let petRef = self.db.collection("pets").document(petId)
+                        batch.updateData([
+                            "xp": newXP,
+                            "level": newLevel,
+                            "mood": newMood
+                        ], forDocument: petRef)
+                    }
+                    
+                    // Opsional: Catat riwayat penalti ke dalam transaksi
+                    let transactionRef = self.db.collection("transactions").document()
+                    let penaltyTx = TransactionModel(id: transactionRef.documentID, userId: uid, amount: 0, date: now, type: .penalty)
+                    try? batch.setData(from: penaltyTx, forDocument: transactionRef)
+                    
+                    // Eksekusi ke database
+                    batch.commit { error in
+                        if let error = error {
+                            print("Gagal menerapkan penalti: \(error.localizedDescription)")
+                        } else {
+                            print("Penalti harian berhasil diterapkan! Streak direset ke 0.")
+                        }
+                    }
+                }
+            }
+        }
     
     private func rewardCoins(amount: Int) {
         guard let uid = userId else { return }
