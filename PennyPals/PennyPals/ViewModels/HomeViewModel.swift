@@ -35,7 +35,10 @@ class HomeViewModel: ObservableObject {
 
     func fetchGoalData() {
         guard let uid = userId else { return }
-        db.collection("goals").whereField("userId", isEqualTo: uid).limit(to: 1)
+        db.collection("goals")
+            .whereField("userId", isEqualTo: uid)
+            .whereField("isCompleted", isEqualTo: false)
+            .limit(to: 1)
             .addSnapshotListener { snapshot, _ in
                 self.goal = try? snapshot?.documents.first?.data(
                     as: GoalModel.self
@@ -86,13 +89,27 @@ class HomeViewModel: ObservableObject {
         // Hitung total tabungan baru secara manual
         let newTotalSavings = currentUser.totalSavings + Int(amount)
 
-        // 3. Gabungkan semua update, TANPA FieldValue.increment untuk totalSavings
+        // Cek apakah sudah nabung hari ini (streak hanya naik 1x per hari)
+        let today = Calendar.current.startOfDay(for: Date())
+        let alreadySavedToday: Bool
+        if let lastSave = currentUser.lastSavingsDate {
+            alreadySavedToday = Calendar.current.isDate(lastSave, inSameDayAs: today)
+        } else {
+            alreadySavedToday = false
+        }
+
+        // 3. Gabungkan semua update
         var userUpdates: [String: Any] = [
-            "streak": FieldValue.increment(Int64(1)),
             "isSafeFromPenalty": true,
             "nextPenaltyCheck": nextSafeDate,
             "totalSavings": newTotalSavings,  // Langsung lempar nilai bulat Int
+            "lastSavingsDate": Date(),  // Selalu update tanggal terakhir nabung
         ]
+
+        // Streak hanya naik jika belum nabung hari ini
+        if !alreadySavedToday {
+            userUpdates["streak"] = FieldValue.increment(Int64(1))
+        }
 
         // 4. Jika dapat koin, tambahkan
         if totalCoinsGained > 0 {
@@ -117,6 +134,32 @@ class HomeViewModel: ObservableObject {
                 "mood": "hungry"
             ])
         }
+    }
+
+    func setNewGoal(itemName: String, targetAmount: Double) {
+        guard let uid = userId else { return }
+
+        let batch = db.batch()
+
+        // 1. Tandai goal lama sebagai completed (jika ada)
+        if let currentGoal = goal, let goalId = currentGoal.id {
+            let oldGoalRef = db.collection("goals").document(goalId)
+            batch.updateData(["isCompleted": true], forDocument: oldGoalRef)
+        }
+
+        // 2. Buat goal baru
+        let newGoalRef = db.collection("goals").document()
+        let newGoal = GoalModel(
+            userId: uid,
+            itemName: itemName,
+            targetAmount: targetAmount,
+            currentAmount: 0,
+            isCompleted: false
+        )
+        try? batch.setData(from: newGoal, forDocument: newGoalRef)
+
+        // 3. Commit batch
+        batch.commit()
     }
 
     func checkDailyPenalty() {

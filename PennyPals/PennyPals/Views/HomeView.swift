@@ -15,6 +15,35 @@ struct HomeView: View {
     @State private var showSavingsModal = false
     @State private var showNewGoalModal = false  // State baru untuk trigger modal Wishlist
 
+    // --- Penalty Status Logic ---
+    private enum PenaltyStatus {
+        case safe
+        case warning
+        case danger
+    }
+
+    private var penaltyStatus: PenaltyStatus {
+        guard let user = authVM.currentUser else { return .safe }
+
+        // Jika sudah kena penalti
+        if !user.isSafeFromPenalty {
+            return .danger
+        }
+
+        // Hitung sisa waktu sebelum penalty check
+        let now = Date()
+        let hoursRemaining = Calendar.current.dateComponents(
+            [.hour], from: now, to: user.nextPenaltyCheck
+        ).hour ?? 0
+
+        // Warning jika sisa waktu <= 24 jam
+        if hoursRemaining <= 24 {
+            return .warning
+        }
+
+        return .safe
+    }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 16) {
@@ -175,21 +204,50 @@ struct HomeView: View {
 
                     // Fix: FixedSize menjaga HStack sejajar, frame max tinggi dipasang ke setiap VStack
                     HStack(spacing: 16) {
-                        // Penalty Card
+                        // Penalty Card (3-state: Safe / Warning / Danger)
                         VStack(alignment: .leading, spacing: 8) {
                             Label(
                                 "Penalty",
-                                systemImage: "exclamationmark.triangle.fill"
-                            ).font(.caption.weight(.medium)).foregroundColor(
-                                .orange
+                                systemImage: penaltyStatus == .safe
+                                    ? "checkmark.shield.fill"
+                                    : (penaltyStatus == .warning
+                                        ? "exclamationmark.triangle.fill"
+                                        : "xmark.shield.fill")
                             )
+                            .font(.caption.weight(.medium))
+                            .foregroundColor(
+                                penaltyStatus == .safe
+                                    ? .green
+                                    : (penaltyStatus == .warning
+                                        ? .orange : .red)
+                            )
+
                             Spacer()  // Mendorong konten ke atas dan bawah
+
                             Text(
-                                authVM.currentUser?.isSafeFromPenalty == true
-                                    ? "Safe ✓" : "Danger!"
-                            ).font(.headline)
-                            Text("Auto-check active").font(.caption2)
-                                .foregroundColor(.pennySecondaryText)
+                                penaltyStatus == .safe
+                                    ? "Safe ✓"
+                                    : (penaltyStatus == .warning
+                                        ? "Warning ⚠️" : "Danger!")
+                            )
+                            .font(.headline)
+                            .foregroundColor(
+                                penaltyStatus == .danger ? .red : .pennyText
+                            )
+
+                            Text(
+                                penaltyStatus == .safe
+                                    ? "You're on track!"
+                                    : (penaltyStatus == .warning
+                                        ? "Save soon to stay safe"
+                                        : "Streak lost, XP reduced")
+                            )
+                            .font(.caption2)
+                            .foregroundColor(
+                                penaltyStatus == .warning
+                                    ? .orange.opacity(0.8)
+                                    : .pennySecondaryText
+                            )
                         }
                         .frame(
                             maxWidth: .infinity,
@@ -198,8 +256,23 @@ struct HomeView: View {
                         )
                         .padding()
                         .background(
-                            Color(UIColor.systemBackground),
+                            penaltyStatus == .warning
+                                ? Color(hex: "#FFF8EC")
+                                : (penaltyStatus == .danger
+                                    ? Color(hex: "#FFF0F0")
+                                    : Color(UIColor.systemBackground)),
                             in: RoundedRectangle(cornerRadius: 20)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(
+                                    penaltyStatus == .warning
+                                        ? Color.orange.opacity(0.3)
+                                        : (penaltyStatus == .danger
+                                            ? Color.red.opacity(0.3)
+                                            : Color.clear),
+                                    lineWidth: 1.5
+                                )
                         )
 
                         // Wishlist Card
@@ -286,10 +359,17 @@ struct HomeView: View {
                     }
                 })
             }
-            // Tambahkan sheet untuk New Goal Modal di sini
+            // Sheet untuk New Goal Modal
             .sheet(isPresented: $showNewGoalModal) {
-                // Ganti Text ini dengan form AddGoalView milik tim kamu
-                Text("Buat UI Form Tambah Wishlist Baru di sini")
+                SetNewGoalModal(
+                    completedGoalName: homeVM.goal?.itemName ?? "Goal",
+                    onSave: { itemName, targetAmount in
+                        homeVM.setNewGoal(
+                            itemName: itemName,
+                            targetAmount: targetAmount
+                        )
+                    }
+                )
             }
         }
     }

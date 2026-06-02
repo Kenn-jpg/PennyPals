@@ -24,4 +24,7 @@ struct UserModel: Identifiable, Codable {
 
     // TAMBAHAN BARU: Status pengecekan onboarding
     var isOnboarded: Bool?
+
+    // Track tanggal terakhir nabung (untuk streak harian)
+    var lastSavingsDate: Date?
 }
