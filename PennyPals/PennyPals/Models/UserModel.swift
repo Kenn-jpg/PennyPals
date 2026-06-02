@@ -20,4 +20,7 @@ struct UserModel: Identifiable, Codable {
     // Status penalti
     var isSafeFromPenalty: Bool
     var nextPenaltyCheck: Date
+
+    // TAMBAHAN BARU: Status pengecekan onboarding
+    var isOnboarded: Bool?
 }

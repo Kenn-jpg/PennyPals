@@ -19,10 +19,21 @@ struct LoginView: View {
     @State private var password = ""
     @State private var animateLogo = false
 
+    // Komputasi properti untuk mengecek apakah form sudah diisi dengan benar
+    var isFormValid: Bool {
+        if mode == .login {
+            return !email.isEmpty && !password.isEmpty
+        } else {
+            return !email.isEmpty && !password.isEmpty && !username.isEmpty
+        }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 0) {
+
+                    // --- HEADER & LOGO ---
                     VStack(spacing: 12) {
                         ZStack {
                             RoundedRectangle(
@@ -52,6 +63,7 @@ struct LoginView: View {
                         ).foregroundColor(.pennySecondaryText)
                     }.padding(.top, 64).padding(.bottom, 24)
 
+                    // --- TAB PICKER (LOG IN / SIGN UP) ---
                     HStack(spacing: 0) {
                         ForEach(["Log In", "Sign Up"], id: \.self) { label in
                             let isSelected =
@@ -88,6 +100,7 @@ struct LoginView: View {
                         Capsule()
                     ).padding(.bottom, 20)
 
+                    // --- INPUT FIELDS ---
                     VStack(spacing: 12) {
                         if mode == .register {
                             TextField("Username", text: $username).padding(
@@ -102,7 +115,9 @@ struct LoginView: View {
                                 ).transition(
                                     .move(edge: .top).combined(with: .opacity)
                                 )
+                                .accessibilityIdentifier("usernameTextField")  // ID untuk UI Test
                         }
+
                         TextField("Email", text: $email).keyboardType(
                             .emailAddress
                         ).autocapitalization(.none).padding(.horizontal, 16)
@@ -113,14 +128,18 @@ struct LoginView: View {
                                 radius: 5,
                                 y: 2
                             )
+                            .accessibilityIdentifier("emailTextField")  // ID untuk UI Test
+
                         SecureField("Password", text: $password).padding(
                             .horizontal,
                             16
                         ).frame(height: 48).background(Color.white).clipShape(
                             RoundedRectangle(cornerRadius: 16)
                         ).shadow(color: .black.opacity(0.03), radius: 5, y: 2)
+                            .accessibilityIdentifier("passwordSecureField")  // ID untuk UI Test
                     }
 
+                    // --- SUBMIT BUTTON ---
                     Button(action: {
                         Task {
                             if mode == .login {
@@ -144,7 +163,15 @@ struct LoginView: View {
                         }
                     }) {
                         Text(mode == .login ? "Log In" : "Create Account")
-                    }.buttonStyle(PennyPrimaryButtonStyle()).padding(.top, 20)
+                    }
+                    .buttonStyle(PennyPrimaryButtonStyle())
+                    .padding(.top, 20)
+                    .disabled(!isFormValid)  // Disable tombol jika form tidak valid
+                    .opacity(isFormValid ? 1.0 : 0.5)  // Buat sedikit transparan jika disabled
+                    .accessibilityIdentifier(
+                        mode == .login
+                            ? "loginSubmitButton" : "registerSubmitButton"
+                    )  // ID untuk UI Test
 
                     Spacer(minLength: 40)
                 }.padding(.horizontal, 24)

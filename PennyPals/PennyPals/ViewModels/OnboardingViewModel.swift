@@ -47,6 +47,12 @@ class OnboardingViewModel: ObservableObject {
                 type: .deposit
             )
             try db.collection("transactions").addDocument(from: initialTx)
+
+            // --- TAMBAHAN BARU: Update status user menjadi sudah onboarded ---
+            try await db.collection("users").document(uid).updateData([
+                "isOnboarded": true
+            ])
+
         } catch {
             print("Onboarding error: \(error.localizedDescription)")
         }

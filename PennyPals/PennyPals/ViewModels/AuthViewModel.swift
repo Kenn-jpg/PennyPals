@@ -61,7 +61,8 @@ class AuthViewModel: ObservableObject {
                 lastLoginDate: Date(),
                 createdAt: Date(),
                 isSafeFromPenalty: true,
-                nextPenaltyCheck: nextCheck
+                nextPenaltyCheck: nextCheck,
+                isOnboarded: false  // <--- TAMBAHKAN BARIS INI
             )
             try db.collection("users").document(result.user.uid).setData(
                 from: newUser
@@ -86,8 +87,29 @@ class AuthViewModel: ObservableObject {
     private func fetchUserData(uid: String) {
         db.collection("users").document(uid).addSnapshotListener {
             snapshot,
-            _ in
-            self.currentUser = try? snapshot?.data(as: UserModel.self)
+            error in
+            if let error = error {
+                print("❌ Firestore Error: \(error.localizedDescription)")
+                return
+            }
+
+            guard let snapshot = snapshot else { return }
+
+            // PROTEKSI 1: Jika dokumen tidak ada di Firestore (Akun Hantu)
+            if !snapshot.exists {
+                print("❌ Dokumen user tidak ditemukan! Logout otomatis...")
+                self.logout()
+                return
+            }
+
+            // PROTEKSI 2: Mencari tahu error dari strukturnya
+            do {
+                self.currentUser = try snapshot.data(as: UserModel.self)
+            } catch {
+                print("❌ DECODING ERROR PADA USERMODEL: \(error)")
+                // Jika error, kita force logout agar tidak stuck di loading
+                self.logout()
+            }
         }
     }
 }
