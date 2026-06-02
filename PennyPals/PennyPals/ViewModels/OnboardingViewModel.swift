@@ -53,7 +53,8 @@ class OnboardingViewModel: ObservableObject {
             try db.collection("transactions").addDocument(from: initialTx)
 
             try await db.collection("users").document(uid).updateData([
-                "isOnboarded": true
+                "isOnboarded": true,
+                "totalSavings": initialSavings,  // 👈 Tambahkan baris ini
             ])
 
         } catch {

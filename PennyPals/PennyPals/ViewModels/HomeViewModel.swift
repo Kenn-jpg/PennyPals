@@ -35,7 +35,10 @@ class HomeViewModel: ObservableObject {
 
     func fetchGoalData() {
         guard let uid = userId else { return }
-        db.collection("goals").whereField("userId", isEqualTo: uid).limit(to: 1)
+        db.collection("goals")
+            .whereField("userId", isEqualTo: uid)
+            .whereField("isCompleted", isEqualTo: false)
+            .limit(to: 1)
             .addSnapshotListener { snapshot, _ in
                 self.goal = try? snapshot?.documents.first?.data(
                     as: GoalModel.self
@@ -43,7 +46,8 @@ class HomeViewModel: ObservableObject {
             }
     }
 
-    func addSavings(amount: Double) {
+    // TAMBAHKAN parameter currentUser: UserModel
+    func addSavings(amount: Double, currentUser: UserModel) {
         guard let uid = userId, let currentPet = pet, let currentGoal = goal
         else { return }
 
@@ -57,32 +61,65 @@ class HomeViewModel: ObservableObject {
         let gainedXP = Int(amount / 1000)
         var newXP = currentPet.xp + gainedXP
         var newLevel = currentPet.level
+        var totalCoinsGained = 0
 
-        if newXP >= currentPet.maxXP {
+        var currentMaxXP = (newLevel + 1) * 200
+        while newXP >= currentMaxXP {
+            newXP -= currentMaxXP
             newLevel += 1
-            newXP = newXP - currentPet.maxXP
-            db.collection("users").document(uid).updateData([
-                "coins": FieldValue.increment(Int64(500))
-            ])
+            totalCoinsGained += 50 + (newLevel * 10)
+            currentMaxXP = (newLevel + 1) * 200
         }
 
+        // 1. Update Pet
         db.collection("pets").document(currentPet.id!).updateData([
             "xp": newXP,
             "level": newLevel,
             "mood": "happy",
         ])
 
-        // Update Streak & Penalty status
+        // 2. Siapkan data tanggal aman penalti
         let nextSafeDate = Calendar.current.date(
             byAdding: .day,
             value: 2,
             to: Date()
         )!
-        db.collection("users").document(uid).updateData([
-            "streak": FieldValue.increment(Int64(1)),
+
+        // 🌟 PERUBAHAN UTAMA DI SINI 🌟
+        // Hitung total tabungan baru secara manual
+        let newTotalSavings = currentUser.totalSavings + Int(amount)
+
+        // Cek apakah sudah nabung hari ini (streak hanya naik 1x per hari)
+        let today = Calendar.current.startOfDay(for: Date())
+        let alreadySavedToday: Bool
+        if let lastSave = currentUser.lastSavingsDate {
+            alreadySavedToday = Calendar.current.isDate(lastSave, inSameDayAs: today)
+        } else {
+            alreadySavedToday = false
+        }
+
+        // 3. Gabungkan semua update
+        var userUpdates: [String: Any] = [
             "isSafeFromPenalty": true,
             "nextPenaltyCheck": nextSafeDate,
-        ])
+            "totalSavings": newTotalSavings,  // Langsung lempar nilai bulat Int
+            "lastSavingsDate": Date(),  // Selalu update tanggal terakhir nabung
+        ]
+
+        // Streak hanya naik jika belum nabung hari ini
+        if !alreadySavedToday {
+            userUpdates["streak"] = FieldValue.increment(Int64(1))
+        }
+
+        // 4. Jika dapat koin, tambahkan
+        if totalCoinsGained > 0 {
+            // Koin juga bisa dihitung manual jika mau, tapi biarkan FieldValue dulu
+            // Jika koin juga error real-time nya, ubah strateginya seperti totalSavings
+            userUpdates["coins"] = FieldValue.increment(Int64(totalCoinsGained))
+        }
+
+        // 5. Kirim data
+        db.collection("users").document(uid).updateData(userUpdates)
 
         let tx = TransactionModel(
             userId: uid,
@@ -92,12 +129,37 @@ class HomeViewModel: ObservableObject {
         )
         try? db.collection("transactions").addDocument(from: tx)
 
-        // Revert mood to hungry after 5 seconds
         DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
             self.db.collection("pets").document(currentPet.id!).updateData([
                 "mood": "hungry"
             ])
         }
+    }
+
+    func setNewGoal(itemName: String, targetAmount: Double) {
+        guard let uid = userId else { return }
+
+        let batch = db.batch()
+
+        // 1. Tandai goal lama sebagai completed (jika ada)
+        if let currentGoal = goal, let goalId = currentGoal.id {
+            let oldGoalRef = db.collection("goals").document(goalId)
+            batch.updateData(["isCompleted": true], forDocument: oldGoalRef)
+        }
+
+        // 2. Buat goal baru
+        let newGoalRef = db.collection("goals").document()
+        let newGoal = GoalModel(
+            userId: uid,
+            itemName: itemName,
+            targetAmount: targetAmount,
+            currentAmount: 0,
+            isCompleted: false
+        )
+        try? batch.setData(from: newGoal, forDocument: newGoalRef)
+
+        // 3. Commit batch
+        batch.commit()
     }
 
     func checkDailyPenalty() {
@@ -114,9 +176,12 @@ class HomeViewModel: ObservableObject {
                 var newLevel = currentPet.level
 
                 if newXP < 0 {
-                    if newLevel > 1 {
+                    // Cek jika level > 0 agar tidak drop di bawah 0
+                    if newLevel > 0 {
                         newLevel -= 1
-                        newXP = (newLevel * 1000) + newXP
+                        // Kembalikan sisa XP yang minus dari maxXP level sebelumnya
+                        let previousMaxXP = (newLevel + 1) * 200
+                        newXP = previousMaxXP + newXP
                     } else {
                         newXP = 0
                     }

@@ -17,8 +17,9 @@ struct PetModel: Identifiable, Codable {
     var level: Int
     var mood: String  // "hungry", "happy", "sad"
 
-    // Logika perhitungan max XP per level (bisa disesuaikan)
+    // Logika perhitungan max XP per level:
+    // Lvl 0 -> 200, Lvl 1 -> 400, Lvl 2 -> 600, dst. (Unlimited)
     var maxXP: Int {
-        return level * 1000
+        return (level + 1) * 200
     }
 }
