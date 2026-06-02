@@ -14,10 +14,13 @@ import Foundation
 class OnboardingViewModel: ObservableObject {
     private var db = Firestore.firestore()
 
+    // --- TAMBAHAN BARU: Tambahkan parameter targetAmount ---
     func completeOnboarding(
         initialSavings: Double,
+        targetAmount: Double,
         eggType: String,
-        petName: String
+        petName: String,
+        wishlistName: String
     ) async {
         guard let uid = Auth.auth().currentUser?.uid else { return }
 
@@ -29,10 +32,11 @@ class OnboardingViewModel: ObservableObject {
             level: 1,
             mood: "hungry"
         )
+
         let initialGoal = GoalModel(
             userId: uid,
-            itemName: "My First Goal",
-            targetAmount: 5_000_000,
+            itemName: wishlistName,
+            targetAmount: targetAmount,  // --- Gunakan input targetAmount di sini ---
             currentAmount: initialSavings,
             isCompleted: false
         )
@@ -48,7 +52,6 @@ class OnboardingViewModel: ObservableObject {
             )
             try db.collection("transactions").addDocument(from: initialTx)
 
-            // --- TAMBAHAN BARU: Update status user menjadi sudah onboarded ---
             try await db.collection("users").document(uid).updateData([
                 "isOnboarded": true
             ])

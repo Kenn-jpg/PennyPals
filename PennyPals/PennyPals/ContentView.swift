@@ -17,19 +17,22 @@ struct ContentView: View {
     @State private var stage: AppStage = .app
     @State private var initialSavings: String = ""
     @State private var selectedEggId: String = "rose"
+    @State private var wishlistName: String = ""
+
+    // --- TAMBAHAN BARU: State untuk menampung nominal target/harga wishlist ---
+    @State private var targetAmountString: String = ""
 
     var body: some View {
         Group {
-            // 1. CEK STATUS LOGIN TERLEBIH DAHULU
             if authVM.isAuthenticated {
-
-                // 2. CEK APAKAH DATA USER SUDAH SELESAI DIDOWNLOAD DARI FIRESTORE
                 if let user = authVM.currentUser {
                     switch stage {
                     case .onboarding:
                         OnboardingView(
                             rawAmount: $initialSavings,
                             selectedEgg: $selectedEggId,
+                            wishlistName: $wishlistName,
+                            targetAmountString: $targetAmountString,  // --- Binding data diteruskan ke sini ---
                             onStart: {
                                 withAnimation(.easeInOut(duration: 0.5)) {
                                     stage = .hatching
@@ -70,7 +73,6 @@ struct ContentView: View {
                         .transition(.opacity)
                     }
                 } else {
-                    // LAYAR LOADING: Hanya muncul beberapa detik saat transisi mengambil data profil
                     VStack {
                         ProgressView()
                             .scaleEffect(1.5)
@@ -83,26 +85,23 @@ struct ContentView: View {
                 }
 
             } else {
-                // 3. JIKA BELUM LOGIN (Langsung lempar ke layar Login)
                 LoginView(onLoginSuccess: { _ in
-                    // Reset field saat pindah
                     self.initialSavings = ""
                     self.selectedEggId = "rose"
+                    self.wishlistName = ""
+                    self.targetAmountString = ""  // --- Reset juga saat user baru login ---
                 })
                 .transition(.opacity)
             }
         }
-        // --- GUARDING LOGIC (Mencegah Bypass Bug) ---
         .onReceive(authVM.$currentUser) { user in
             guard let user = user else { return }
 
-            // Jika user belum selesai Onboarding (false/nil), paksa layar ke Onboarding
             if user.isOnboarded == false || user.isOnboarded == nil {
                 if stage == .app {
                     stage = .onboarding
                 }
             } else if user.isOnboarded == true && stage == .onboarding {
-                // Safety check: Jika dia sudah onboarded tapi nyangkut di stage onboarding, pindahkan ke Home
                 stage = .app
             }
         }
