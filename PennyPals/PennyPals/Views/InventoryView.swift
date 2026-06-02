@@ -43,12 +43,12 @@ struct InventoryView: View {
                                     .frame(width: 28)
 
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text(item.name)
-                                        .font(.headline)
+                                    Text(item.name).font(.headline)
                                     Text("Owned")
                                         .font(.caption)
                                         .foregroundColor(.secondary)
                                 }
+
                                 Spacer()
                             }
                             .padding(.vertical, 6)
@@ -80,6 +80,9 @@ struct InventoryView: View {
             }
             let inv = try? snapshot?.data(as: UserInventoryModel.self)
             self.unlockedItemIds = inv?.unlockedItemIds ?? []
+
+            // Debug (hapus kalau sudah oke)
+            print("Inventory unlockedItemIds:", self.unlockedItemIds)
         }
     }
 
@@ -89,8 +92,22 @@ struct InventoryView: View {
                 self.errorMessage = error.localizedDescription
                 return
             }
+
             let docs = snapshot?.documents ?? []
-            self.shopItems = docs.compactMap { try? $0.data(as: ShopItemModel.self) }
+            print("Shop items docs count:", docs.count)
+
+            self.shopItems = docs.compactMap { doc in
+                do {
+                    let item = try doc.data(as: ShopItemModel.self)
+                    return item
+                } catch {
+                    print("❌ Decode shopItem failed for docID=\(doc.documentID):", error)
+                    print("Raw data:", doc.data())
+                    return nil
+                }
+            }
+
+            print("Shop items ids:", self.shopItems.compactMap { $0.id })
         }
     }
 }
