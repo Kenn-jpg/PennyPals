@@ -18,8 +18,6 @@ struct ContentView: View {
     @State private var initialSavings: String = ""
     @State private var selectedEggId: String = "rose"
     @State private var wishlistName: String = ""
-
-    // --- TAMBAHAN BARU: State untuk menampung nominal target/harga wishlist ---
     @State private var targetAmountString: String = ""
 
     var body: some View {
@@ -32,8 +30,10 @@ struct ContentView: View {
                             rawAmount: $initialSavings,
                             selectedEgg: $selectedEggId,
                             wishlistName: $wishlistName,
-                            targetAmountString: $targetAmountString,  // --- Binding data diteruskan ke sini ---
+                            targetAmountString: $targetAmountString,
                             onStart: {
+                                // 🌟 Transisikan ke hatching terlebih dahulu secara lokal
+                                // agar blok .onReceive tidak memotong urutan animasi saat Firestore terupdate!
                                 withAnimation(.easeInOut(duration: 0.5)) {
                                     stage = .hatching
                                 }
@@ -52,15 +52,21 @@ struct ContentView: View {
 
                     case .app:
                         TabView {
-                            HomeView().tabItem {
-                                Label("Home", systemImage: "house.fill")
-                            }
-                            ShopView().tabItem {
-                                Label("Shop", systemImage: "bag.fill")
-                            }
+                            HomeView()
+                                .tabItem {
+                                    Label("Home", systemImage: "house.fill")
+                                }
+
+                            // Pastikan ShopView menerima data/environment jika dibutuhkan
+                            ShopView()
+                                .tabItem {
+                                    Label("Shop", systemImage: "bag.fill")
+                                }
+
                             AccountView(onLogout: {
                                 authVM.logout()
-                            }).tabItem {
+                            })
+                            .tabItem {
                                 Label("Account", systemImage: "person.fill")
                             }
                         }
@@ -73,6 +79,7 @@ struct ContentView: View {
                         .transition(.opacity)
                     }
                 } else {
+                    // Loading Screen saat AuthViewModel sedang addSnapshotListener pertama kali
                     VStack {
                         ProgressView()
                             .scaleEffect(1.5)
@@ -86,10 +93,11 @@ struct ContentView: View {
 
             } else {
                 LoginView(onLoginSuccess: { _ in
+                    // Reset semua state input form saat ada user baru login
                     self.initialSavings = ""
                     self.selectedEggId = "rose"
                     self.wishlistName = ""
-                    self.targetAmountString = ""  // --- Reset juga saat user baru login ---
+                    self.targetAmountString = ""
                 })
                 .transition(.opacity)
             }
@@ -97,11 +105,13 @@ struct ContentView: View {
         .onReceive(authVM.$currentUser) { user in
             guard let user = user else { return }
 
-            if user.isOnboarded == false || user.isOnboarded == nil {
+            // Logika Router Otomatis berdasarkan status Onboarding di DB
+            if user.isOnboarded == false {
                 if stage == .app {
                     stage = .onboarding
                 }
             } else if user.isOnboarded == true && stage == .onboarding {
+                // Skenario jika user login ulang dan ternyata sudah pernah onboarding sebelumnya
                 stage = .app
             }
         }

@@ -60,15 +60,21 @@ class AuthViewModel: ObservableObject {
                 streak: 0,
                 lastLoginDate: Date(),
                 createdAt: Date(),
+                totalSavings: 0,
                 isSafeFromPenalty: true,
                 nextPenaltyCheck: nextCheck,
-                isOnboarded: false  // <--- TAMBAHKAN BARIS INI
+                isOnboarded: false
             )
             try db.collection("users").document(result.user.uid).setData(
                 from: newUser
             )
+
             self.currentUser = newUser
             self.isAuthenticated = true
+
+            // 🌟 TAMBAHKAN BARIS INI: Aktifkan listener real-time langsung setelah register selesai!
+            fetchUserData(uid: result.user.uid)
+
         } catch {
             self.errorMessage = error.localizedDescription
         }
@@ -85,30 +91,33 @@ class AuthViewModel: ObservableObject {
     }
 
     private func fetchUserData(uid: String) {
+        // Tambahkan [weak self] agar tidak terjadi memory leak
         db.collection("users").document(uid).addSnapshotListener {
-            snapshot,
-            error in
-            if let error = error {
-                print("❌ Firestore Error: \(error.localizedDescription)")
-                return
-            }
+            [weak self] snapshot, error in
+            guard let self = self else { return }
 
-            guard let snapshot = snapshot else { return }
+            // Bungkus ke Main Thread agar SwiftUI sadar ada perubahan data!
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("❌ Firestore Error: \(error.localizedDescription)")
+                    return
+                }
 
-            // PROTEKSI 1: Jika dokumen tidak ada di Firestore (Akun Hantu)
-            if !snapshot.exists {
-                print("❌ Dokumen user tidak ditemukan! Logout otomatis...")
-                self.logout()
-                return
-            }
+                guard let snapshot = snapshot, snapshot.exists else {
+                    print("❌ Dokumen user tidak ditemukan! Logout otomatis...")
+                    self.logout()
+                    return
+                }
 
-            // PROTEKSI 2: Mencari tahu error dari strukturnya
-            do {
-                self.currentUser = try snapshot.data(as: UserModel.self)
-            } catch {
-                print("❌ DECODING ERROR PADA USERMODEL: \(error)")
-                // Jika error, kita force logout agar tidak stuck di loading
-                self.logout()
+                do {
+                    // Update currentUser yang akan memicu perubahan di HomeView
+                    self.currentUser = try snapshot.data(as: UserModel.self)
+                    print("✅ User data berhasil diupdate secara real-time!")
+                } catch {
+                    print("❌ DECODING ERROR PADA USERMODEL: \(error)")
+                    // TIPS: Jangan panggil self.logout() dulu saat masih tahap development,
+                    // supaya kamu bisa melihat errornya di konsol Xcode tanpa terlempar ke layar login.
+                }
             }
         }
     }

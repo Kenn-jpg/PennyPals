@@ -16,6 +16,7 @@ struct UserModel: Identifiable, Codable {
     var streak: Int
     var lastLoginDate: Date
     var createdAt: Date
+    var totalSavings: Int
 
     // Status penalti
     var isSafeFromPenalty: Bool
@@ -23,4 +24,7 @@ struct UserModel: Identifiable, Codable {
 
     // TAMBAHAN BARU: Status pengecekan onboarding
     var isOnboarded: Bool?
+
+    // Track tanggal terakhir nabung (untuk streak harian)
+    var lastSavingsDate: Date?
 }
