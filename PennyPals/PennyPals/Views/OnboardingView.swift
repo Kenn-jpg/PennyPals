@@ -19,7 +19,7 @@ struct OnboardingView: View {
 
     // 1. AKSES AUTH VIEW MODEL UNTUK LOGOUT PINTU KELUAR
     @EnvironmentObject var authVM: AuthViewModel
-
+    @State private var petNameInput: String = ""
     @Binding var rawAmount: String
     @Binding var selectedEgg: String
     @Binding var wishlistName: String
@@ -66,9 +66,8 @@ struct OnboardingView: View {
 
         // Form valid jika egg sudah dipilih, nama wishlist tidak kosong, dan target nominal valid
         return !selectedEgg.isEmpty
-            && !wishlistName.trimmingCharacters(in: .whitespacesAndNewlines)
-                .isEmpty
-    }
+            && !wishlistName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && !petNameInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty    }
 
     var body: some View {
         VStack(spacing: 16) {
@@ -283,6 +282,34 @@ struct OnboardingView: View {
                     .background(Color(UIColor.systemBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 20))
                     .shadow(color: .black.opacity(0.05), radius: 10, y: 4)
+                    
+                    
+                    // --- SECTION: PET NAME ---
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("YOUR PET NAME")
+                            .font(.caption.weight(.semibold))
+                            .foregroundColor(.pennySecondaryText)
+
+                        HStack(spacing: 12) {
+                            Image(systemName: "pawprint.fill")
+                                .font(.body.bold())
+                                .foregroundColor(.pennyPurple)
+
+                            TextField("Nama pet kamu (Contoh: Mochi)", text: $petNameInput)
+                                .font(.body.weight(.medium))
+                                .foregroundColor(.pennyText)
+                                .autocorrectionDisabled()
+                        }
+                        .padding(.vertical, 4)
+
+                        Text("💡 Nama ini akan tampil di Home dan bisa diubah di Edit Profile.")
+                            .font(.caption2)
+                            .foregroundColor(.pennySecondaryText.opacity(0.8))
+                    }
+                    .padding()
+                    .background(Color(UIColor.systemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                    .shadow(color: .black.opacity(0.05), radius: 10, y: 4)
 
                     // --- SECTION 3: CHOOSE EGG ---
                     VStack(alignment: .leading, spacing: 12) {
@@ -364,9 +391,7 @@ struct OnboardingView: View {
                     let targetAmount = Double(cleanedTargetString) ?? 0
 
                     // --- DIUBAH: Pemanggilan id dan name menggunakan struct baru ---
-                    let petName =
-                        eggs.first(where: { $0.id == selectedEgg })?.name
-                        ?? "Pal"
+                    let petName = petNameInput.trimmingCharacters(in: .whitespacesAndNewlines)
 
                     await onboardingVM.completeOnboarding(
                         initialSavings: amount,

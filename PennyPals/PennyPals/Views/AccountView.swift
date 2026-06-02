@@ -5,11 +5,16 @@
 //  Created by Kelompok 8 on 28/05/26.
 //
 
+
+
 import SwiftUI
 
 struct AccountView: View {
     @EnvironmentObject var authVM: AuthViewModel
     var onLogout: () -> Void
+    @State private var showInventory = false
+    // TAMBAHAN (tidak mengubah UI layout): untuk buka sheet Edit Profile
+    @State private var showEditProfile = false
 
     var body: some View {
         NavigationStack {
@@ -87,10 +92,14 @@ struct AccountView: View {
                                 )
                             VStack(spacing: 0) {
                                 SettingRow(
-                                    icon: "bell.fill",
+                                    icon: "bag.fill",
                                     color: .blue,
-                                    title: "Notifications"
-                                )
+                                    title: "Inventory",
+                                    action: { showInventory = true }
+                                ).sheet(isPresented: $showInventory) {
+                                    InventoryView()
+                                }
+                                
                                 Divider().padding(.leading, 56)
                                 SettingRow(
                                     icon: "moon.fill",
@@ -98,10 +107,15 @@ struct AccountView: View {
                                     title: "Theme"
                                 )
                                 Divider().padding(.leading, 56)
+
+                                // DIUBAH: Language -> Edit Profile (sisanya tidak disentuh)
                                 SettingRow(
-                                    icon: "globe",
-                                    color: .green,
-                                    title: "Language"
+                                    icon: "person.crop.circle.fill",
+                                    color: .green, // kalau mau tetap hijau seperti "Language"
+                                    title: "Edit Profile",
+                                    action: {
+                                        showEditProfile = true
+                                    }
                                 )
                             }.background(Color(UIColor.systemBackground))
                                 .clipShape(RoundedRectangle(cornerRadius: 20))
@@ -152,6 +166,11 @@ struct AccountView: View {
             }
             .background(Color.pennyBackground.ignoresSafeArea())
         }
+        // TAMBAHAN: present EditProfileView tanpa mengubah layout AccountView
+        .sheet(isPresented: $showEditProfile) {
+            EditProfileView()
+                .environmentObject(authVM)
+        }
     }
 }
 
@@ -159,8 +178,12 @@ struct SettingRow: View {
     var icon: String
     var color: Color
     var title: String
+
+    // TAMBAHAN: supaya row bisa punya aksi (default kosong => row lain tidak berubah)
+    var action: () -> Void = {}
+
     var body: some View {
-        Button(action: {}) {
+        Button(action: action) {
             HStack(spacing: 16) {
                 ZStack {
                     Circle().fill(color.opacity(0.15)).frame(

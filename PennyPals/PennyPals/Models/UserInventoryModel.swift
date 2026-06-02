@@ -12,4 +12,6 @@ struct UserInventoryModel: Identifiable, Codable {
     @DocumentID var id: String?
     var userId: String
     var unlockedItemIds: [String]  // Menyimpan ID barang dari ShopItemModel
+    
+    var selectedBackgroundId: String?
 }

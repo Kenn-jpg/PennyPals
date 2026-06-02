@@ -127,7 +127,7 @@ struct HomeView: View {
                                 endPoint: .bottomTrailing
                             )
                         ).frame(width: 200, height: 200)
-
+                                
                         PetView(mood: homeVM.pet?.mood ?? "hungry", size: 180)
                             .offset(y: isBouncing ? -8 : 8)
                             .onAppear {

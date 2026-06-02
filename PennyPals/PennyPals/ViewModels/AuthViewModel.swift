@@ -14,6 +14,7 @@ import SwiftUI
 class AuthViewModel: ObservableObject {
     @Published var isAuthenticated = false
     @Published var currentUser: UserModel?
+    
     @Published var errorMessage: String?
     private var db = Firestore.firestore()
 
@@ -25,6 +26,26 @@ class AuthViewModel: ObservableObject {
             fetchUserData(uid: user.uid)
         } else {
             self.isAuthenticated = false
+        }
+    }
+    
+
+    func updateUsername(_ newUsername: String) async {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        do {
+            try await db.collection("users").document(uid).updateData([
+                "username": newUsername
+            ])
+        } catch {
+            self.errorMessage = error.localizedDescription
+        }
+    }
+
+    func updatePassword(_ newPassword: String) async {
+        do {
+            try await Auth.auth().currentUser?.updatePassword(to: newPassword)
+        } catch {
+            self.errorMessage = error.localizedDescription
         }
     }
 

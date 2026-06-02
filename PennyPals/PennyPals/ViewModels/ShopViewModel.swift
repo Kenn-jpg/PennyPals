@@ -15,6 +15,7 @@ class ShopViewModel: ObservableObject {
     @Published var shopItems: [ShopItemModel] = []
     @Published var unlockedItemIds: [String] = []
     @Published var errorMessage: String?
+    @Published var selectedBackgroundId: String?
 
     private var db = Firestore.firestore()
     private var userId: String? { Auth.auth().currentUser?.uid }
@@ -25,47 +26,51 @@ class ShopViewModel: ObservableObject {
     }
 
     func fetchShopItems() {
-        // Fallback dummy data jika firestore kosong
         self.shopItems = [
             ShopItemModel(
-                id: "egg1",
-                name: "Rosie",
-                category: "Eggs",
-                price: 500,
-                colorHex: "#FFC9DE",
-                spotsHex: "#FF94B8"
+                id: "acc_hat",
+                name: "Cute Hat",
+                category: "Accessories",
+                price: 150,
+                colorHex: nil,
+                spotsHex: nil,
+                imageName: "tshirt.fill"
             ),
             ShopItemModel(
-                id: "egg2",
-                name: "Sprout",
-                category: "Eggs",
-                price: 500,
-                colorHex: "#B8EBD0",
-                spotsHex: "#5FCB97"
-            ),
+                id: "bg_softpink",
+                name: "Soft Pink",
+                category: "Backgrounds",
+                price: 200,
+                colorHex: "#FFF1F6",
+                spotsHex: "#E8F4FF",
+                imageName: nil
+            )
         ]
+
         db.collection("shopItems").getDocuments { snapshot, _ in
             if let docs = snapshot?.documents, !docs.isEmpty {
-                self.shopItems = docs.compactMap {
-                    try? $0.data(as: ShopItemModel.self)
-                }
+                self.shopItems = docs.compactMap { try? $0.data(as: ShopItemModel.self) }
             }
         }
     }
 
     func fetchUserInventory() {
         guard let uid = userId else { return }
-        db.collection("inventories").document(uid).addSnapshotListener {
-            snapshot,
-            _ in
-            self.unlockedItemIds =
-                (try? snapshot?.data(as: UserInventoryModel.self))?
-                .unlockedItemIds ?? []
+        db.collection("inventories").document(uid).addSnapshotListener { snapshot, _ in
+            let inv = try? snapshot?.data(as: UserInventoryModel.self)
+            self.unlockedItemIds = inv?.unlockedItemIds ?? []
+            self.selectedBackgroundId = inv?.selectedBackgroundId
         }
     }
-
+    
     func purchaseItem(item: ShopItemModel, currentUserCoins: Int) {
         guard let uid = userId, let itemId = item.id else { return }
+
+        // FIX: kalau sudah punya, jangan bisa beli lagi
+        if unlockedItemIds.contains(itemId) {
+            self.errorMessage = "Item sudah dimiliki!"
+            return
+        }
 
         if currentUserCoins < item.price {
             self.errorMessage = "Koin tidak cukup!"
@@ -73,24 +78,42 @@ class ShopViewModel: ObservableObject {
         }
 
         let batch = db.batch()
+
         let userRef = db.collection("users").document(uid)
-        batch.updateData(
-            ["coins": currentUserCoins - item.price],
-            forDocument: userRef
-        )
+        batch.updateData(["coins": currentUserCoins - item.price], forDocument: userRef)
 
         let inventoryRef = db.collection("inventories").document(uid)
-        batch.setData(
-            [
-                "userId": uid,
-                "unlockedItemIds": FieldValue.arrayUnion([itemId]),
-            ],
-            forDocument: inventoryRef,
-            merge: true
-        )
+
+        var data: [String: Any] = [
+            "userId": uid,
+            "unlockedItemIds": FieldValue.arrayUnion([itemId]),
+        ]
+
+        // Auto-equip kalau beli background
+        if item.category == "Backgrounds" {
+            data["selectedBackgroundId"] = itemId
+        }
+
+        batch.setData(data, forDocument: inventoryRef, merge: true)
 
         batch.commit { error in
             if let err = error { self.errorMessage = err.localizedDescription }
         }
+    }
+    
+    
+    func useBackground(item: ShopItemModel) {
+        guard let uid = userId, let itemId = item.id else { return }
+
+        // hanya boleh equip kalau sudah dimiliki
+        guard unlockedItemIds.contains(itemId) else {
+            self.errorMessage = "Beli dulu background-nya!"
+            return
+        }
+
+        db.collection("inventories").document(uid).setData(
+            ["selectedBackgroundId": itemId],
+            merge: true
+        )
     }
 }
