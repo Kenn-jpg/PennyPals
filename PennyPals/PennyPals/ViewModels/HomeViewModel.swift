@@ -43,7 +43,8 @@ class HomeViewModel: ObservableObject {
             }
     }
 
-    func addSavings(amount: Double) {
+    // TAMBAHKAN parameter currentUser: UserModel
+    func addSavings(amount: Double, currentUser: UserModel) {
         guard let uid = userId, let currentPet = pet, let currentGoal = goal
         else { return }
 
@@ -57,32 +58,51 @@ class HomeViewModel: ObservableObject {
         let gainedXP = Int(amount / 1000)
         var newXP = currentPet.xp + gainedXP
         var newLevel = currentPet.level
+        var totalCoinsGained = 0
 
-        if newXP >= currentPet.maxXP {
+        var currentMaxXP = (newLevel + 1) * 200
+        while newXP >= currentMaxXP {
+            newXP -= currentMaxXP
             newLevel += 1
-            newXP = newXP - currentPet.maxXP
-            db.collection("users").document(uid).updateData([
-                "coins": FieldValue.increment(Int64(500))
-            ])
+            totalCoinsGained += 50 + (newLevel * 10)
+            currentMaxXP = (newLevel + 1) * 200
         }
 
+        // 1. Update Pet
         db.collection("pets").document(currentPet.id!).updateData([
             "xp": newXP,
             "level": newLevel,
             "mood": "happy",
         ])
 
-        // Update Streak & Penalty status
+        // 2. Siapkan data tanggal aman penalti
         let nextSafeDate = Calendar.current.date(
             byAdding: .day,
             value: 2,
             to: Date()
         )!
-        db.collection("users").document(uid).updateData([
+
+        // 🌟 PERUBAHAN UTAMA DI SINI 🌟
+        // Hitung total tabungan baru secara manual
+        let newTotalSavings = currentUser.totalSavings + Int(amount)
+
+        // 3. Gabungkan semua update, TANPA FieldValue.increment untuk totalSavings
+        var userUpdates: [String: Any] = [
             "streak": FieldValue.increment(Int64(1)),
             "isSafeFromPenalty": true,
             "nextPenaltyCheck": nextSafeDate,
-        ])
+            "totalSavings": newTotalSavings,  // Langsung lempar nilai bulat Int
+        ]
+
+        // 4. Jika dapat koin, tambahkan
+        if totalCoinsGained > 0 {
+            // Koin juga bisa dihitung manual jika mau, tapi biarkan FieldValue dulu
+            // Jika koin juga error real-time nya, ubah strateginya seperti totalSavings
+            userUpdates["coins"] = FieldValue.increment(Int64(totalCoinsGained))
+        }
+
+        // 5. Kirim data
+        db.collection("users").document(uid).updateData(userUpdates)
 
         let tx = TransactionModel(
             userId: uid,
@@ -92,7 +112,6 @@ class HomeViewModel: ObservableObject {
         )
         try? db.collection("transactions").addDocument(from: tx)
 
-        // Revert mood to hungry after 5 seconds
         DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
             self.db.collection("pets").document(currentPet.id!).updateData([
                 "mood": "hungry"
@@ -114,9 +133,12 @@ class HomeViewModel: ObservableObject {
                 var newLevel = currentPet.level
 
                 if newXP < 0 {
-                    if newLevel > 1 {
+                    // Cek jika level > 0 agar tidak drop di bawah 0
+                    if newLevel > 0 {
                         newLevel -= 1
-                        newXP = (newLevel * 1000) + newXP
+                        // Kembalikan sisa XP yang minus dari maxXP level sebelumnya
+                        let previousMaxXP = (newLevel + 1) * 200
+                        newXP = previousMaxXP + newXP
                     } else {
                         newXP = 0
                     }

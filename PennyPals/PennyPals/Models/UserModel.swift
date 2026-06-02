@@ -16,6 +16,7 @@ struct UserModel: Identifiable, Codable {
     var streak: Int
     var lastLoginDate: Date
     var createdAt: Date
+    var totalSavings: Int
 
     // Status penalti
     var isSafeFromPenalty: Bool

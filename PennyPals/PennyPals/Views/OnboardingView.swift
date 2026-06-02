@@ -7,6 +7,13 @@
 
 import SwiftUI
 
+// --- BEST PRACTICE: Buat struktur data khusus untuk opsi telur ---
+struct EggOption {
+    let id: String
+    let name: String
+    let assetName: String
+}
+
 struct OnboardingView: View {
     @StateObject private var onboardingVM = OnboardingViewModel()
 
@@ -22,13 +29,14 @@ struct OnboardingView: View {
 
     var onStart: () -> Void
 
-    let eggs = [
-        ("rose", "Rosie", "#FFC9DE", "#FF94B8"),
-        ("mint", "Sprout", "#B8EBD0", "#5FCB97"),
-        ("sky", "Bloo", "#BFE0FF", "#5FA8E8"),
-        ("sun", "Sunny", "#FFE3A8", "#F2B441"),
-        ("lilac", "Vio", "#D9C8FF", "#9B7CFF"),
-        ("peach", "Pip", "#FFD0B8", "#F2885F"),
+    // --- DIUBAH: Menggunakan struct EggOption dan Asset Gambar ---
+    let eggs: [EggOption] = [
+        EggOption(id: "rose", name: "Rosie", assetName: "PinkEgg01"),
+        EggOption(id: "mint", name: "Sprout", assetName: "GreenEgg01"),
+        EggOption(id: "sky", name: "Bloo", assetName: "BlueEgg01"),
+        EggOption(id: "sun", name: "Sunny", assetName: "YellowEgg01"),
+        EggOption(id: "lilac", name: "Vio", assetName: "PurpleEgg01"),
+        EggOption(id: "peach", name: "Pip", assetName: "PeachEgg01"),
     ]
 
     // Konstanta Batas Maksimal Tabungan (Rp 100 Juta)
@@ -172,8 +180,8 @@ struct OnboardingView: View {
                                         rawAmount = formattedPreset
                                     }
                                 }) {
-                                    Text(formattedPreset)  // ← Tidak lagi menggunakan "k"
-                                        .font(.caption.weight(.semibold))  // Ubah font jadi caption agar muat
+                                    Text(formattedPreset)
+                                        .font(.caption.weight(.semibold))
                                         .frame(
                                             maxWidth: .infinity,
                                             minHeight: 44
@@ -289,8 +297,9 @@ struct OnboardingView: View {
                             ],
                             spacing: 12
                         ) {
-                            ForEach(eggs, id: \.0) { egg in
-                                let isEggSelected = selectedEgg == egg.0
+                            // --- DIUBAH: Menggunakan id dari struct EggOption ---
+                            ForEach(eggs, id: \.id) { egg in
+                                let isEggSelected = selectedEgg == egg.id
 
                                 Button(action: {
                                     withAnimation(
@@ -299,18 +308,21 @@ struct OnboardingView: View {
                                             dampingFraction: 0.6
                                         )
                                     ) {
-                                        selectedEgg = egg.0
+                                        selectedEgg = egg.id
                                     }
                                 }) {
                                     VStack(spacing: 8) {
-                                        EggView(
-                                            color: egg.2,
-                                            spots: egg.3,
-                                            size: 60
-                                        )
-                                        .scaleEffect(isEggSelected ? 1.08 : 1.0)
 
-                                        Text(egg.1)
+                                        // --- DIUBAH: Menggunakan Image Asset ---
+                                        Image(egg.assetName)
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 60, height: 60)
+                                            .scaleEffect(
+                                                isEggSelected ? 1.08 : 1.0
+                                            )
+
+                                        Text(egg.name)
                                             .font(.caption.weight(.medium))
                                             .foregroundColor(.pennyText)
                                     }
@@ -330,7 +342,7 @@ struct OnboardingView: View {
                                     )
                                 }
                                 .buttonStyle(.plain)
-                                .accessibilityIdentifier("eggButton_\(egg.0)")
+                                .accessibilityIdentifier("eggButton_\(egg.id)")
                             }
                         }
                         .padding(.horizontal, 4)
@@ -346,19 +358,19 @@ struct OnboardingView: View {
                     let cleanedAmountString = cleanNumericString(rawAmount)
                     let amount = Double(cleanedAmountString) ?? 0
 
-                    // --- TAMBAHAN BARU: Parsing target nominal ke Double ---
                     let cleanedTargetString = cleanNumericString(
                         targetAmountString
                     )
                     let targetAmount = Double(cleanedTargetString) ?? 0
 
+                    // --- DIUBAH: Pemanggilan id dan name menggunakan struct baru ---
                     let petName =
-                        eggs.first(where: { $0.0 == selectedEgg })?.1 ?? "Pal"
+                        eggs.first(where: { $0.id == selectedEgg })?.name
+                        ?? "Pal"
 
-                    // Panggil ViewModel dengan parameter targetAmount yang baru
                     await onboardingVM.completeOnboarding(
                         initialSavings: amount,
-                        targetAmount: targetAmount,  // Oper variabel baru ke sini
+                        targetAmount: targetAmount,
                         eggType: selectedEgg,
                         petName: petName,
                         wishlistName: wishlistName
@@ -405,7 +417,6 @@ struct OnboardingView: View {
         }
     }
 
-    // --- TAMBAHAN BARU: Helper currency formatting untuk input nominal target ---
     private func formatDynamicTargetAmount(_ input: String) {
         let digits = input.filter { $0.isNumber }
         if digits.isEmpty {
