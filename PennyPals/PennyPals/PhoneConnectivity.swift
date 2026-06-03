@@ -10,7 +10,7 @@ import Foundation
 
 /// Singleton yang mengelola komunikasi iPhone → Apple Watch
 /// Mengirim data user & pet ke Watch setiap kali ada perubahan dari Firestore
-class PhoneConnectivity: NSObject, ObservableObject {
+class PhoneConnectivity: NSObject {
     static let shared = PhoneConnectivity()
 
     private override init() {
