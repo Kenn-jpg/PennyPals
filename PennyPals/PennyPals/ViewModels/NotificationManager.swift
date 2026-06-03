@@ -7,7 +7,7 @@
 
 import UserNotifications
 import UIKit
-import Combine
+internal import Combine
 
 /// Singleton manager untuk mengelola semua Local Notifications di PennyPals.
 /// Menangani permission request, scheduling, dan pembatalan notifikasi.
