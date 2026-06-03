@@ -114,14 +114,6 @@
 			);
 			target = 3F1897BA2FD01C4F00A0C204 /* PennyPalsWidgetExtension */;
 		};
-		3F1897D42FD01CF100A0C204 /* Exceptions for "PennyPals" folder in "PennyPalsWidgetExtension" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Models/GoalModel.swift,
-				Models/PetModel.swift,
-			);
-			target = 3F1897BA2FD01C4F00A0C204 /* PennyPalsWidgetExtension */;
-		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -150,9 +142,6 @@
 		};
 		4CFAB1352FC7CA4B008A9E42 /* PennyPals */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				3F1897D42FD01CF100A0C204 /* Exceptions for "PennyPals" folder in "PennyPalsWidgetExtension" target */,
-			);
 			path = PennyPals;
 			sourceTree = "<group>";
 		};
