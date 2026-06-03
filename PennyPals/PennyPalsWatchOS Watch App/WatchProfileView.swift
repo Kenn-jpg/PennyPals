@@ -12,38 +12,36 @@ struct WatchProfileView: View {
 
     var body: some View {
         VStack(spacing: 4) {
+            Spacer(minLength: 0)
 
-            // --- Header: Avatar + Name ---
-            HStack(spacing: 8) {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(hex: "#FF8FB5"),
-                                Color(hex: "#9B7CFF"),
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+            // --- Avatar ---
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color(hex: "#FF8FB5"),
+                            Color(hex: "#9B7CFF"),
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
                     )
-                    .frame(width: 32, height: 32)
-                    .overlay(
-                        Text(avatarInitials)
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(.white)
-                    )
-                    .shadow(color: Color.black.opacity(0.1), radius: 2, y: 1)
+                )
+                .frame(width: 36, height: 36)
+                .overlay(
+                    Text(avatarInitials)
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white)
+                )
+                .shadow(color: Color.black.opacity(0.1), radius: 2, y: 1)
 
-                Text(connectivity.username)
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(Color(hex: "#2A2440"))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.6)
-                
-                Spacer()
-            }
-            .padding(.horizontal, 4)
-            .padding(.top, 2)
+            // --- Name ---
+            Text(connectivity.username)
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(Color(hex: "#2A2440"))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+
+            Spacer(minLength: 0)
 
             // --- Stats Grid ---
             HStack(spacing: 6) {
@@ -125,7 +123,7 @@ struct WatchProfileView: View {
             
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, 2)
+        .padding(.horizontal, 4)
     }
 
     // MARK: - Computed Properties
