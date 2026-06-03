@@ -10,8 +10,6 @@ import SwiftUI
 struct WatchPetStatsView: View {
     @EnvironmentObject var connectivity: IOSConnectivity
 
-    @State private var isBouncing = false
-
     var body: some View {
         VStack(spacing: 4) {
             Spacer(minLength: 0)
@@ -32,19 +30,10 @@ struct WatchPetStatsView: View {
                     .frame(width: 54, height: 54)
                     .shadow(color: Color.black.opacity(0.1), radius: 2, y: 1)
 
-                WatchPetView(
-                    mood: connectivity.petMood,
-                    size: 44
-                )
-                .offset(y: isBouncing ? -2 : 2)
-                .onAppear {
-                    withAnimation(
-                        .easeInOut(duration: 1.5)
-                            .repeatForever(autoreverses: true)
-                    ) {
-                        isBouncing = true
-                    }
-                }
+                Image("\(connectivity.petType)Laugh")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 44, height: 44)
             }
 
             // --- Pet Name & Mood ---
@@ -161,47 +150,7 @@ struct WatchPetStatsView: View {
     }
 }
 
-// MARK: - Watch-compatible Pet View (simplified PetView without UIKit)
 
-struct WatchPetView: View {
-    var mood: String
-    var size: CGFloat
-
-    var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: size * 0.4)
-                .fill(Color(hex: "#FFC9DE"))
-                .frame(width: size * 0.75, height: size * 0.7)
-
-            HStack(spacing: size * 0.15) {
-                if mood == "sad" {
-                    Text("T_T")
-                        .font(.system(size: size * 0.12, weight: .bold))
-                        .foregroundColor(Color(hex: "#2A2440"))
-                    Text("T_T")
-                        .font(.system(size: size * 0.12, weight: .bold))
-                        .foregroundColor(Color(hex: "#2A2440"))
-                } else if mood == "hungry" {
-                    Text("🥺").font(.system(size: size * 0.2))
-                    Text("🥺").font(.system(size: size * 0.2))
-                } else {
-                    Text("^-^")
-                        .font(.system(size: size * 0.12, weight: .bold))
-                        .foregroundColor(Color(hex: "#2A2440"))
-                    Text("^-^")
-                        .font(.system(size: size * 0.12, weight: .bold))
-                        .foregroundColor(Color(hex: "#2A2440"))
-                }
-            }
-            .offset(y: -size * 0.04)
-
-            Text("🔺")
-                .font(.system(size: size * 0.07))
-                .rotationEffect(.degrees(180))
-                .offset(y: size * 0.08)
-        }
-    }
-}
 
 // MARK: - Color Hex Extension (Watch-compatible, no UIKit)
 
