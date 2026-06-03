@@ -158,13 +158,6 @@ class HomeViewModel: ObservableObject {
         )
         try? db.collection("transactions").addDocument(from: tx)
 
-        // --- PERBAIKAN: Gunakan [weak self] dan ID konstan agar tidak memicu memory leak atau crash saat tertunda ---
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
-            guard let self = self else { return }
-            self.db.collection("pets").document(petId).updateData([
-                "mood": "hungry"
-            ])
-        }
     }
 
     func setNewGoal(itemName: String, targetAmount: Double) {
@@ -262,6 +255,31 @@ class HomeViewModel: ObservableObject {
                 )
                 batch.commit()
             }
+        }
+    }
+
+    func checkDailyHunger(currentUser: UserModel) {
+        guard let currentPet = pet, let petId = currentPet.id else { return }
+
+        // Jika pet sudah sad/penalty, jangan ditimpa dengan hungry
+        if currentPet.mood == "sad" { return }
+
+        let today = Calendar.current.startOfDay(for: Date())
+        let alreadySavedToday: Bool
+        if let lastSave = currentUser.lastSavingsDate {
+            alreadySavedToday = Calendar.current.isDate(
+                lastSave,
+                inSameDayAs: today
+            )
+        } else {
+            alreadySavedToday = false
+        }
+
+        // Jika belum nabung hari ini dan pet belum lapar, buat jadi lapar
+        if !alreadySavedToday && currentPet.mood != "hungry" {
+            db.collection("pets").document(petId).updateData([
+                "mood": "hungry"
+            ])
         }
     }
 }

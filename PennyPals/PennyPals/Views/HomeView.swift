@@ -63,7 +63,17 @@ struct HomeView: View {
             .padding(.vertical)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.pennyBackground.ignoresSafeArea())
-            .onAppear { homeVM.checkDailyPenalty() }
+            .onAppear {
+                homeVM.checkDailyPenalty()
+                if let currentUser = authVM.currentUser {
+                    homeVM.checkDailyHunger(currentUser: currentUser)
+                }
+            }
+            .onChange(of: authVM.currentUser) { _, newUser in
+                if let user = newUser {
+                    homeVM.checkDailyHunger(currentUser: user)
+                }
+            }
             .sheet(isPresented: $showSavingsModal) {
                 AddSavingsModal(onSave: { amount in
                     if let currentUser = authVM.currentUser {
