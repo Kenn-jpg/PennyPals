@@ -27,20 +27,26 @@ class HomeViewModel: ObservableObject {
         guard let uid = userId else { return }
         db.collection("pets").whereField("userId", isEqualTo: uid)
             .addSnapshotListener { snapshot, _ in
-                self.pet = try? snapshot?.documents.first?.data(
+                // Mengambil data pet dengan aman
+                let fetchedPet = try? snapshot?.documents.first?.data(
                     as: PetModel.self
                 )
 
-                // 📲 Forward pet data ke Apple Watch
-                if let pet = self.pet {
-                    PhoneConnectivity.shared.sendPetToWatch(
-                        name: pet.name,
-                        level: pet.level,
-                        xp: pet.xp,
-                        maxXP: pet.maxXP,
-                        mood: pet.mood,
-                        type: pet.type
-                    )
+                // --- PERBAIKAN: Pastikan update properti @Published terjadi di Main Actor ---
+                Task { @MainActor in
+                    self.pet = fetchedPet
+
+                    // 📲 Forward pet data ke Apple Watch jika data tersedia
+                    if let pet = fetchedPet {
+                        PhoneConnectivity.shared.sendPetToWatch(
+                            name: pet.name,
+                            level: pet.level,
+                            xp: pet.xp,
+                            maxXP: pet.maxXP,
+                            mood: pet.mood,
+                            type: pet.type
+                        )
+                    }
                 }
             }
     }
@@ -52,20 +58,30 @@ class HomeViewModel: ObservableObject {
             .whereField("isCompleted", isEqualTo: false)
             .limit(to: 1)
             .addSnapshotListener { snapshot, _ in
-                self.goal = try? snapshot?.documents.first?.data(
+                let fetchedGoal = try? snapshot?.documents.first?.data(
                     as: GoalModel.self
                 )
+
+                // --- PERBAIKAN: Pastikan update properti @Published terjadi di Main Actor ---
+                Task { @MainActor in
+                    self.goal = fetchedGoal
+                }
             }
     }
 
     // TAMBAHKAN parameter currentUser: UserModel
     func addSavings(amount: Double, currentUser: UserModel) {
-        guard let uid = userId, let currentPet = pet, let currentGoal = goal
+        // --- PERBAIKAN: Hindari force unwrapping (!) pada ID Pet dan Goal untuk mencegah crash ---
+        guard let uid = userId,
+            let currentPet = pet,
+            let petId = currentPet.id,
+            let currentGoal = goal,
+            let goalId = currentGoal.id
         else { return }
 
         // Update Goal
         let newGoalAmount = currentGoal.currentAmount + amount
-        db.collection("goals").document(currentGoal.id!).updateData([
+        db.collection("goals").document(goalId).updateData([
             "currentAmount": newGoalAmount
         ])
 
@@ -83,8 +99,8 @@ class HomeViewModel: ObservableObject {
             currentMaxXP = (newLevel + 1) * 200
         }
 
-        // 1. Update Pet
-        db.collection("pets").document(currentPet.id!).updateData([
+        // 1. Update Pet menggunakan ID yang aman
+        db.collection("pets").document(petId).updateData([
             "xp": newXP,
             "level": newLevel,
             "mood": "happy",
@@ -105,7 +121,10 @@ class HomeViewModel: ObservableObject {
         let today = Calendar.current.startOfDay(for: Date())
         let alreadySavedToday: Bool
         if let lastSave = currentUser.lastSavingsDate {
-            alreadySavedToday = Calendar.current.isDate(lastSave, inSameDayAs: today)
+            alreadySavedToday = Calendar.current.isDate(
+                lastSave,
+                inSameDayAs: today
+            )
         } else {
             alreadySavedToday = false
         }
@@ -125,8 +144,6 @@ class HomeViewModel: ObservableObject {
 
         // 4. Jika dapat koin, tambahkan
         if totalCoinsGained > 0 {
-            // Koin juga bisa dihitung manual jika mau, tapi biarkan FieldValue dulu
-            // Jika koin juga error real-time nya, ubah strateginya seperti totalSavings
             userUpdates["coins"] = FieldValue.increment(Int64(totalCoinsGained))
         }
 
@@ -141,8 +158,10 @@ class HomeViewModel: ObservableObject {
         )
         try? db.collection("transactions").addDocument(from: tx)
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
-            self.db.collection("pets").document(currentPet.id!).updateData([
+        // --- PERBAIKAN: Gunakan [weak self] dan ID konstan agar tidak memicu memory leak atau crash saat tertunda ---
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
+            guard let self = self else { return }
+            self.db.collection("pets").document(petId).updateData([
                 "mood": "hungry"
             ])
         }
@@ -175,7 +194,12 @@ class HomeViewModel: ObservableObject {
     }
 
     func checkDailyPenalty() {
-        guard let uid = userId, let currentPet = pet else { return }
+        // --- PERBAIKAN: Pastikan ID Pet diekstrak dengan aman di awal fungsi ---
+        guard let uid = userId,
+            let currentPet = pet,
+            let petId = currentPet.id
+        else { return }
+
         db.collection("users").document(uid).getDocument {
             [weak self] snapshot, _ in
             guard let self = self,
@@ -211,19 +235,19 @@ class HomeViewModel: ObservableObject {
                 let userRef = self.db.collection("users").document(uid)
                 batch.updateData(
                     [
-                        "streak": 0, "isSafeFromPenalty": false,
+                        "streak": 0,
+                        "isSafeFromPenalty": false,
                         "nextPenaltyCheck": nextCheck,
                     ],
                     forDocument: userRef
                 )
 
-                if let petId = currentPet.id {
-                    let petRef = self.db.collection("pets").document(petId)
-                    batch.updateData(
-                        ["xp": newXP, "level": newLevel, "mood": "sad"],
-                        forDocument: petRef
-                    )
-                }
+                // Menggunakan petId yang sudah tervalidasi aman
+                let petRef = self.db.collection("pets").document(petId)
+                batch.updateData(
+                    ["xp": newXP, "level": newLevel, "mood": "sad"],
+                    forDocument: petRef
+                )
 
                 let txRef = self.db.collection("transactions").document()
                 try? batch.setData(

@@ -14,47 +14,56 @@ import Foundation
 class OnboardingViewModel: ObservableObject {
     private var db = Firestore.firestore()
 
-    // --- TAMBAHAN BARU: Tambahkan parameter targetAmount ---
+    // --- DIUBAH: Menambahkan parameter petType untuk menerima hasil random pet ---
     func completeOnboarding(
         initialSavings: Double,
         targetAmount: Double,
         eggType: String,
         petName: String,
-        wishlistName: String
+        wishlistName: String,
+        petType: String  // <--- Parameter baru untuk jenis pet hasil gacha
     ) async {
         guard let uid = Auth.auth().currentUser?.uid else { return }
 
+        // Membuat model peliharaan dengan tipe hewan yang didapat (bukan tipe telurnya)
         let newPet = PetModel(
             userId: uid,
             name: petName,
-            type: eggType,
+            type: petType,  // <--- Menyimpan "Cat", "Dog", dsb. ke database
             xp: 0,
             level: 1,
             mood: "hungry"
         )
 
+        // Membuat model target wishlist pertama
         let initialGoal = GoalModel(
             userId: uid,
             itemName: wishlistName,
-            targetAmount: targetAmount,  // --- Gunakan input targetAmount di sini ---
+            targetAmount: targetAmount,
             currentAmount: initialSavings,
             isCompleted: false
         )
 
         do {
+            // 1. Simpan data pet & goal ke Firestore
             try db.collection("pets").addDocument(from: newPet)
             try db.collection("goals").addDocument(from: initialGoal)
-            let initialTx = TransactionModel(
-                userId: uid,
-                amount: initialSavings,
-                date: Date(),
-                type: .deposit
-            )
-            try db.collection("transactions").addDocument(from: initialTx)
 
+            // 2. Simpan transaksi tabungan awal jika lebih dari 0
+            if initialSavings > 0 {
+                let initialTx = TransactionModel(
+                    userId: uid,
+                    amount: initialSavings,
+                    date: Date(),
+                    type: .deposit
+                )
+                try db.collection("transactions").addDocument(from: initialTx)
+            }
+
+            // 3. Update status user
             try await db.collection("users").document(uid).updateData([
                 "isOnboarded": true,
-                "totalSavings": initialSavings,  // 👈 Tambahkan baris ini
+                "totalSavings": initialSavings,
             ])
 
         } catch {

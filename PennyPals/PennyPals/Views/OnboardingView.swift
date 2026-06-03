@@ -35,6 +35,9 @@ struct OnboardingView: View {
         EggOption(id: "peach", name: "Pip", assetName: "PeachEgg01"),
     ]
 
+    // --- DAFTAR PET UNTUK DI RANDOM ---
+    private let availablePets = ["Cat", "Dog", "Owl", "Pig", "Raccoon", "Seal"]
+
     private let maxSavingsLimit: Double = 100_000_000
 
     // --- BEST PRACTICE: Singleton NumberFormatter ---
@@ -308,12 +311,18 @@ struct OnboardingView: View {
                         in: .whitespacesAndNewlines
                     )
 
+                    // MENGACAK PET SEBELUM DISIMPAN!
+                    let randomlyHatchedPet =
+                        availablePets.randomElement() ?? "Cat"
+
+                    // ERROR TERATASI: Memasukkan parameter petType
                     await onboardingVM.completeOnboarding(
                         initialSavings: amount,
                         targetAmount: targetAmount,
                         eggType: selectedEgg,
                         petName: petName,
-                        wishlistName: wishlistName
+                        wishlistName: wishlistName,
+                        petType: randomlyHatchedPet
                     )
                     onStart()
                 }
