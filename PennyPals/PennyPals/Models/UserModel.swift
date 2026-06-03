@@ -8,24 +8,41 @@
 import FirebaseFirestore
 import Foundation
 
-// CUKUP TAMBAHKAN Equatable di baris ini
+/// Menyimpan informasi profil utama, metrik gamifikasi, dan status finansial pengguna secara keseluruhan.
 struct UserModel: Identifiable, Codable, Equatable {
+    /// ID unik dokumen di Firebase Firestore (diselaraskan dengan UID FirebaseAuth).
     @DocumentID var id: String?
+
+    /// Nama tampilan dari pengguna.
     var username: String
+
+    /// Alamat email aktif milik pengguna.
     var email: String
+
+    /// Jumlah koin virtual yang dimiliki untuk berbelanja di Shop.
     var coins: Int
+
+    /// Jumlah hari berturut-turut pengguna disiplin menabung.
     var streak: Int
+
+    /// Waktu terakhir kali pengguna login ke dalam aplikasi.
     var lastLoginDate: Date
+
+    /// Waktu saat akun pengguna pertama kali dibuat.
     var createdAt: Date
+
+    /// Total keseluruhan saldo uang yang telah berhasil ditabung.
     var totalSavings: Int
 
-    // Status penalti
+    /// Menandakan apakah pengguna saat ini berstatus aman dari penalti poin XP.
     var isSafeFromPenalty: Bool
+
+    /// Batas waktu bagi sistem untuk mengecek konsistensi menabung pengguna berikutnya.
     var nextPenaltyCheck: Date
 
-    // TAMBAHAN BARU: Status pengecekan onboarding
+    /// Menandai apakah pengguna baru telah menyelesaikan alur perkenalan (Onboarding).
     var isOnboarded: Bool?
 
-    // Track tanggal terakhir nabung (untuk streak harian)
+    /// Waktu terakhir kali pengguna menabung (digunakan untuk mendeteksi streak harian).
     var lastSavingsDate: Date?
 }
