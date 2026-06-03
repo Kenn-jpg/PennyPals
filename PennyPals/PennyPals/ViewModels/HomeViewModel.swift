@@ -30,6 +30,18 @@ class HomeViewModel: ObservableObject {
                 self.pet = try? snapshot?.documents.first?.data(
                     as: PetModel.self
                 )
+
+                // 📲 Forward pet data ke Apple Watch
+                if let pet = self.pet {
+                    PhoneConnectivity.shared.sendPetToWatch(
+                        name: pet.name,
+                        level: pet.level,
+                        xp: pet.xp,
+                        maxXP: pet.maxXP,
+                        mood: pet.mood,
+                        type: pet.type
+                    )
+                }
             }
     }
 

@@ -8,17 +8,45 @@
 import SwiftUI
 
 struct ContentView: View {
+    @EnvironmentObject var connectivity: IOSConnectivity
+    @AppStorage("selectedTheme") private var selectedThemeRaw: String = WatchTheme.midnight.rawValue
+
+    private var currentTheme: WatchTheme {
+        WatchTheme(rawValue: selectedThemeRaw) ?? .midnight
+    }
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        TabView {
+            // Tab 1: Pet Stats
+            WatchPetStatsView()
+                .containerBackground(
+                    currentTheme.gradient,
+                    for: .tabView
+                )
+
+            // Tab 2: Profile
+            WatchProfileView()
+                .containerBackground(
+                    currentTheme.gradient,
+                    for: .tabView
+                )
+
+            // Tab 3: Settings
+            WatchSettingsView()
+                .containerBackground(
+                    currentTheme.gradient,
+                    for: .tabView
+                )
         }
-        .padding()
+        .tabViewStyle(.verticalPage)
+        .onAppear {
+            // Request data terbaru saat Watch app dibuka
+            connectivity.requestRefresh()
+        }
     }
 }
 
 #Preview {
     ContentView()
+        .environmentObject(IOSConnectivity())
 }

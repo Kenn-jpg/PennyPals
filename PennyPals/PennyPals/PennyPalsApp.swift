@@ -20,7 +20,12 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 struct PennyPalsApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @StateObject private var authViewModel = AuthViewModel()
-    
+
+    init() {
+        // Activate WatchConnectivity saat app launch
+        PhoneConnectivity.shared.activate()
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()

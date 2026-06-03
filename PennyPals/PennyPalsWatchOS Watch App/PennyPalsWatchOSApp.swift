@@ -9,9 +9,12 @@ import SwiftUI
 
 @main
 struct PennyPalsWatchOS_Watch_AppApp: App {
+    @StateObject private var connectivity = IOSConnectivity()
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(connectivity)
         }
     }
 }

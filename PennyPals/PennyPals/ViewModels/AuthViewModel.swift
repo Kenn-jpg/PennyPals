@@ -134,6 +134,19 @@ class AuthViewModel: ObservableObject {
                     // Update currentUser yang akan memicu perubahan di HomeView
                     self.currentUser = try snapshot.data(as: UserModel.self)
                     print("✅ User data berhasil diupdate secara real-time!")
+
+                    // 📲 Forward data ke Apple Watch
+                    if let user = self.currentUser {
+                        PhoneConnectivity.shared.sendUserToWatch(
+                            username: user.username,
+                            email: user.email,
+                            coins: user.coins,
+                            streak: user.streak,
+                            totalSavings: user.totalSavings,
+                            isSafeFromPenalty: user.isSafeFromPenalty,
+                            nextPenaltyCheck: user.nextPenaltyCheck
+                        )
+                    }
                 } catch {
                     print("❌ DECODING ERROR PADA USERMODEL: \(error)")
                     // TIPS: Jangan panggil self.logout() dulu saat masih tahap development,
