@@ -106,6 +106,8 @@ class AuthViewModel: ObservableObject {
             try Auth.auth().signOut()
             self.isAuthenticated = false
             self.currentUser = nil
+            // 📲 Beritahu WatchOS untuk menghapus data cached
+            PhoneConnectivity.shared.sendLogoutToWatch()
         } catch {
             print("Logout error: \(error.localizedDescription)")
         }

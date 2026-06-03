@@ -39,8 +39,8 @@ struct WatchSettingsView: View {
                     ForEach(connectivity.ownedBackgrounds, id: \.self) { bg in
                         let isSelected = connectivity.selectedBackgroundId == bg["id"]
                         let name = bg["name"] ?? "Unknown"
-                        let colorHex = bg["colorHex"] ?? "#1A1A2E"
-                        let spotsHex = bg["spotsHex"] ?? "#16213E"
+                        let colorHex = bg["colorHex"] ?? "#FFF1F6"
+                        let spotsHex = bg["spotsHex"] ?? "#E8F4FF"
 
                         Button(action: {
                             if let id = bg["id"] {

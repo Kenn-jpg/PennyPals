@@ -87,6 +87,14 @@ class PhoneConnectivity: NSObject {
         sendToWatch(data)
     }
 
+    /// Kirim instruksi ke Watch untuk hapus data karena user logout di iPhone
+    func sendLogoutToWatch() {
+        let data: [String: Any] = [
+            "type": "logout"
+        ]
+        sendToWatch(data)
+    }
+
     // MARK: - Private Helpers
 
     private func sendToWatch(_ data: [String: Any]) {

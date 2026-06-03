@@ -15,8 +15,8 @@ struct ContentView: View {
         let bgs = connectivity.ownedBackgrounds
         let currentBg = bgs.first(where: { $0["id"] == selectedId })
         
-        let colorHex = currentBg?["colorHex"] ?? "#1A1A2E"
-        let spotsHex = currentBg?["spotsHex"] ?? "#16213E"
+        let colorHex = currentBg?["colorHex"] ?? "#FFF1F6"
+        let spotsHex = currentBg?["spotsHex"] ?? "#E8F4FF"
         
         return LinearGradient(
             colors: [Color(hex: colorHex), Color(hex: spotsHex)],

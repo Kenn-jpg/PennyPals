@@ -154,10 +154,36 @@ class IOSConnectivity: NSObject, ObservableObject {
                 self.isConnected = true
                 print("⌚ Watch received inventory update: \(self.ownedBackgrounds.count) backgrounds")
 
+            case "logout":
+                self.clearData()
+                print("⌚ Watch received logout event. Cleared all data.")
+
             default:
                 print("⌚ Unknown message type: \(messageType)")
             }
         }
+    }
+
+    private func clearData() {
+        self.username = "—"
+        self.email = "—"
+        self.coins = 0
+        self.streak = 0
+        self.totalSavings = 0
+        self.isSafeFromPenalty = true
+        self.nextPenaltyCheck = Date()
+        
+        self.petName = "Pal"
+        self.petLevel = 0
+        self.petXP = 0
+        self.petMaxXP = 200
+        self.petMood = "hungry"
+        self.petType = "rose"
+        
+        self.ownedBackgrounds = []
+        self.selectedBackgroundId = ""
+        
+        self.isConnected = false
     }
 }
 
