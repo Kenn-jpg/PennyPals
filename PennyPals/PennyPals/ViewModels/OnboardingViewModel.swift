@@ -10,18 +10,24 @@ import FirebaseAuth
 import FirebaseFirestore
 import Foundation
 
+/// ViewModel untuk mengelola proses onboarding pengguna baru di PennyPals.
+/// Menangani pembuatan data pet awal, target wishlist, dan inisialisasi status user.
 @MainActor
 class OnboardingViewModel: ObservableObject {
+    
+    // MARK: - Properties
     private var db = Firestore.firestore()
 
-    // --- DIUBAH: Menambahkan parameter petType untuk menerima hasil random pet ---
+    // MARK: - Onboarding Process
+
+    /// Menyelesaikan proses onboarding dan menyimpan semua data konfigurasi awal ke Firestore
     func completeOnboarding(
         initialSavings: Double,
         targetAmount: Double,
         eggType: String,
         petName: String,
         wishlistName: String,
-        petType: String  // <--- Parameter baru untuk jenis pet hasil gacha
+        petType: String
     ) async {
         guard let uid = Auth.auth().currentUser?.uid else { return }
 
@@ -29,7 +35,7 @@ class OnboardingViewModel: ObservableObject {
         let newPet = PetModel(
             userId: uid,
             name: petName,
-            type: petType,  // <--- Menyimpan "Cat", "Dog", dsb. ke database
+            type: petType,  // Menyimpan "Cat", "Dog", dsb. ke database
             xp: 0,
             level: 1,
             mood: "hungry"
