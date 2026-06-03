@@ -12,7 +12,9 @@ struct HomeView: View {
     @EnvironmentObject var authVM: AuthViewModel
 
     @State private var isBouncing = false
-    @State private var showSavingsModal = false
+    
+    // 🌟 Menggabungkan state modal menjadi satu karena AddSavingsModal sudah multifungsi
+    @State private var showTransactionModal = false
     @State private var showNewGoalModal = false
 
     // --- Penalty Status Logic ---
@@ -74,15 +76,20 @@ struct HomeView: View {
                     homeVM.checkDailyHunger(currentUser: user)
                 }
             }
-            .sheet(isPresented: $showSavingsModal) {
-                AddSavingsModal(onSave: { amount in
+            // 🌟 SATU SHEET UNTUK SEMUA TRANSAKSI (Tabungan & Pengeluaran)
+            .sheet(isPresented: $showTransactionModal) {
+                // Menangkap 2 value: amount dan isExpense dari Modal
+                AddSavingsModal { amount, isExpense in
                     if let currentUser = authVM.currentUser {
-                        homeVM.addSavings(
-                            amount: amount,
-                            currentUser: currentUser
-                        )
+                        if isExpense {
+                            // Jika toggle Pengeluaran yang dipilih
+                            homeVM.addExpense(amount: amount, currentUser: currentUser)
+                        } else {
+                            // Jika toggle Tabungan yang dipilih
+                            homeVM.addSavings(amount: amount, currentUser: currentUser)
+                        }
                     }
-                })
+                }
             }
             .sheet(isPresented: $showNewGoalModal) {
                 SetNewGoalModal(
@@ -102,7 +109,6 @@ struct HomeView: View {
 // MARK: - UI Components
 extension HomeView {
 
-    // 🌟 Pemetaan Teks Gelembung secara Dinamis Berdasarkan Mood Aktual 🌟
     private var petMessage: String {
         guard let petMood = homeVM.pet?.mood else {
             return "I'm hungry — let's save! 🍓"
@@ -119,7 +125,6 @@ extension HomeView {
         case "angry": return "You ignored me! I'm starving! 😡"
         case "hungry": return "I'm hungry — let's save! 🍓"
         default:
-            // Jaring Pengaman Cerdas (Fallback)
             if let user = authVM.currentUser,
                 let lastSave = user.lastSavingsDate
             {
@@ -131,7 +136,6 @@ extension HomeView {
         }
     }
 
-    // 1. Header Profil & Stats
     private var headerSection: some View {
         HStack {
             HStack {
@@ -183,7 +187,6 @@ extension HomeView {
         .padding(.horizontal)
     }
 
-    // 2. Main Pet Area
     private var petSection: some View {
         VStack(spacing: 12) {
             Text(petMessage)
@@ -226,7 +229,6 @@ extension HomeView {
                     }
                 }
 
-                // Badge Streak
                 Label(
                     "\(authVM.currentUser?.streak ?? 0)d streak",
                     systemImage: "flame.fill"
@@ -241,10 +243,8 @@ extension HomeView {
         }
     }
 
-    // 3. Dashboard Cards
     private var dashboardCardsSection: some View {
         VStack(spacing: 16) {
-            // Card Total Savings
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Label("Total Savings", systemImage: "wallet.pass.fill")
@@ -265,7 +265,6 @@ extension HomeView {
                 in: RoundedRectangle(cornerRadius: 20)
             )
 
-            // Card Pet XP
             VStack(spacing: 8) {
                 HStack {
                     Text("\(homeVM.pet?.name ?? "Pet") XP")
@@ -288,20 +287,20 @@ extension HomeView {
                 in: RoundedRectangle(cornerRadius: 20)
             )
 
-            // Baris Penalty & Wishlist
             HStack(spacing: 16) {
                 penaltyCard
                 wishlistCard
             }
             .fixedSize(horizontal: false, vertical: true)
 
-            // Tombol Manual Input
+            // 🌟 MENGGABUNGKAN TOMBOL MENJADI SATU KARENA MODAL SUDAH MULTIFUNGSI
             Button(action: {
-                showSavingsModal = true
+                showTransactionModal = true
                 homeVM.registerModalOpen()
             }) {
-                Label("Manual Input", systemImage: "plus")
+                Label("Add Transaction", systemImage: "plus.circle")
                     .frame(maxWidth: .infinity)
+                    .padding(.vertical, 4) // Opsional: Sedikit menebalkan tombol
             }
             .buttonStyle(PennyPrimaryButtonStyle())
         }

@@ -18,5 +18,6 @@ struct TransactionModel: Identifiable, Codable {
     enum TransactionType: String, Codable {
         case deposit
         case penalty
+        case expense
     }
 }
