@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3F1897BD2FD01C4F00A0C204 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3F1897BC2FD01C4F00A0C204 /* WidgetKit.framework */; };
+		3F1897BF2FD01C4F00A0C204 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3F1897BE2FD01C4F00A0C204 /* SwiftUI.framework */; };
+		3F1897CC2FD01C5100A0C204 /* PennyPalsWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 3F1897BB2FD01C4F00A0C204 /* PennyPalsWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		3F81DADE2FC7D1F500C1BFA7 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 3F81DADD2FC7D1F500C1BFA7 /* FirebaseAnalytics */; };
 		3F81DAE02FC7D1F500C1BFA7 /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 3F81DADF2FC7D1F500C1BFA7 /* FirebaseAppCheck */; };
 		3F81DAE22FC7D1F500C1BFA7 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 3F81DAE12FC7D1F500C1BFA7 /* FirebaseAuth */; };
@@ -19,6 +22,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		3F1897CA2FD01C5100A0C204 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4CFAB12B2FC7CA4B008A9E42 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3F1897BA2FD01C4F00A0C204;
+			remoteInfo = PennyPalsWidgetExtension;
+		};
 		4C87BE6F2FCF031E004486CD /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 4CFAB12B2FC7CA4B008A9E42 /* Project object */;
@@ -57,6 +67,17 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		3F1897CD2FD01C5100A0C204 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				3F1897CC2FD01C5100A0C204 /* PennyPalsWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		4C87BE862FCF031E004486CD /* Embed Watch Content */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -71,6 +92,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		3F1897BB2FD01C4F00A0C204 /* PennyPalsWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PennyPalsWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		3F1897BC2FD01C4F00A0C204 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		3F1897BE2FD01C4F00A0C204 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		3F1897D22FD01C8D00A0C204 /* PennyPalsWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PennyPalsWidgetExtension.entitlements; sourceTree = "<group>"; };
 		4C87BE622FCF031D004486CD /* PennyPalsWatchOS Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "PennyPalsWatchOS Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4C87BE6E2FCF031E004486CD /* PennyPalsWatchOS Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "PennyPalsWatchOS Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4C87BE782FCF031E004486CD /* PennyPalsWatchOS Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "PennyPalsWatchOS Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -81,7 +106,25 @@
 		4CFAB14A2FC7CA4C008A9E42 /* PennyPalsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PennyPalsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		3F1897D02FD01C5100A0C204 /* Exceptions for "PennyPalsWidget" folder in "PennyPalsWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 3F1897BA2FD01C4F00A0C204 /* PennyPalsWidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		3F1897C02FD01C4F00A0C204 /* PennyPalsWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				3F1897D02FD01C5100A0C204 /* Exceptions for "PennyPalsWidget" folder in "PennyPalsWidgetExtension" target */,
+			);
+			path = PennyPalsWidget;
+			sourceTree = "<group>";
+		};
 		4C87BE632FCF031D004486CD /* PennyPalsWatchOS Watch App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "PennyPalsWatchOS Watch App";
@@ -115,6 +158,15 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		3F1897B82FD01C4F00A0C204 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3F1897BF2FD01C4F00A0C204 /* SwiftUI.framework in Frameworks */,
+				3F1897BD2FD01C4F00A0C204 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		4C87BE5F2FCF031D004486CD /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -173,6 +225,8 @@
 			children = (
 				4C87BE902FCF037B004486CD /* WatchConnectivity.framework */,
 				4C87BE8E2FCF0362004486CD /* WatchConnectivity.framework */,
+				3F1897BC2FD01C4F00A0C204 /* WidgetKit.framework */,
+				3F1897BE2FD01C4F00A0C204 /* SwiftUI.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -180,12 +234,14 @@
 		4CFAB12A2FC7CA4B008A9E42 = {
 			isa = PBXGroup;
 			children = (
+				3F1897D22FD01C8D00A0C204 /* PennyPalsWidgetExtension.entitlements */,
 				4CFAB1352FC7CA4B008A9E42 /* PennyPals */,
 				4CFAB1432FC7CA4C008A9E42 /* PennyPalsTests */,
 				4CFAB14D2FC7CA4C008A9E42 /* PennyPalsUITests */,
 				4C87BE632FCF031D004486CD /* PennyPalsWatchOS Watch App */,
 				4C87BE712FCF031E004486CD /* PennyPalsWatchOS Watch AppTests */,
 				4C87BE7B2FCF031E004486CD /* PennyPalsWatchOS Watch AppUITests */,
+				3F1897C02FD01C4F00A0C204 /* PennyPalsWidget */,
 				4C87BE8D2FCF0362004486CD /* Frameworks */,
 				4CFAB1342FC7CA4B008A9E42 /* Products */,
 			);
@@ -200,6 +256,7 @@
 				4C87BE622FCF031D004486CD /* PennyPalsWatchOS Watch App.app */,
 				4C87BE6E2FCF031E004486CD /* PennyPalsWatchOS Watch AppTests.xctest */,
 				4C87BE782FCF031E004486CD /* PennyPalsWatchOS Watch AppUITests.xctest */,
+				3F1897BB2FD01C4F00A0C204 /* PennyPalsWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -207,6 +264,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		3F1897BA2FD01C4F00A0C204 /* PennyPalsWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3F1897D12FD01C5100A0C204 /* Build configuration list for PBXNativeTarget "PennyPalsWidgetExtension" */;
+			buildPhases = (
+				3F1897B72FD01C4F00A0C204 /* Sources */,
+				3F1897B82FD01C4F00A0C204 /* Frameworks */,
+				3F1897B92FD01C4F00A0C204 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				3F1897C02FD01C4F00A0C204 /* PennyPalsWidget */,
+			);
+			name = PennyPalsWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = PennyPalsWidgetExtension;
+			productReference = 3F1897BB2FD01C4F00A0C204 /* PennyPalsWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		4C87BE612FCF031D004486CD /* PennyPalsWatchOS Watch App */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 4C87BE832FCF031E004486CD /* Build configuration list for PBXNativeTarget "PennyPalsWatchOS Watch App" */;
@@ -283,11 +362,13 @@
 				4CFAB1302FC7CA4B008A9E42 /* Frameworks */,
 				4CFAB1312FC7CA4B008A9E42 /* Resources */,
 				4C87BE862FCF031E004486CD /* Embed Watch Content */,
+				3F1897CD2FD01C5100A0C204 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				4C87BE812FCF031E004486CD /* PBXTargetDependency */,
+				3F1897CB2FD01C5100A0C204 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				4CFAB1352FC7CA4B008A9E42 /* PennyPals */,
@@ -358,9 +439,12 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2650;
+				LastSwiftUpdateCheck = 2640;
 				LastUpgradeCheck = 2650;
 				TargetAttributes = {
+					3F1897BA2FD01C4F00A0C204 = {
+						CreatedOnToolsVersion = 26.4.1;
+					};
 					4C87BE612FCF031D004486CD = {
 						CreatedOnToolsVersion = 26.5;
 					};
@@ -408,11 +492,19 @@
 				4C87BE612FCF031D004486CD /* PennyPalsWatchOS Watch App */,
 				4C87BE6D2FCF031E004486CD /* PennyPalsWatchOS Watch AppTests */,
 				4C87BE772FCF031E004486CD /* PennyPalsWatchOS Watch AppUITests */,
+				3F1897BA2FD01C4F00A0C204 /* PennyPalsWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		3F1897B92FD01C4F00A0C204 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		4C87BE602FCF031D004486CD /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -458,6 +550,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		3F1897B72FD01C4F00A0C204 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		4C87BE5E2FCF031D004486CD /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -503,6 +602,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		3F1897CB2FD01C5100A0C204 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3F1897BA2FD01C4F00A0C204 /* PennyPalsWidgetExtension */;
+			targetProxy = 3F1897CA2FD01C5100A0C204 /* PBXContainerItemProxy */;
+		};
 		4C87BE702FCF031E004486CD /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 4C87BE612FCF031D004486CD /* PennyPalsWatchOS Watch App */;
@@ -531,6 +635,70 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		3F1897CE2FD01C5100A0C204 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = PennyPalsWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8NL253F95Z;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PennyPalsWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PennyPalsWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = MAD.PennyPals.PennyPalsWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		3F1897CF2FD01C5100A0C204 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = PennyPalsWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8NL253F95Z;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PennyPalsWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PennyPalsWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = MAD.PennyPals.PennyPalsWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		4C87BE842FCF031E004486CD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -805,8 +973,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = PennyPals/PennyPals.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8NL253F95Z;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -836,8 +1006,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = PennyPals/PennyPals.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8NL253F95Z;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -945,6 +1117,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		3F1897D12FD01C5100A0C204 /* Build configuration list for PBXNativeTarget "PennyPalsWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3F1897CE2FD01C5100A0C204 /* Debug */,
+				3F1897CF2FD01C5100A0C204 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		4C87BE832FCF031E004486CD /* Build configuration list for PBXNativeTarget "PennyPalsWatchOS Watch App" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
