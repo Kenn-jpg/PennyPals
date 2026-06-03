@@ -5,13 +5,6 @@
 //  Created by Kelompok 8 on 03/06/26.
 //
 
-//
-//  WatchSettingsView.swift
-//  PennyPalsWatchOS Watch App
-//
-//  Created by Kelompok 8 on 03/06/26.
-//
-
 import SwiftUI
 
 struct WatchSettingsView: View {
@@ -26,7 +19,7 @@ struct WatchSettingsView: View {
                     .foregroundColor(Color(hex: "#9B7CFF"))
                 Text("Backgrounds")
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundColor(Color(hex: "#2A2440"))
                 Spacer()
             }
             .padding(.horizontal, 4)
@@ -35,10 +28,10 @@ struct WatchSettingsView: View {
                 Spacer()
                 Text("No backgrounds owned.")
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color(hex: "#6B6580"))
                 Text("Buy some in the iPhone app!")
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color(hex: "#6B6580"))
                 Spacer()
             } else {
                 // --- Theme List ---
@@ -66,24 +59,24 @@ struct WatchSettingsView: View {
                                     )
                                     .frame(width: 24, height: 24)
                                     .overlay(
-                                        Circle().stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                        Circle().stroke(Color.black.opacity(0.1), lineWidth: 1)
                                     )
 
                                 Text(name)
                                     .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(isSelected ? .white : .secondary)
+                                    .foregroundColor(isSelected ? Color(hex: "#9B7CFF") : Color(hex: "#2A2440"))
 
                                 Spacer()
 
                                 if isSelected {
                                     Image(systemName: "checkmark")
                                         .font(.caption.bold())
-                                        .foregroundColor(Color(hex: spotsHex))
+                                        .foregroundColor(Color(hex: "#9B7CFF"))
                                 }
                             }
                             .padding(.vertical, 4)
                         }
-                        .listRowBackground(isSelected ? Color.white.opacity(0.1) : Color.clear)
+                        .listRowBackground(isSelected ? Color.white.opacity(0.8) : Color.white.opacity(0.4))
                     }
                 }
                 .listStyle(.carousel)

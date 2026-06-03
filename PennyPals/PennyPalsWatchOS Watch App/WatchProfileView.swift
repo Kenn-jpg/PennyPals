@@ -31,17 +31,18 @@ struct WatchProfileView: View {
                         .font(.body.bold())
                         .foregroundColor(.white)
                 )
+                .shadow(color: Color.black.opacity(0.1), radius: 2, y: 1)
 
             // --- Name & Email ---
             VStack(spacing: 0) {
                 Text(connectivity.username)
                     .font(.body.bold())
-                    .foregroundColor(.white)
+                    .foregroundColor(Color(hex: "#2A2440"))
                     .lineLimit(1)
 
                 Text(connectivity.email)
                     .font(.system(size: 10))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color(hex: "#6B6580"))
                     .lineLimit(1)
             }
 
@@ -70,20 +71,20 @@ struct WatchProfileView: View {
                         .foregroundColor(Color(hex: "#9B7CFF"))
                     Text("Total Savings")
                         .font(.system(size: 10))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color(hex: "#6B6580"))
                     Spacer()
                 }
 
                 HStack {
                     Text("Rp \(connectivity.totalSavings.formattedWithDot)")
                         .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundColor(Color(hex: "#2A2440"))
                     Spacer()
                 }
             }
             .padding(8)
             .background(
-                Color.white.opacity(0.1),
+                Color.white.opacity(0.6),
                 in: RoundedRectangle(cornerRadius: 10)
             )
 
@@ -101,8 +102,12 @@ struct WatchProfileView: View {
             }
             .padding(6)
             .background(
-                penaltyColor.opacity(0.15),
+                Color.white.opacity(0.6),
                 in: RoundedRectangle(cornerRadius: 8)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(penaltyColor.opacity(0.3), lineWidth: 1)
             )
 
             // --- Connection Status ---
@@ -173,16 +178,16 @@ struct StatBadge: View {
 
             Text(value)
                 .font(.system(size: 14, weight: .bold))
-                .foregroundColor(.white)
+                .foregroundColor(Color(hex: "#2A2440"))
 
             Text(label)
                 .font(.system(size: 9))
-                .foregroundColor(.secondary)
+                .foregroundColor(Color(hex: "#6B6580"))
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 4)
         .background(
-            Color.white.opacity(0.1),
+            Color.white.opacity(0.6),
             in: RoundedRectangle(cornerRadius: 10)
         )
     }

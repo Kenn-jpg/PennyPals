@@ -21,8 +21,8 @@ struct WatchPetStatsView: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(hex: "#FFE8F1"),
-                                Color(hex: "#E8DCFF"),
+                                Color.white.opacity(0.8),
+                                Color.white.opacity(0.4),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -50,14 +50,14 @@ struct WatchPetStatsView: View {
             VStack(spacing: 0) {
                 Text(connectivity.petName)
                     .font(.body.bold())
-                    .foregroundColor(.white)
+                    .foregroundColor(Color(hex: "#2A2440")) // Dark text
 
                 HStack(spacing: 4) {
                     Text(moodEmoji)
                         .font(.system(size: 10))
                     Text(connectivity.petMood.capitalized)
                         .font(.system(size: 10))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color(hex: "#6B6580")) // Darker secondary
                 }
             }
 
@@ -69,12 +69,12 @@ struct WatchPetStatsView: View {
 
                 Text("Level \(connectivity.petLevel)")
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundColor(Color(hex: "#2A2440"))
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 4)
             .background(
-                Color(hex: "#9B7CFF").opacity(0.25),
+                Color.white.opacity(0.6),
                 in: Capsule()
             )
 
@@ -83,7 +83,7 @@ struct WatchPetStatsView: View {
                 HStack {
                     Text("XP")
                         .font(.system(size: 10, weight: .medium))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color(hex: "#6B6580"))
                     Spacer()
                     Text("\(connectivity.petXP) / \(connectivity.petMaxXP)")
                         .font(.system(size: 10, weight: .bold))
@@ -93,7 +93,7 @@ struct WatchPetStatsView: View {
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         RoundedRectangle(cornerRadius: 3)
-                            .fill(Color.white.opacity(0.15))
+                            .fill(Color(hex: "#2A2440").opacity(0.1))
                             .frame(height: 6)
 
                         RoundedRectangle(cornerRadius: 3)
