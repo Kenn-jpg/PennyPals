@@ -375,4 +375,72 @@ class HomeViewModel: ObservableObject {
             modalOpenCount = 0
         }
     }
+    
+        func addExpense(amount: Double, currentUser: UserModel) {
+            guard let uid = userId,
+                  let currentPet = pet,
+                  let petId = currentPet.id
+            else { return }
+
+            // 1. Hitung penalti XP berdasarkan jumlah uang yang di-spend (Misal: 1000 rupiah = 1 XP hilang)
+            let lostXP = Int(amount / 1000)
+            var newXP = currentPet.xp - lostXP
+            var newLevel = currentPet.level
+
+            // 2. Logika Level Down (Turun Level jika XP kurang dari 0)
+            while newXP < 0 {
+                if newLevel > 0 {
+                    newLevel -= 1
+                    // XP maksimal di level sebelumnya
+                    let previousMaxXP = (newLevel + 1) * 200
+                    newXP = previousMaxXP + newXP // newXP bernilai minus, jadi ini sama dengan menguranginya
+                } else {
+                    newXP = 0
+                    break
+                }
+            }
+
+            // 3. Tentukan Mood Pet berdasarkan pengeluaran atau penurunan level
+            // Jika level turun, pet menangis ("cry"). Jika hanya pengeluaran biasa, pet sedih ("sad")
+            let newMood = (newLevel < currentPet.level) ? "cry" : "sad"
+
+            // 4. Update data Pet di Firestore
+            db.collection("pets").document(petId).updateData([
+                "xp": newXP,
+                "level": newLevel,
+                "mood": newMood
+            ])
+
+            // 5. Update Tabungan User & Goal (Opsional: Jika pengeluaran memengaruhi progress Goal saat ini)
+            let newTotalSavings = max(0, currentUser.totalSavings - Int(amount)) // Pastikan tidak minus
+            
+            var userUpdates: [String: Any] = [
+                "totalSavings": newTotalSavings
+            ]
+            
+            // Hapus streak jika melakukan pengeluaran (Opsional: tegantung rules game kamu)
+            userUpdates["streak"] = 0
+            
+            db.collection("users").document(uid).updateData(userUpdates)
+            
+            // Kurangi progress Goal jika ada goal yang aktif
+            if let currentGoal = goal, let goalId = currentGoal.id {
+                let newGoalAmount = max(0, currentGoal.currentAmount - amount) // Progress tidak boleh minus
+                db.collection("goals").document(goalId).updateData([
+                    "currentAmount": newGoalAmount
+                ])
+            }
+
+            // 6. Catat Transaksi Pengeluaran
+            // Catatan: Pastikan enum TransactionType di model kamu memiliki case `.expense` atau `.withdrawal`
+            let tx = TransactionModel(
+                userId: uid,
+                amount: amount, // Bisa kamu set minus jika perlu di laporan, atau tetap positif tergantung struktur UI report kamu
+                date: Date(),
+                type: .expense 
+            )
+            try? db.collection("transactions").addDocument(from: tx)
+        }
 }
+
+

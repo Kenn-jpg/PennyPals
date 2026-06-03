@@ -9,18 +9,22 @@ import SwiftUI
 
 struct AddSavingsModal: View {
     @Environment(\.dismiss) var dismiss
-    var onSave: (Double) -> Void
+    
+    // 1. Change closure to accept 2 arguments: (Amount, IsExpense)
+    var onSave: (Double, Bool) -> Void
 
     @State private var amountString: String = ""
+    // 2. Add State to differentiate between Savings and Expense
+    @State private var isExpense: Bool = false
 
-    // Konstanta Batas Maksimal Input Tabungan
+    // Maximum Input Limit Constant
     private let maxSavingsLimit: Double = 100_000_000
 
-    // Validasi form untuk mengontrol status tombol simpan
+    // Form validation to control the save button status
     private var isFormValid: Bool {
         let cleanDigits = cleanNumericString(amountString)
         guard let amount = Double(cleanDigits),
-            amount > 0 && amount <= maxSavingsLimit
+              amount > 0 && amount <= maxSavingsLimit
         else {
             return false
         }
@@ -28,19 +32,29 @@ struct AddSavingsModal: View {
     }
 
     var body: some View {
-        VStack(spacing: 24) {
-            Text("Add Savings")
+        VStack(spacing: 20) {
+            // 3. Add Segmented Picker to select transaction type
+            Picker("Transaction Type", selection: $isExpense) {
+                Text("Savings").tag(false)
+                Text("Expense").tag(true)
+            }
+            .pickerStyle(.segmented)
+            .padding(.top, 10)
+            
+            // Dynamic title based on selection
+            Text(isExpense ? "Add Expense" : "Add Savings")
                 .font(.title3.bold())
                 .foregroundColor(.pennyText)
 
             VStack(alignment: .leading, spacing: 8) {
-                // Input form dengan style yang konsisten
                 HStack(spacing: 8) {
                     Text("Rp")
                         .font(.headline.bold())
-                        .foregroundColor(.pennyPurple)
+                        // The color of Rp changes to red if it is an expense
+                        .foregroundColor(isExpense ? .red : .pennyPurple)
 
-                    TextField("Nominal Tabungan", text: $amountString)
+                    // Dynamic placeholder based on selection
+                    TextField(isExpense ? "Expense Amount" : "Savings Amount", text: $amountString)
                         .keyboardType(.numberPad)
                         .font(.title3.weight(.semibold))
                         .foregroundColor(.pennyText)
@@ -52,11 +66,10 @@ struct AddSavingsModal: View {
                 .background(Color(UIColor.secondarySystemBackground))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
 
-                // Pesan Peringatan jika melebihi batas
-                let currentAmount =
-                    Double(cleanNumericString(amountString)) ?? 0
+                // Warning message if it exceeds the limit
+                let currentAmount = Double(cleanNumericString(amountString)) ?? 0
                 if currentAmount >= maxSavingsLimit {
-                    Text("⚠️ Batas maksimal input adalah Rp 100.000.000")
+                    Text("⚠️ Maximum input limit is Rp 100,000,000")
                         .font(.caption2)
                         .foregroundColor(.red.opacity(0.9))
                         .padding(.leading, 4)
@@ -66,11 +79,13 @@ struct AddSavingsModal: View {
             Button(action: {
                 let cleanAmount = cleanNumericString(amountString)
                 if let amount = Double(cleanAmount) {
-                    onSave(amount)
+                    // 4. Send amount data and expense status to HomeScreen
+                    onSave(amount, isExpense)
                 }
                 dismiss()
             }) {
-                Text("Simpan Tabungan")
+                // Dynamic button text based on selection
+                Text(isExpense ? "Save Expense" : "Save Savings")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(PennyPrimaryButtonStyle())
@@ -78,16 +93,15 @@ struct AddSavingsModal: View {
             .opacity(isFormValid ? 1.0 : 0.5)
         }
         .padding(.horizontal, 32)
-        .padding(.vertical, 40)
-        // Menyesuaikan tinggi agar muat dengan teks peringatan
-        .presentationDetents([.height(280)])
+        .padding(.vertical, 30)
+        // Increased height slightly to 340 to accommodate the Segmented Picker above it
+        .presentationDetents([.height(340)])
         .presentationDragIndicator(.visible)
     }
 
     // --- HELPER LOGIC FUNCTIONS ---
 
     private func formatDynamicCurrency(_ input: String) {
-        // Hanya ambil digit angka
         let digits = input.filter { $0.isNumber }
 
         if digits.isEmpty {
@@ -100,14 +114,12 @@ struct AddSavingsModal: View {
             return
         }
 
-        // Batasi nilai yang dimasukkan agar tidak melebihi limit
         let finalValue = min(doubleValue, maxSavingsLimit)
         if finalValue == 0 {
             amountString = ""
             return
         }
 
-        // Format angka dengan separator titik
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         formatter.groupingSeparator = "."
