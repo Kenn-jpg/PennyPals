@@ -7,39 +7,25 @@
 
 import SwiftUI
 
-/// Model data internal untuk mendefinisikan struktur pilihan opsi telur pada visual antarmuka.
+// --- BEST PRACTICE: Struktur data khusus untuk opsi telur ---
 struct EggOption {
-    /// ID unik untuk penanda variasi telur.
     let id: String
-    /// Nama tampilan dari variasi telur.
     let name: String
-    /// Nama berkas gambar yang tersimpan di Xcode Asset Catalog.
     let assetName: String
 }
 
-/// Tampilan antarmuka pemandu bagi pengguna baru untuk mengisi target keuangan pertama dan memilih telur peliharaan.
 struct OnboardingView: View {
-    /// Instance ViewModel lokal penanggung jawab business logic onboarding.
     @StateObject private var onboardingVM = OnboardingViewModel()
-    /// Shared ViewModel autentikasi untuk memantau status sesi akun saat ini.
     @EnvironmentObject var authVM: AuthViewModel
 
-    /// State lokal penyimpan teks input nama peliharaan virtual.
     @State private var petNameInput: String = ""
-
-    /// Binding jumlah tabungan awal dalam format string tekstual dari parent view.
     @Binding var rawAmount: String
-    /// Binding ID telur terpilih dari parent view.
     @Binding var selectedEgg: String
-    /// Binding nama target wishlist barang impian dari parent view.
     @Binding var wishlistName: String
-    /// Binding jumlah nominal batas target wishlist dari parent view.
     @Binding var targetAmountString: String
 
-    /// Callback closure yang dipicu setelah form disubmit untuk berpindah ke layar transisi menetas.
     var onStart: () -> Void
 
-    /// Daftar pilihan variasi produk telur awal yang dapat diadopsi pengguna.
     let eggs: [EggOption] = [
         EggOption(id: "rose", name: "Rosie", assetName: "PinkEgg01"),
         EggOption(id: "mint", name: "Sprout", assetName: "GreenEgg01"),
@@ -49,13 +35,14 @@ struct OnboardingView: View {
         EggOption(id: "peach", name: "Pip", assetName: "PeachEgg01"),
     ]
 
-    /// Kumpulan variasi ras hewan peliharaan virtual yang digunakan untuk logika penentuan acak (Gacha).
+    // --- DAFTAR PET UNTUK DI RANDOM ---
     private let availablePets = ["Cat", "Dog", "Owl", "Pig", "Raccoon", "Seal"]
 
-    /// Batas nominal input keuangan maksimal sebesar Rp 100 Juta demi keamanan tipe data angka.
     private let maxSavingsLimit: Double = 100_000_000
 
-    /// Formatter angka statis pembentuk format tampilan titik ribuan desimal secara real-time.
+    // --- BEST PRACTICE: Singleton NumberFormatter ---
+    // NumberFormatter sangat berat jika di-instansiasi setiap kali user mengetik.
+    // Kita buat static agar tersimpan di memori sekali saja.
     private static let currencyFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
@@ -63,191 +50,309 @@ struct OnboardingView: View {
         return formatter
     }()
 
-    /// Properti komputasi validasi form untuk mengontrol status keaktifan tombol submit.
     private var isFormValid: Bool {
-        let cleanSavings = cleanNumericString(rawAmount)
-        let cleanTarget = cleanNumericString(targetAmountString)
+        let initialAmount = Double(cleanNumericString(rawAmount)) ?? 0
+        let targetAmount = Double(cleanNumericString(targetAmountString)) ?? 0
 
-        guard let savings = Double(cleanSavings),
-            let target = Double(cleanTarget)
+        guard initialAmount > 0, initialAmount <= maxSavingsLimit,
+            targetAmount > 0, targetAmount <= maxSavingsLimit,
+            initialAmount <= targetAmount
         else { return false }
 
-        return !petNameInput.trimmingCharacters(in: .whitespacesAndNewlines)
-            .isEmpty
+        return !selectedEgg.isEmpty
             && !wishlistName.trimmingCharacters(in: .whitespacesAndNewlines)
                 .isEmpty
-            && savings >= 0 && target > 0 && target <= maxSavingsLimit
-            && target >= savings && !selectedEgg.isEmpty
+            && !petNameInput.trimmingCharacters(in: .whitespacesAndNewlines)
+                .isEmpty
     }
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: 24) {
-                VStack(spacing: 8) {
-                    Text("Welcome to PennyPals!")
-                        .font(.title.bold())
-                        .foregroundColor(.pennyText)
-                    Text("Let's setup your first savings buddy")
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                }
-                .padding(.top, 20)
+        VStack(spacing: 0) {
 
-                // KATEGORI 1: Pemilihan Karakter Peliharaan
-                VStack(alignment: .leading, spacing: 12) {
-                    SectionHeader(title: "1. CHOOSE YOUR PET BUDDY")
-
-                    MinimalTextField(
-                        icon: "heart.fill",
-                        placeholder: "Give your pet a name...",
-                        text: $petNameInput
-                    )
-
-                    Text("Select an Egg to Hatch:")
+            // --- TOP ACTION BAR ---
+            HStack {
+                Spacer()
+                Button(action: { authVM.logout() }) {
+                    Text("Log Out")
                         .font(.footnote.weight(.medium))
-                        .foregroundColor(.pennyText)
+                        .foregroundColor(.red.opacity(0.8))
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+            }
 
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 16) {
-                            ForEach(eggs, id: \.id) { egg in
-                                VStack {
-                                    Image(egg.assetName)
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: 60, height: 70)
-                                        .padding(8)
-                                        .background(
-                                            selectedEgg == egg.id
-                                                ? Color.pennyPurple.opacity(
-                                                    0.15
-                                                ) : Color.clear
-                                        )
-                                        .clipShape(
-                                            RoundedRectangle(cornerRadius: 16)
-                                        )
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 16)
-                                                .stroke(
-                                                    selectedEgg == egg.id
-                                                        ? Color.pennyPurple
-                                                        : Color.gray.opacity(
-                                                            0.3
-                                                        ),
-                                                    lineWidth: 2
-                                                )
-                                        )
-                                    Text(egg.name)
-                                        .font(.caption.weight(.semibold))
-                                        .foregroundColor(.pennyText)
+            // --- HEADER TITLE ---
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Let's set you up")
+                    .font(.largeTitle.bold())
+                    .foregroundColor(.pennyText)
+                Text("A few quick steps to hatch your pal")
+                    .font(.body)
+                    .foregroundColor(.pennySecondaryText)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
+            .padding(.bottom, 24)
+
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 32) {
+
+                    // --- SECTION 1: INITIAL SAVINGS ---
+                    VStack(alignment: .leading, spacing: 12) {
+                        SectionHeader(title: "INITIAL SAVINGS")
+
+                        HStack(alignment: .bottom, spacing: 8) {
+                            Text("Rp")
+                                .font(.title3.bold())
+                                .foregroundColor(.pennySecondaryText)
+                                .padding(.bottom, 4)
+
+                            TextField("0", text: $rawAmount)
+                                .keyboardType(.numberPad)
+                                .font(
+                                    .system(
+                                        size: 32,
+                                        weight: .bold,
+                                        design: .rounded
+                                    )
+                                )
+                                .foregroundColor(.pennyText)
+                                .onChange(of: rawAmount) { _, newValue in
+                                    rawAmount = formatCurrencyInput(newValue)
                                 }
-                                .onTapGesture {
-                                    selectedEgg = egg.id
+                        }
+
+                        Divider()
+
+                        let currentAmount =
+                            Double(cleanNumericString(rawAmount)) ?? 0
+                        if currentAmount >= maxSavingsLimit {
+                            HintText(
+                                icon: "exclamationmark.triangle.fill",
+                                text:
+                                    "Batas maksimal tabungan awal adalah Rp 100.000.000",
+                                isWarning: true
+                            )
+                        }
+
+                        // Presets
+                        HStack(spacing: 8) {
+                            ForEach(
+                                ["100000", "500000", "1000000", "5000000"],
+                                id: \.self
+                            ) { amount in
+                                let formattedPreset = formatCurrencyInput(
+                                    amount
+                                )
+                                let isSelected =
+                                    cleanNumericString(rawAmount) == amount
+
+                                Button(action: {
+                                    withAnimation(.easeOut(duration: 0.2)) {
+                                        rawAmount = formattedPreset
+                                    }
+                                }) {
+                                    Text(formattedPreset)
+                                        .font(.caption.weight(.medium))
+                                        .frame(
+                                            maxWidth: .infinity,
+                                            minHeight: 36
+                                        )
+                                        .background(
+                                            isSelected
+                                                ? Color.pennyPurple
+                                                : Color.gray.opacity(0.1)
+                                        )
+                                        .foregroundColor(
+                                            isSelected ? .white : .pennyText
+                                        )
+                                        .clipShape(Capsule())
                                 }
                             }
                         }
-                        .padding(.horizontal, 2)
-                    }
-                }
-                .padding()
-                .background(
-                    Color(UIColor.secondarySystemBackground),
-                    in: RoundedRectangle(cornerRadius: 20)
-                )
-
-                // KATEGORI 2: Penentuan Target Finansial (Wishlist)
-                VStack(alignment: .leading, spacing: 12) {
-                    SectionHeader(title: "2. SET YOUR FINANCIAL GOAL")
-
-                    MinimalTextField(
-                        icon: "bag.fill",
-                        placeholder: "What are you saving for? (e.g., Shoes)",
-                        text: $wishlistName
-                    )
-
-                    MinimalTextField(
-                        icon: "dollarsign.circle.fill",
-                        placeholder: "Target Amount (Rp)",
-                        text: $targetAmountString,
-                        isNumeric: true
-                    )
-                    .onChange(of: targetAmountString) { newValue in
-                        targetAmountString = formatDynamicCurrency(newValue)
+                        .padding(.top, 4)
                     }
 
-                    MinimalTextField(
-                        icon: "archivebox.fill",
-                        placeholder: "Initial Savings (Rp) - Optional",
-                        text: $rawAmount,
-                        isNumeric: true
-                    )
-                    .onChange(of: rawAmount) { newValue in
-                        rawAmount = formatDynamicCurrency(newValue)
+                    // --- SECTION 2: WISHLIST GOAL & TARGET PRICE ---
+                    VStack(alignment: .leading, spacing: 16) {
+                        SectionHeader(title: "YOUR FIRST WISHLIST GOAL")
+
+                        VStack(spacing: 0) {
+                            MinimalTextField(
+                                icon: "bag",
+                                placeholder: "Nama barang (Contoh: Laptop)",
+                                text: $wishlistName
+                            )
+                            Divider().padding(.leading, 32)
+                            MinimalTextField(
+                                icon: "tag",
+                                placeholder: "Target harga nominal (Rp)",
+                                text: $targetAmountString,
+                                isNumeric: true
+                            )
+                            .onChange(of: targetAmountString) { _, newValue in
+                                targetAmountString = formatCurrencyInput(
+                                    newValue
+                                )
+                            }
+                        }
+                        .background(Color.gray.opacity(0.05))
+                        .cornerRadius(12)
+
+                        // Validation Warnings
+                        let currentInitial =
+                            Double(cleanNumericString(rawAmount)) ?? 0
+                        let currentTarget =
+                            Double(cleanNumericString(targetAmountString)) ?? 0
+
+                        if currentTarget > 0 && currentInitial > currentTarget {
+                            HintText(
+                                icon: "exclamationmark.triangle.fill",
+                                text:
+                                    "Tabungan awal tidak boleh melebihi harga target barang!",
+                                isWarning: true
+                            )
+                        }
                     }
 
-                    HintText(
-                        icon: "info.circle",
-                        text:
-                            "Your pet will grow and evolve as you add savings toward this goal!"
-                    )
-                }
-                .padding()
-                .background(
-                    Color(UIColor.secondarySystemBackground),
-                    in: RoundedRectangle(cornerRadius: 20)
-                )
+                    // --- SECTION 3: PET NAME ---
+                    VStack(alignment: .leading, spacing: 12) {
+                        SectionHeader(title: "YOUR PET NAME")
 
-                // Tombol Aksi Penyelesaian Onboarding & Picu Gacha Pet
-                Button(action: {
-                    let cleanSavings =
-                        Double(cleanNumericString(rawAmount)) ?? 0.0
-                    let cleanTarget =
-                        Double(cleanNumericString(targetAmountString)) ?? 0.0
-                    let randomPetType = availablePets.randomElement() ?? "Cat"  // Logika Gacha Hewan Virtual
-
-                    Task {
-                        await onboardingVM.completeOnboarding(
-                            initialSavings: cleanSavings,
-                            targetAmount: cleanTarget,
-                            eggType: selectedEgg,
-                            petName: petNameInput,
-                            wishlistName: wishlistName,
-                            petType: randomPetType
+                        MinimalTextField(
+                            icon: "pawprint",
+                            placeholder: "Nama pet kamu (Contoh: Mochi)",
+                            text: $petNameInput
                         )
-                        onStart()  // Mematangkan pemicu transisi menuju layar HatchingView
+                        .background(Color.gray.opacity(0.05))
+                        .cornerRadius(12)
                     }
-                }) {
-                    Text("Hatch My Egg!")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .foregroundColor(.white)
-                        .background(
-                            isFormValid ? Color.pennyPurple : Color.gray
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
+
+                    // --- SECTION 4: CHOOSE EGG ---
+                    VStack(alignment: .leading, spacing: 16) {
+                        SectionHeader(title: "CHOOSE YOUR EGG")
+
+                        LazyVGrid(
+                            columns: [
+                                GridItem(.adaptive(minimum: 90), spacing: 16)
+                            ],
+                            spacing: 16
+                        ) {
+                            ForEach(eggs, id: \.id) { egg in
+                                let isSelected = selectedEgg == egg.id
+
+                                Button(action: {
+                                    withAnimation(
+                                        .spring(
+                                            response: 0.3,
+                                            dampingFraction: 0.6
+                                        )
+                                    ) { selectedEgg = egg.id }
+                                }) {
+                                    VStack(spacing: 8) {
+                                        Image(egg.assetName)
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 60, height: 60)
+                                            .scaleEffect(isSelected ? 1.1 : 1.0)
+                                            .opacity(
+                                                selectedEgg.isEmpty
+                                                    || isSelected ? 1.0 : 0.5
+                                            )
+
+                                        Text(egg.name)
+                                            .font(
+                                                .caption.weight(
+                                                    isSelected
+                                                        ? .bold : .regular
+                                                )
+                                            )
+                                            .foregroundColor(
+                                                isSelected
+                                                    ? .pennyPurple
+                                                    : .pennySecondaryText
+                                            )
+                                    }
+                                    .padding(.vertical, 12)
+                                    .frame(maxWidth: .infinity)
+                                    .background(
+                                        isSelected
+                                            ? Color.pennyPurple.opacity(0.1)
+                                            : Color.clear
+                                    )
+                                    .cornerRadius(16)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .stroke(
+                                                isSelected
+                                                    ? Color.pennyPurple
+                                                    : Color.gray.opacity(0.2),
+                                                lineWidth: isSelected ? 2 : 1
+                                            )
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
                 }
-                .disabled(!isFormValid)
-                .padding(.top, 8)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 24)
             }
-            .padding(.horizontal, 24)
+
+            // --- BOTTOM ACTION BUTTON ---
+            Button(action: {
+                Task {
+                    let amount = Double(cleanNumericString(rawAmount)) ?? 0
+                    let targetAmount =
+                        Double(cleanNumericString(targetAmountString)) ?? 0
+                    let petName = petNameInput.trimmingCharacters(
+                        in: .whitespacesAndNewlines
+                    )
+
+                    // MENGACAK PET SEBELUM DISIMPAN!
+                    let randomlyHatchedPet =
+                        availablePets.randomElement() ?? "Cat"
+
+                    // ERROR TERATASI: Memasukkan parameter petType
+                    await onboardingVM.completeOnboarding(
+                        initialSavings: amount,
+                        targetAmount: targetAmount,
+                        eggType: selectedEgg,
+                        petName: petName,
+                        wishlistName: wishlistName,
+                        petType: randomlyHatchedPet
+                    )
+                    onStart()
+                }
+            }) {
+                Text("Start Saving →")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(PennyPrimaryButtonStyle())
+            .padding(.horizontal, 20)
+            .padding(.bottom, 16)
+            .padding(.top, 8)
+            .disabled(!isFormValid)
+            .opacity(isFormValid ? 1.0 : 0.5)
         }
         .background(Color.pennyBackground.ignoresSafeArea())
     }
 
-    // --- HELPER LOGIC FUNCTIONS ---
-
-    /// Memformat teks input angka menjadi format string decimal berpemisah titik secara real-time.
-    private func formatDynamicCurrency(_ input: String) -> String {
+    // MARK: - REFACTORED HELPER LOGIC
+    // Tiga fungsi redundant sebelumnya digabung menjadi HANYA SATU fungsi yang pure (mengembalikan nilai)
+    private func formatCurrencyInput(_ input: String) -> String {
         let digits = cleanNumericString(input)
-        if digits.isEmpty { return "" }
-        guard let doubleValue = Double(digits) else { return "" }
+        guard let doubleValue = Double(digits), doubleValue > 0 else {
+            return ""
+        }
         let finalValue = min(doubleValue, maxSavingsLimit)
 
         return Self.currencyFormatter.string(from: NSNumber(value: finalValue))
             ?? ""
     }
 
-    /// Menyaring teks dengan membuang seluruh karakter non-angka.
     private func cleanNumericString(_ input: String) -> String {
         return input.filter { $0.isNumber }
     }
@@ -255,7 +360,6 @@ struct OnboardingView: View {
 
 // MARK: - REUSABLE UI COMPONENTS
 
-/// Label penanda kecil di atas kelompok baris input formulir.
 struct SectionHeader: View {
     let title: String
     var body: some View {
@@ -266,7 +370,6 @@ struct SectionHeader: View {
     }
 }
 
-/// Komponen teks petunjuk pembantu navigasi di bawah isian form.
 struct HintText: View {
     let icon: String
     let text: String
@@ -282,7 +385,6 @@ struct HintText: View {
     }
 }
 
-/// Baris input tekstual minimalis kustom terstandarisasi untuk keselarasan tema aplikasi.
 struct MinimalTextField: View {
     let icon: String
     let placeholder: String
@@ -301,10 +403,7 @@ struct MinimalTextField: View {
                 .keyboardType(isNumeric ? .numberPad : .default)
                 .autocorrectionDisabled()
         }
-        .padding()
-        .background(
-            Color(UIColor.systemBackground),
-            in: RoundedRectangle(cornerRadius: 12)
-        )
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
     }
 }

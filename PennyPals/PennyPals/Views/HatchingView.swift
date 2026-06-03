@@ -8,66 +8,61 @@
 internal import Combine
 import SwiftUI
 
-/// Tampilan transisi interaktif yang menyajikan animasi menetasnya telur menjadi hewan peliharaan sesaat setelah onboarding selesai disubmit.
 struct HatchingView: View {
-    /// ID tipe telur pilihan pengguna yang dioperasikan dari layar OnboardingView.
     var eggId: String
-    /// Callback closure untuk mengeksekusi perpindahan halaman akhir menuju dashboard utama (HomeView).
     var onComplete: () -> Void
 
-    /// Nilai pelacak tingkat kemajuan progres bar pemecahan telur (0.0 sampai 1.0).
     @State private var progress: Double = 0.0
-    /// Pemicu visual efek animasi meloncat naik-turun pada gambar telur.
     @State private var isBouncing = false
-    /// Timer Combine otomatis yang memicu interupsi berkala setiap 0.1 detik pada thread utama.
     let timer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
 
-    /// Properti komputasi matematis untuk merubah skala linear progress (0.0-1.0) menjadi urutan bingkai indeks gambar (1-7).
+    // --- TAMBAHAN BARU: Menghitung frame gambar (1 sampai 7) berdasarkan progress ---
     private var currentFrameIndex: Int {
         let maxFrames = 7
+        // Mengubah progress (0.0 - 1.0) menjadi index (1 - 7)
         var index = Int(progress * Double(maxFrames)) + 1
 
-        // Menjaga agar batas indeks terlindungi dan tidak melebihi total frame aset ke-7
+        // Memastikan index tidak melebihi 7 walaupun progress mencapai 1.0
         if index > maxFrames {
             index = maxFrames
         }
         return index
     }
 
-    /// Properti komputasi perangkai nama file gambar secara dinamis dengan menggabungkan ID telur dan indeks bingkai.
+    // --- TAMBAHAN BARU: Mendapatkan nama aset lengkap (contoh: BlueEgg01) ---
     private var currentImageName: String {
         let baseName: String
 
-        // Memetakan eggId ke struktur nama prefix Xcode Asset Catalog
+        // Mapping eggId dari OnboardingView ke nama folder/aset
         switch eggId {
         case "rose": baseName = "PinkEgg"
         case "mint": baseName = "GreenEgg"
         case "sky": baseName = "BlueEgg"
         case "sun": baseName = "YellowEgg"
         case "lilac": baseName = "PurpleEgg"
-        default: baseName = "PinkEgg"
+        case "peach": baseName = "PeachEgg"
+        default: baseName = "BlueEgg"  // Fallback default
         }
 
-        // Membentuk string urutan berkas dua digit (contoh: "BlueEgg01", "BlueEgg02", dst.)
+        // Format angka menjadi 2 digit (1 -> "01", 7 -> "07")
         let frameString = String(format: "%02d", currentFrameIndex)
         return "\(baseName)\(frameString)"
     }
 
     var body: some View {
-        VStack {
+        VStack(spacing: 40) {
             Spacer()
 
-            // Render Visual Gambar Animasi Melompat Karakter Telur
             ZStack {
+                // --- DIUBAH: Menggunakan Image dari Assets berdasarkan frame ---
                 Image(currentImageName)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 130, height: 150)
-                    .offset(y: isBouncing ? -10 : 10)
+                    .frame(width: 150, height: 150)  // Ukuran disesuaikan
+                    .offset(y: isBouncing ? -10 : 10)  // Efek loncat tetap dipertahankan
             }
             .frame(height: 150)
             .onAppear {
-                // Memulai siklus animasi melompat konstan tak berujung secara otomatis
                 withAnimation(
                     .easeInOut(duration: 1.0).repeatForever(autoreverses: true)
                 ) {
@@ -75,7 +70,6 @@ struct HatchingView: View {
                 }
             }
 
-            // Indikator Progres Bar Pemecahan Batang Cangkang Telur
             VStack(spacing: 16) {
                 Text("Hatching...")
                     .font(.headline)
@@ -97,15 +91,11 @@ struct HatchingView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.pennyBackground.ignoresSafeArea())
-        // Mengobservasi setiap pulsa emisi waktu yang dipancarkan oleh timer Combine
         .onReceive(timer) { _ in
             if progress < 1.0 {
-                progress += 0.02  // Menaikkan isi progres bar secara berkala sebesar 2%
+                progress += 0.02
             } else {
-                // Menghentikan koneksi langganan upstream timer secara bersih (Mencegah Memory Leak)
                 timer.upstream.connect().cancel()
-
-                // Memberikan delay jeda visual sepersekian detik sebelum melepas user ke HomeView
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     onComplete()
                 }
