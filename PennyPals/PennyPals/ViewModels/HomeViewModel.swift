@@ -18,6 +18,10 @@ class HomeViewModel: ObservableObject {
     private var db = Firestore.firestore()
     private var userId: String? { Auth.auth().currentUser?.uid }
 
+    // Properti untuk menghitung frekuensi buka modal (memicu dizzy)
+    private var modalOpenCount = 0
+    private var lastModalOpenTime = Date()
+
     init() {
         fetchPetData()
         fetchGoalData()
@@ -27,16 +31,13 @@ class HomeViewModel: ObservableObject {
         guard let uid = userId else { return }
         db.collection("pets").whereField("userId", isEqualTo: uid)
             .addSnapshotListener { snapshot, _ in
-                // Mengambil data pet dengan aman
                 let fetchedPet = try? snapshot?.documents.first?.data(
                     as: PetModel.self
                 )
 
-                // --- PERBAIKAN: Pastikan update properti @Published terjadi di Main Actor ---
                 Task { @MainActor in
                     self.pet = fetchedPet
 
-                    // 📲 Forward pet data ke Apple Watch jika data tersedia
                     if let pet = fetchedPet {
                         PhoneConnectivity.shared.sendPetToWatch(
                             name: pet.name,
@@ -62,16 +63,13 @@ class HomeViewModel: ObservableObject {
                     as: GoalModel.self
                 )
 
-                // --- PERBAIKAN: Pastikan update properti @Published terjadi di Main Actor ---
                 Task { @MainActor in
                     self.goal = fetchedGoal
                 }
             }
     }
 
-    // TAMBAHKAN parameter currentUser: UserModel
     func addSavings(amount: Double, currentUser: UserModel) {
-        // --- PERBAIKAN: Hindari force unwrapping (!) pada ID Pet dan Goal untuk mencegah crash ---
         guard let uid = userId,
             let currentPet = pet,
             let petId = currentPet.id,
@@ -79,13 +77,11 @@ class HomeViewModel: ObservableObject {
             let goalId = currentGoal.id
         else { return }
 
-        // Update Goal
         let newGoalAmount = currentGoal.currentAmount + amount
         db.collection("goals").document(goalId).updateData([
             "currentAmount": newGoalAmount
         ])
 
-        // Update XP & Level
         let gainedXP = Int(amount / 1000)
         var newXP = currentPet.xp + gainedXP
         var newLevel = currentPet.level
@@ -99,25 +95,23 @@ class HomeViewModel: ObservableObject {
             currentMaxXP = (newLevel + 1) * 200
         }
 
-        // 1. Update Pet menggunakan ID yang aman
+        // 🌟 TRIGGER SURPRISED: Jika nabung >= Rp 500.000 mendadak terkejut
+        let newMood = amount >= 500_000 ? "surprised" : "happy"
+
         db.collection("pets").document(petId).updateData([
             "xp": newXP,
             "level": newLevel,
-            "mood": "happy",
+            "mood": newMood,
         ])
 
-        // 2. Siapkan data tanggal aman penalti
         let nextSafeDate = Calendar.current.date(
             byAdding: .day,
             value: 2,
             to: Date()
         )!
 
-        // 🌟 PERUBAHAN UTAMA DI SINI 🌟
-        // Hitung total tabungan baru secara manual
         let newTotalSavings = currentUser.totalSavings + Int(amount)
 
-        // Cek apakah sudah nabung hari ini (streak hanya naik 1x per hari)
         let today = Calendar.current.startOfDay(for: Date())
         let alreadySavedToday: Bool
         if let lastSave = currentUser.lastSavingsDate {
@@ -129,25 +123,21 @@ class HomeViewModel: ObservableObject {
             alreadySavedToday = false
         }
 
-        // 3. Gabungkan semua update
         var userUpdates: [String: Any] = [
             "isSafeFromPenalty": true,
             "nextPenaltyCheck": nextSafeDate,
-            "totalSavings": newTotalSavings,  // Langsung lempar nilai bulat Int
-            "lastSavingsDate": Date(),  // Selalu update tanggal terakhir nabung
+            "totalSavings": newTotalSavings,
+            "lastSavingsDate": Date(),
         ]
 
-        // Streak hanya naik jika belum nabung hari ini
         if !alreadySavedToday {
             userUpdates["streak"] = FieldValue.increment(Int64(1))
         }
 
-        // 4. Jika dapat koin, tambahkan
         if totalCoinsGained > 0 {
             userUpdates["coins"] = FieldValue.increment(Int64(totalCoinsGained))
         }
 
-        // 5. Kirim data
         db.collection("users").document(uid).updateData(userUpdates)
 
         let tx = TransactionModel(
@@ -157,21 +147,17 @@ class HomeViewModel: ObservableObject {
             type: .deposit
         )
         try? db.collection("transactions").addDocument(from: tx)
-
     }
 
     func setNewGoal(itemName: String, targetAmount: Double) {
         guard let uid = userId else { return }
-
         let batch = db.batch()
 
-        // 1. Tandai goal lama sebagai completed (jika ada)
         if let currentGoal = goal, let goalId = currentGoal.id {
             let oldGoalRef = db.collection("goals").document(goalId)
             batch.updateData(["isCompleted": true], forDocument: oldGoalRef)
         }
 
-        // 2. Buat goal baru
         let newGoalRef = db.collection("goals").document()
         let newGoal = GoalModel(
             userId: uid,
@@ -181,13 +167,10 @@ class HomeViewModel: ObservableObject {
             isCompleted: false
         )
         try? batch.setData(from: newGoal, forDocument: newGoalRef)
-
-        // 3. Commit batch
         batch.commit()
     }
 
     func checkDailyPenalty() {
-        // --- PERBAIKAN: Pastikan ID Pet diekstrak dengan aman di awal fungsi ---
         guard let uid = userId,
             let currentPet = pet,
             let petId = currentPet.id
@@ -205,10 +188,8 @@ class HomeViewModel: ObservableObject {
                 var newLevel = currentPet.level
 
                 if newXP < 0 {
-                    // Cek jika level > 0 agar tidak drop di bawah 0
                     if newLevel > 0 {
                         newLevel -= 1
-                        // Kembalikan sisa XP yang minus dari maxXP level sebelumnya
                         let previousMaxXP = (newLevel + 1) * 200
                         newXP = previousMaxXP + newXP
                     } else {
@@ -224,6 +205,9 @@ class HomeViewModel: ObservableObject {
                     )
                 else { return }
 
+                // 🌟 TRIGGER CRY vs SAD: Jika level turun, menangis. Jika level aman, cuma sedih.
+                let penaltyMood = (newLevel < currentPet.level) ? "cry" : "sad"
+
                 let batch = self.db.batch()
                 let userRef = self.db.collection("users").document(uid)
                 batch.updateData(
@@ -235,10 +219,9 @@ class HomeViewModel: ObservableObject {
                     forDocument: userRef
                 )
 
-                // Menggunakan petId yang sudah tervalidasi aman
                 let petRef = self.db.collection("pets").document(petId)
                 batch.updateData(
-                    ["xp": newXP, "level": newLevel, "mood": "sad"],
+                    ["xp": newXP, "level": newLevel, "mood": penaltyMood],
                     forDocument: petRef
                 )
 
@@ -261,25 +244,77 @@ class HomeViewModel: ObservableObject {
     func checkDailyHunger(currentUser: UserModel) {
         guard let currentPet = pet, let petId = currentPet.id else { return }
 
-        // Jika pet sudah sad/penalty, jangan ditimpa dengan hungry
-        if currentPet.mood == "sad" { return }
+        // Jika pet sedang dihukum (sedih/menangis), biarkan status penalti tetap berjalan
+        if currentPet.mood == "sad" || currentPet.mood == "cry" { return }
 
         let today = Calendar.current.startOfDay(for: Date())
         let alreadySavedToday: Bool
+        let hoursSinceLastSave: Int
+
         if let lastSave = currentUser.lastSavingsDate {
             alreadySavedToday = Calendar.current.isDate(
                 lastSave,
                 inSameDayAs: today
             )
+            hoursSinceLastSave =
+                Calendar.current.dateComponents(
+                    [.hour],
+                    from: lastSave,
+                    to: Date()
+                ).hour ?? 0
         } else {
             alreadySavedToday = false
+            hoursSinceLastSave = 0
         }
 
-        // Jika belum nabung hari ini dan pet belum lapar, buat jadi lapar
-        if !alreadySavedToday && currentPet.mood != "hungry" {
-            db.collection("pets").document(petId).updateData([
-                "mood": "hungry"
-            ])
+        let currentHour = Calendar.current.component(.hour, from: Date())
+        let isLateNight = currentHour >= 22 || currentHour < 5
+
+        if !alreadySavedToday {
+            let newMood = hoursSinceLastSave > 24 ? "angry" : "hungry"
+            if currentPet.mood != newMood {
+                db.collection("pets").document(petId).updateData([
+                    "mood": newMood
+                ])
+            }
+        } else if isLateNight {
+            // 🌟 PERBAIKAN: Jangan timpa mood spesial (surprised/wink) menjadi sleepy secara instan
+            let protectedMoods = ["surprised", "wink"]
+            if !protectedMoods.contains(currentPet.mood)
+                && currentPet.mood != "sleepy"
+            {
+                db.collection("pets").document(petId).updateData([
+                    "mood": "sleepy"
+                ])
+            }
+        } else {
+            // Mengembalikan ke happy secara tegas jika siang hari dan SUDAH menabung
+            // Pengecualian hanya untuk "surprised" atau "wink" agar ekspresi bahagianya bertahan
+            let allowedMoods = ["happy", "surprised", "wink"]
+            if !allowedMoods.contains(currentPet.mood) {
+                db.collection("pets").document(petId).updateData([
+                    "mood": "happy"
+                ])
+            }
+        }
+    }
+
+    func registerModalOpen() {
+        guard let currentPet = pet, let petId = currentPet.id else { return }
+        if currentPet.mood == "sad" || currentPet.mood == "cry" { return }
+
+        let now = Date()
+        if now.timeIntervalSince(lastModalOpenTime) < 30 {
+            modalOpenCount += 1
+        } else {
+            modalOpenCount = 1
+        }
+
+        lastModalOpenTime = now
+
+        if modalOpenCount >= 4 {
+            db.collection("pets").document(petId).updateData(["mood": "dizzy"])
+            modalOpenCount = 0
         }
     }
 }

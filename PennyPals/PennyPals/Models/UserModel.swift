@@ -8,7 +8,8 @@
 import FirebaseFirestore
 import Foundation
 
-struct UserModel: Identifiable, Codable {
+// CUKUP TAMBAHKAN Equatable di baris ini
+struct UserModel: Identifiable, Codable, Equatable {
     @DocumentID var id: String?
     var username: String
     var email: String

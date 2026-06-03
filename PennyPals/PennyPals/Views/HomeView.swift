@@ -99,8 +99,37 @@ struct HomeView: View {
     }
 }
 
-// MARK: - UI Components (Best Practice: Ekstrak UI ke dalam private var)
+// MARK: - UI Components
 extension HomeView {
+
+    // 🌟 Pemetaan Teks Gelembung secara Dinamis Berdasarkan Mood Aktual 🌟
+    private var petMessage: String {
+        guard let petMood = homeVM.pet?.mood else {
+            return "I'm hungry — let's save! 🍓"
+        }
+
+        switch petMood {
+        case "happy": return "Yay! Thanks for saving! 🍓"
+        case "surprised": return "Whoa! That's a huge saving! 🤩"
+        case "wink": return "Looking good! Thanks for the gift! 😉"
+        case "sleepy": return "Yawn... I'm so sleepy 😴"
+        case "dizzy": return "Whoa, I'm getting dizzy! 😵‍💫"
+        case "sad": return "I missed you... T_T"
+        case "cry": return "My level dropped... Waaah! 😭"
+        case "angry": return "You ignored me! I'm starving! 😡"
+        case "hungry": return "I'm hungry — let's save! 🍓"
+        default:
+            // Jaring Pengaman Cerdas (Fallback)
+            if let user = authVM.currentUser,
+                let lastSave = user.lastSavingsDate
+            {
+                if Calendar.current.isDate(lastSave, inSameDayAs: Date()) {
+                    return "Yay! Thanks for saving! 🍓"
+                }
+            }
+            return "I'm hungry — let's save! 🍓"
+        }
+    }
 
     // 1. Header Profil & Stats
     private var headerSection: some View {
@@ -157,26 +186,17 @@ extension HomeView {
     // 2. Main Pet Area
     private var petSection: some View {
         VStack(spacing: 12) {
-            Text(
-                homeVM.pet?.mood == "happy"
-                    ? "Yay! Thanks for saving! 🍓"
-                    : (homeVM.pet?.mood == "sad"
-                        ? "I missed you... T_T"
-                        : "I'm hungry — let's save! 🍓")
-            )
-            .font(.subheadline.weight(.medium))
-            .foregroundColor(.pennyText)
-            .padding()
-            .background(
-                Color(UIColor.systemBackground),
-                in: RoundedRectangle(cornerRadius: 16)
-            )
-            .shadow(color: .black.opacity(0.05), radius: 5, y: 2)
+            Text(petMessage)
+                .font(.subheadline.weight(.medium))
+                .foregroundColor(.pennyText)
+                .padding()
+                .background(
+                    Color(UIColor.systemBackground),
+                    in: RoundedRectangle(cornerRadius: 16)
+                )
+                .shadow(color: .black.opacity(0.05), radius: 5, y: 2)
 
-            // ZStack Luar: Khusus untuk menaruh Badge Streak di Kanan Atas
             ZStack(alignment: .topTrailing) {
-
-                // ZStack Dalam (Default: Center): Untuk menengahkan Pet di atas Circle
                 ZStack {
                     Circle().fill(
                         LinearGradient(
@@ -190,11 +210,10 @@ extension HomeView {
                     ).frame(width: 200, height: 200)
 
                     PetView(
-                        petType: homeVM.pet?.type ?? "Cat",  // Mengambil jenis pet dari model/VM Anda
+                        petType: homeVM.pet?.type ?? "Cat",
                         mood: homeVM.pet?.mood ?? "hungry",
                         size: 180
                     )
-                    // Karena sekarang sudah di-center, floating animasi akan bergerak presisi di tengah
                     .offset(y: isBouncing ? -8 : 8)
                     .onAppear {
                         withAnimation(
@@ -217,7 +236,6 @@ extension HomeView {
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
                 .background(Color(hex: "#FFEDC4"), in: Capsule())
-                // Offset disesuaikan sedikit agar pas menyentuh ujung lingkaran
                 .offset(x: 10, y: 4)
             }
         }
@@ -226,7 +244,7 @@ extension HomeView {
     // 3. Dashboard Cards
     private var dashboardCardsSection: some View {
         VStack(spacing: 16) {
-            // -- Card Total Savings --
+            // Card Total Savings
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Label("Total Savings", systemImage: "wallet.pass.fill")
@@ -247,7 +265,7 @@ extension HomeView {
                 in: RoundedRectangle(cornerRadius: 20)
             )
 
-            // -- Card Pet XP --
+            // Card Pet XP
             VStack(spacing: 8) {
                 HStack {
                     Text("\(homeVM.pet?.name ?? "Pet") XP")
@@ -270,15 +288,18 @@ extension HomeView {
                 in: RoundedRectangle(cornerRadius: 20)
             )
 
-            // -- Baris Penalty & Wishlist (Sejajar) --
+            // Baris Penalty & Wishlist
             HStack(spacing: 16) {
                 penaltyCard
                 wishlistCard
             }
-            .fixedSize(horizontal: false, vertical: true)  // Kunci agar tinggi box seimbang
+            .fixedSize(horizontal: false, vertical: true)
 
-            // -- Tombol Manual Input --
-            Button(action: { showSavingsModal = true }) {
+            // Tombol Manual Input
+            Button(action: {
+                showSavingsModal = true
+                homeVM.registerModalOpen()
+            }) {
                 Label("Manual Input", systemImage: "plus")
                     .frame(maxWidth: .infinity)
             }
@@ -287,11 +308,8 @@ extension HomeView {
         .padding(.horizontal)
     }
 
-    // Sub-card Penalty
     private var penaltyCard: some View {
-        VStack(alignment: .center, spacing: 0) {  // Ubah alignment ke center agar seimbang
-
-            // Header Card
+        VStack(alignment: .center, spacing: 0) {
             HStack {
                 Label(
                     "Penalty",
@@ -307,12 +325,11 @@ extension HomeView {
                         ? .green
                         : (penaltyStatus == .warning ? .orange : .red)
                 )
-                Spacer()  // Memaksa header tetap di kiri atas
+                Spacer()
             }
 
-            Spacer(minLength: 8)  // Menambah ruang fleksibel di tengah
+            Spacer(minLength: 8)
 
-            // Konten Tengah
             VStack(spacing: 6) {
                 Text(
                     penaltyStatus == .safe
@@ -339,7 +356,7 @@ extension HomeView {
                 )
             }
 
-            Spacer(minLength: 8)  // Menyeimbangkan ruang bagian bawah
+            Spacer(minLength: 8)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(14)
@@ -364,15 +381,12 @@ extension HomeView {
         )
     }
 
-    // Sub-card Wishlist
     private var wishlistCard: some View {
-        VStack(alignment: .center, spacing: 0) {  // Ubah alignment ke center agar seimbang
-
+        VStack(alignment: .center, spacing: 0) {
             let currentAmt = homeVM.goal?.currentAmount ?? 0
             let targetAmt = homeVM.goal?.targetAmount ?? 1
             let isGoalCompleted = currentAmt >= targetAmt && targetAmt > 0
 
-            // Header Card
             HStack {
                 Label("Wishlist", systemImage: "target")
                     .font(.caption.weight(.medium))
@@ -387,9 +401,8 @@ extension HomeView {
                 }
             }
 
-            Spacer(minLength: 8)  // Menambah ruang fleksibel di tengah
+            Spacer(minLength: 8)
 
-            // Konten Tengah
             VStack(spacing: 8) {
                 Text(homeVM.goal?.itemName ?? "No Goal")
                     .font(.subheadline.weight(.semibold))
@@ -410,20 +423,19 @@ extension HomeView {
                         ProgressView(value: currentAmt, total: targetAmt)
                             .tint(.blue)
 
-                        // Menampilkan nominal utuh dengan separator pemisah ribuan
                         Text(
                             "\(Int(currentAmt).formattedWithSeparator) / \(Int(targetAmt).formattedWithSeparator)"
                         )
                         .font(.caption2)
                         .foregroundColor(.pennySecondaryText)
-                        .frame(maxWidth: .infinity, alignment: .center)  // Rata tengah
+                        .frame(maxWidth: .infinity, alignment: .center)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.8)  // Mencegah teks terpotong jika terlalu panjang
+                        .minimumScaleFactor(0.8)
                     }
                 }
             }
 
-            Spacer(minLength: 8)  // Menyeimbangkan ruang bagian bawah
+            Spacer(minLength: 8)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(14)

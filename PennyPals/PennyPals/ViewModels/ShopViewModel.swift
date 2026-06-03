@@ -23,7 +23,7 @@ class ShopViewModel: ObservableObject {
     init() {
         fetchShopItems()
         fetchUserInventory()
-        
+
         NotificationCenter.default.addObserver(
             forName: .watchRequestedEquipBackground,
             object: nil,
@@ -54,26 +54,33 @@ class ShopViewModel: ObservableObject {
                 colorHex: "#FFF1F6",
                 spotsHex: "#E8F4FF",
                 imageName: nil
-            )
+            ),
         ]
 
         db.collection("shopItems").getDocuments { snapshot, _ in
             if let docs = snapshot?.documents, !docs.isEmpty {
-                self.shopItems = docs.compactMap { try? $0.data(as: ShopItemModel.self) }
+                self.shopItems = docs.compactMap {
+                    try? $0.data(as: ShopItemModel.self)
+                }
             }
         }
     }
 
     func fetchUserInventory() {
         guard let uid = userId else { return }
-        db.collection("inventories").document(uid).addSnapshotListener { snapshot, _ in
+        db.collection("inventories").document(uid).addSnapshotListener {
+            snapshot,
+            _ in
             let inv = try? snapshot?.data(as: UserInventoryModel.self)
             self.unlockedItemIds = inv?.unlockedItemIds ?? []
             self.selectedBackgroundId = inv?.selectedBackgroundId
 
             // 📲 Forward owned backgrounds ke Watch
             let ownedBgs = self.shopItems
-                .filter { $0.category == "Backgrounds" && self.unlockedItemIds.contains($0.id ?? "") }
+                .filter {
+                    $0.category == "Backgrounds"
+                        && self.unlockedItemIds.contains($0.id ?? "")
+                }
                 .map { item -> [String: String] in
                     [
                         "id": item.id ?? "",
@@ -88,7 +95,7 @@ class ShopViewModel: ObservableObject {
             )
         }
     }
-    
+
     func purchaseItem(item: ShopItemModel, currentUserCoins: Int) {
         guard let uid = userId, let itemId = item.id else { return }
 
@@ -106,7 +113,10 @@ class ShopViewModel: ObservableObject {
         let batch = db.batch()
 
         let userRef = db.collection("users").document(uid)
-        batch.updateData(["coins": currentUserCoins - item.price], forDocument: userRef)
+        batch.updateData(
+            ["coins": currentUserCoins - item.price],
+            forDocument: userRef
+        )
 
         let inventoryRef = db.collection("inventories").document(uid)
 
@@ -123,11 +133,20 @@ class ShopViewModel: ObservableObject {
         batch.setData(data, forDocument: inventoryRef, merge: true)
 
         batch.commit { error in
-            if let err = error { self.errorMessage = err.localizedDescription }
+            if let err = error {
+                self.errorMessage = err.localizedDescription
+            } else {
+                // 🌟 TRIGGER WINK: Setelah pembelian berhasil, ubah mood pet menjadi wink!
+                self.db.collection("pets").whereField("userId", isEqualTo: uid)
+                    .getDocuments { snap, _ in
+                        if let petDoc = snap?.documents.first {
+                            petDoc.reference.updateData(["mood": "wink"])
+                        }
+                    }
+            }
         }
     }
-    
-    
+
     func useBackground(item: ShopItemModel) {
         guard let uid = userId, let itemId = item.id else { return }
 
