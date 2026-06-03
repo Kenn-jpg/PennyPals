@@ -45,7 +45,13 @@ struct LoginView: View {
                                     radius: 24,
                                     y: 8
                                 )
-                            PetView(mood: "happy", size: 72)
+
+                            // MENGGUNAKAN ICON APP DARI ASSETS
+                            Image("PennyPals")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 72, height: 72)
+                                .clipShape(RoundedRectangle(cornerRadius: 16))  // Opsional: Membulatkan ujung icon jika aslinya kotak lancip
                         }
                         .padding(.bottom, 12).scaleEffect(animateLogo ? 1 : 0.8)
                         .opacity(animateLogo ? 1 : 0)
