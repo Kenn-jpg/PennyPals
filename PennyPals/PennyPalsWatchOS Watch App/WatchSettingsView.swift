@@ -35,51 +35,69 @@ struct WatchSettingsView: View {
                 Spacer()
             } else {
                 // --- Theme List ---
-                List {
-                    ForEach(connectivity.ownedBackgrounds, id: \.self) { bg in
-                        let isSelected = connectivity.selectedBackgroundId == bg["id"]
-                        let name = bg["name"] ?? "Unknown"
-                        let colorHex = bg["colorHex"] ?? "#FFF1F6"
-                        let spotsHex = bg["spotsHex"] ?? "#E8F4FF"
+                ScrollView {
+                    VStack(spacing: 8) {
+                        ForEach(connectivity.ownedBackgrounds, id: \.self) { bg in
+                            let isSelected = connectivity.selectedBackgroundId == bg["id"]
+                            let name = bg["name"] ?? "Unknown"
+                            let colorHex = bg["colorHex"] ?? "#FFF1F6"
+                            let spotsHex = bg["spotsHex"] ?? "#E8F4FF"
 
-                        Button(action: {
-                            if let id = bg["id"] {
-                                connectivity.equipBackground(id: id)
-                            }
-                        }) {
-                            HStack {
-                                // Color Preview Circle
-                                Circle()
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [Color(hex: colorHex), Color(hex: spotsHex)],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
-                                    .frame(width: 24, height: 24)
-                                    .overlay(
-                                        Circle().stroke(Color.black.opacity(0.1), lineWidth: 1)
-                                    )
-
-                                Text(name)
-                                    .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(isSelected ? Color(hex: "#9B7CFF") : Color(hex: "#2A2440"))
-
-                                Spacer()
-
-                                if isSelected {
-                                    Image(systemName: "checkmark")
-                                        .font(.caption.bold())
-                                        .foregroundColor(Color(hex: "#9B7CFF"))
+                            Button(action: {
+                                if let id = bg["id"] {
+                                    connectivity.equipBackground(id: id)
                                 }
+                            }) {
+                                HStack {
+                                    // Color Preview Circle
+                                    Circle()
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [Color(hex: colorHex), Color(hex: spotsHex)],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                        .frame(width: 24, height: 24)
+                                        .overlay(
+                                            Circle().stroke(Color.black.opacity(0.1), lineWidth: 1)
+                                        )
+
+                                    Text(name)
+                                        .font(.system(size: 14, weight: .bold))
+                                        .foregroundColor(isSelected ? Color(hex: "#9B7CFF") : Color(hex: "#2A2440"))
+                                        .minimumScaleFactor(0.8)
+                                        .lineLimit(1)
+
+                                    Spacer()
+
+                                    if isSelected {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .font(.system(size: 16))
+                                            .foregroundColor(Color(hex: "#9B7CFF"))
+                                    } else {
+                                        Circle()
+                                            .stroke(Color.black.opacity(0.1), lineWidth: 1)
+                                            .frame(width: 16, height: 16)
+                                    }
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(
+                                    isSelected ? Color.white.opacity(0.8) : Color.white.opacity(0.4),
+                                    in: Capsule()
+                                )
+                                .overlay(
+                                    Capsule()
+                                        .stroke(isSelected ? Color(hex: "#9B7CFF").opacity(0.5) : Color.clear, lineWidth: 2)
+                                )
                             }
-                            .padding(.vertical, 4)
+                            .buttonStyle(PlainButtonStyle())
                         }
-                        .listRowBackground(isSelected ? Color.white.opacity(0.8) : Color.white.opacity(0.4))
                     }
+                    .padding(.horizontal, 4)
+                    .padding(.bottom, 20)
                 }
-                .listStyle(.carousel)
             }
         }
     }

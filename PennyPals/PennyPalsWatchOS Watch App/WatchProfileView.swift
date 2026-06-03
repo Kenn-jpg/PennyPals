@@ -11,40 +11,39 @@ struct WatchProfileView: View {
     @EnvironmentObject var connectivity: IOSConnectivity
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 4) {
 
-            // --- Avatar ---
-            Circle()
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color(hex: "#FF8FB5"),
-                            Color(hex: "#9B7CFF"),
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
+            // --- Header: Avatar + Name ---
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color(hex: "#FF8FB5"),
+                                Color(hex: "#9B7CFF"),
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
                     )
-                )
-                .frame(width: 40, height: 40)
-                .overlay(
-                    Text(avatarInitials)
-                        .font(.body.bold())
-                        .foregroundColor(.white)
-                )
-                .shadow(color: Color.black.opacity(0.1), radius: 2, y: 1)
+                    .frame(width: 32, height: 32)
+                    .overlay(
+                        Text(avatarInitials)
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.white)
+                    )
+                    .shadow(color: Color.black.opacity(0.1), radius: 2, y: 1)
 
-            // --- Name & Email ---
-            VStack(spacing: 0) {
                 Text(connectivity.username)
-                    .font(.body.bold())
+                    .font(.system(size: 14, weight: .bold))
                     .foregroundColor(Color(hex: "#2A2440"))
                     .lineLimit(1)
-
-                Text(connectivity.email)
-                    .font(.system(size: 10))
-                    .foregroundColor(Color(hex: "#6B6580"))
-                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                
+                Spacer()
             }
+            .padding(.horizontal, 4)
+            .padding(.top, 2)
 
             // --- Stats Grid ---
             HStack(spacing: 6) {
@@ -64,49 +63,52 @@ struct WatchProfileView: View {
             }
 
             // --- Total Savings Card ---
-            VStack(spacing: 2) {
+            VStack(spacing: 0) {
                 HStack(spacing: 4) {
                     Image(systemName: "wallet.pass.fill")
-                        .font(.system(size: 10))
+                        .font(.system(size: 9))
                         .foregroundColor(Color(hex: "#9B7CFF"))
                     Text("Total Savings")
-                        .font(.system(size: 10))
+                        .font(.system(size: 9))
                         .foregroundColor(Color(hex: "#6B6580"))
                     Spacer()
                 }
 
                 HStack {
                     Text("Rp \(connectivity.totalSavings.formattedWithDot)")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 12, weight: .bold))
                         .foregroundColor(Color(hex: "#2A2440"))
+                        .minimumScaleFactor(0.8)
                     Spacer()
                 }
             }
-            .padding(8)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
             .background(
                 Color.white.opacity(0.6),
-                in: RoundedRectangle(cornerRadius: 10)
+                in: RoundedRectangle(cornerRadius: 8)
             )
 
             // --- Penalty Status ---
             HStack(spacing: 4) {
                 Image(systemName: penaltyIcon)
-                    .font(.system(size: 10))
+                    .font(.system(size: 9))
                     .foregroundColor(penaltyColor)
 
                 Text(penaltyText)
-                    .font(.system(size: 10, weight: .medium))
+                    .font(.system(size: 9, weight: .medium))
                     .foregroundColor(penaltyColor)
 
                 Spacer()
             }
-            .padding(6)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 4)
             .background(
                 Color.white.opacity(0.6),
-                in: RoundedRectangle(cornerRadius: 8)
+                in: RoundedRectangle(cornerRadius: 6)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: 6)
                     .stroke(penaltyColor.opacity(0.3), lineWidth: 1)
             )
 
@@ -114,14 +116,16 @@ struct WatchProfileView: View {
             if !connectivity.isConnected {
                 HStack(spacing: 4) {
                     Image(systemName: "iphone.slash")
-                        .font(.system(size: 9))
+                        .font(.system(size: 8))
                     Text("Waiting for iPhone...")
-                        .font(.system(size: 9))
+                        .font(.system(size: 8))
                 }
                 .foregroundColor(.orange)
             }
+            
+            Spacer(minLength: 0)
         }
-        .padding(.horizontal, 4)
+        .padding(.horizontal, 2)
     }
 
     // MARK: - Computed Properties
