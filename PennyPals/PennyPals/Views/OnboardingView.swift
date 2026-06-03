@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-// --- BEST PRACTICE: Buat struktur data khusus untuk opsi telur ---
+// --- BEST PRACTICE: Struktur data khusus untuk opsi telur ---
 struct EggOption {
     let id: String
     let name: String
@@ -16,20 +16,16 @@ struct EggOption {
 
 struct OnboardingView: View {
     @StateObject private var onboardingVM = OnboardingViewModel()
-
-    // 1. AKSES AUTH VIEW MODEL UNTUK LOGOUT PINTU KELUAR
     @EnvironmentObject var authVM: AuthViewModel
+
     @State private var petNameInput: String = ""
     @Binding var rawAmount: String
     @Binding var selectedEgg: String
     @Binding var wishlistName: String
-
-    // --- TAMBAHAN BARU: Binding untuk target nominal wishlist ---
     @Binding var targetAmountString: String
 
     var onStart: () -> Void
 
-    // --- DIUBAH: Menggunakan struct EggOption dan Asset Gambar ---
     let eggs: [EggOption] = [
         EggOption(id: "rose", name: "Rosie", assetName: "PinkEgg01"),
         EggOption(id: "mint", name: "Sprout", assetName: "GreenEgg01"),
@@ -39,84 +35,77 @@ struct OnboardingView: View {
         EggOption(id: "peach", name: "Pip", assetName: "PeachEgg01"),
     ]
 
-    // Konstanta Batas Maksimal Tabungan (Rp 100 Juta)
     private let maxSavingsLimit: Double = 100_000_000
 
-    // Validasi kelayakan form sebelum melanjutkan (Termasuk validasi Wishlist & Target Nominal)
+    // --- BEST PRACTICE: Singleton NumberFormatter ---
+    // NumberFormatter sangat berat jika di-instansiasi setiap kali user mengetik.
+    // Kita buat static agar tersimpan di memori sekali saja.
+    private static let currencyFormatter: NumberFormatter = {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.groupingSeparator = "."
+        return formatter
+    }()
+
     private var isFormValid: Bool {
-        let cleanInitialDigits = cleanNumericString(rawAmount)
-        let cleanTargetDigits = cleanNumericString(targetAmountString)
+        let initialAmount = Double(cleanNumericString(rawAmount)) ?? 0
+        let targetAmount = Double(cleanNumericString(targetAmountString)) ?? 0
 
-        guard let initialAmount = Double(cleanInitialDigits),
-            initialAmount > 0 && initialAmount <= maxSavingsLimit
-        else {
-            return false
-        }
+        guard initialAmount > 0, initialAmount <= maxSavingsLimit,
+            targetAmount > 0, targetAmount <= maxSavingsLimit,
+            initialAmount <= targetAmount
+        else { return false }
 
-        guard let targetAmount = Double(cleanTargetDigits),
-            targetAmount > 0 && targetAmount <= maxSavingsLimit
-        else {
-            return false
-        }
-
-        // Tabungan awal tidak masuk akal jika melebihi target harga barang itu sendiri
-        guard initialAmount <= targetAmount else {
-            return false
-        }
-
-        // Form valid jika egg sudah dipilih, nama wishlist tidak kosong, dan target nominal valid
         return !selectedEgg.isEmpty
-            && !wishlistName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && !petNameInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty    }
+            && !wishlistName.trimmingCharacters(in: .whitespacesAndNewlines)
+                .isEmpty
+            && !petNameInput.trimmingCharacters(in: .whitespacesAndNewlines)
+                .isEmpty
+    }
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 0) {
 
-            // --- TOP ACTION BAR (PINTU KELUAR LOGOUT) ---
+            // --- TOP ACTION BAR ---
             HStack {
                 Spacer()
-                Button(action: {
-                    authVM.logout()
-                }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "rectangle.portrait.and.arrow.right")
-                        Text("Log Out")
-                    }
-                    .font(.footnote.weight(.semibold))
-                    .foregroundColor(.red.opacity(0.8))
+                Button(action: { authVM.logout() }) {
+                    Text("Log Out")
+                        .font(.footnote.weight(.medium))
+                        .foregroundColor(.red.opacity(0.8))
                 }
-                .padding(.horizontal)
-                .padding(.top, 12)
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
             }
 
             // --- HEADER TITLE ---
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text("Let's set you up")
-                    .font(.title.bold())
+                    .font(.largeTitle.bold())
                     .foregroundColor(.pennyText)
                 Text("A few quick steps to hatch your pal")
-                    .font(.subheadline)
+                    .font(.body)
                     .foregroundColor(.pennySecondaryText)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal)
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
+            .padding(.bottom, 24)
 
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 16) {
+                VStack(spacing: 32) {
 
                     // --- SECTION 1: INITIAL SAVINGS ---
-                    VStack(alignment: .leading, spacing: 14) {
-                        Text("INITIAL SAVINGS")
-                            .font(.caption.weight(.semibold))
-                            .foregroundColor(.pennySecondaryText)
+                    VStack(alignment: .leading, spacing: 12) {
+                        SectionHeader(title: "INITIAL SAVINGS")
 
-                        // Input Lapisan Utama dengan UX Signifier
-                        HStack(spacing: 8) {
+                        HStack(alignment: .bottom, spacing: 8) {
                             Text("Rp")
-                                .font(.title2.bold())
-                                .foregroundColor(.pennyPurple)
+                                .font(.title3.bold())
+                                .foregroundColor(.pennySecondaryText)
+                                .padding(.bottom, 4)
 
-                            TextField("500.000", text: $rawAmount)
+                            TextField("0", text: $rawAmount)
                                 .keyboardType(.numberPad)
                                 .font(
                                     .system(
@@ -127,48 +116,30 @@ struct OnboardingView: View {
                                 )
                                 .foregroundColor(.pennyText)
                                 .onChange(of: rawAmount) { _, newValue in
-                                    formatDynamicCurrency(newValue)
+                                    rawAmount = formatCurrencyInput(newValue)
                                 }
-                                .accessibilityIdentifier(
-                                    "initialSavingsTextField"
-                                )
-
-                            Spacer()
-
-                            // Ikon Pensil sebagai indikator visual bahwa input bisa di-custom sendiri
-                            Image(systemName: "pencil.line")
-                                .foregroundColor(
-                                    .pennySecondaryText.opacity(0.7)
-                                )
-                                .font(.system(size: 18))
                         }
 
-                        // Hint teks edukasi / Warning Limit Angka
+                        Divider()
+
                         let currentAmount =
                             Double(cleanNumericString(rawAmount)) ?? 0
                         if currentAmount >= maxSavingsLimit {
-                            Text(
-                                "⚠️ Batas maksimal tabungan awal adalah Rp 100.000.000"
+                            HintText(
+                                icon: "exclamationmark.triangle.fill",
+                                text:
+                                    "Batas maksimal tabungan awal adalah Rp 100.000.000",
+                                isWarning: true
                             )
-                            .font(.caption2)
-                            .foregroundColor(.red.opacity(0.9))
-                            .padding(.top, -4)
-                        } else {
-                            Text(
-                                "💡 Tip: Kamu bisa mengetik langsung nominal tabunganmu di atas."
-                            )
-                            .font(.caption2)
-                            .foregroundColor(.pennySecondaryText.opacity(0.8))
-                            .padding(.top, -4)
                         }
 
-                        // Tombol-tombol Preset Cepat (Sudah diubah ke format angka asli)
+                        // Presets
                         HStack(spacing: 8) {
                             ForEach(
                                 ["100000", "500000", "1000000", "5000000"],
                                 id: \.self
                             ) { amount in
-                                let formattedPreset = formatRawStringToDisplay(
+                                let formattedPreset = formatCurrencyInput(
                                     amount
                                 )
                                 let isSelected =
@@ -180,153 +151,93 @@ struct OnboardingView: View {
                                     }
                                 }) {
                                     Text(formattedPreset)
-                                        .font(.caption.weight(.semibold))
+                                        .font(.caption.weight(.medium))
                                         .frame(
                                             maxWidth: .infinity,
-                                            minHeight: 44
+                                            minHeight: 36
                                         )
                                         .background(
                                             isSelected
                                                 ? Color.pennyPurple
-                                                : Color(hex: "#F3F0FF")
+                                                : Color.gray.opacity(0.1)
                                         )
                                         .foregroundColor(
-                                            isSelected
-                                                ? .white : .pennySecondaryText
+                                            isSelected ? .white : .pennyText
                                         )
-                                        .clipShape(
-                                            RoundedRectangle(cornerRadius: 12)
-                                        )
+                                        .clipShape(Capsule())
                                 }
-                                .accessibilityIdentifier(
-                                    "presetButton_\(amount)"
+                            }
+                        }
+                        .padding(.top, 4)
+                    }
+
+                    // --- SECTION 2: WISHLIST GOAL & TARGET PRICE ---
+                    VStack(alignment: .leading, spacing: 16) {
+                        SectionHeader(title: "YOUR FIRST WISHLIST GOAL")
+
+                        VStack(spacing: 0) {
+                            MinimalTextField(
+                                icon: "bag",
+                                placeholder: "Nama barang (Contoh: Laptop)",
+                                text: $wishlistName
+                            )
+                            Divider().padding(.leading, 32)
+                            MinimalTextField(
+                                icon: "tag",
+                                placeholder: "Target harga nominal (Rp)",
+                                text: $targetAmountString,
+                                isNumeric: true
+                            )
+                            .onChange(of: targetAmountString) { _, newValue in
+                                targetAmountString = formatCurrencyInput(
+                                    newValue
                                 )
                             }
                         }
-                    }
-                    .padding()
-                    .background(Color(UIColor.systemBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 20))
-                    .shadow(color: .black.opacity(0.05), radius: 10, y: 4)
+                        .background(Color.gray.opacity(0.05))
+                        .cornerRadius(12)
 
-                    // --- SECTION 2: WISHLIST GOAL & TARGET PRICE ---
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("YOUR FIRST WISHLIST GOAL")
-                            .font(.caption.weight(.semibold))
-                            .foregroundColor(.pennySecondaryText)
-
-                        // 1. Input Nama Wishlist Barang (Teks dipersingkat)
-                        HStack(spacing: 12) {
-                            Image(systemName: "bag.fill")
-                                .font(.body.bold())
-                                .foregroundColor(.pennyPurple)
-
-                            TextField(
-                                "Nama barang (Contoh: Laptop)",
-                                text: $wishlistName
-                            )
-                            .font(.body.weight(.medium))
-                            .foregroundColor(.pennyText)
-                            .autocorrectionDisabled()
-                        }
-                        .padding(.vertical, 4)
-
-                        Divider()
-                            .padding(.vertical, 2)
-
-                        // 2. Input Target Nominal / Harga Barang (Teks dipersingkat)
-                        HStack(spacing: 12) {
-                            Image(systemName: "tag.fill")
-                                .font(.body.bold())
-                                .foregroundColor(.pennyPurple)
-
-                            Text("Rp")
-                                .font(.body.weight(.bold))
-                                .foregroundColor(.pennyText)
-
-                            TextField(
-                                "Target harga nominal",
-                                text: $targetAmountString
-                            )
-                            .keyboardType(.numberPad)
-                            .font(.body.weight(.medium))
-                            .foregroundColor(.pennyText)
-                            .onChange(of: targetAmountString) { _, newValue in
-                                formatDynamicTargetAmount(newValue)
-                            }
-                        }
-                        .padding(.vertical, 4)
-
-                        // Validasi Real-time: Cegah initial savings lebih besar dari target harga wishlist
+                        // Validation Warnings
                         let currentInitial =
                             Double(cleanNumericString(rawAmount)) ?? 0
                         let currentTarget =
                             Double(cleanNumericString(targetAmountString)) ?? 0
 
                         if currentTarget > 0 && currentInitial > currentTarget {
-                            Text(
-                                "⚠️ Tabungan awal tidak boleh melebihi harga target barang!"
+                            HintText(
+                                icon: "exclamationmark.triangle.fill",
+                                text:
+                                    "Tabungan awal tidak boleh melebihi harga target barang!",
+                                isWarning: true
                             )
-                            .font(.caption2)
-                            .foregroundColor(.red.opacity(0.9))
-                            .padding(.top, 2)
-                        } else {
-                            Text(
-                                "💡 Goal ini akan langsung muncul sebagai target utama di Home pagenya."
-                            )
-                            .font(.caption2)
-                            .foregroundColor(.pennySecondaryText.opacity(0.8))
                         }
                     }
-                    .padding()
-                    .background(Color(UIColor.systemBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 20))
-                    .shadow(color: .black.opacity(0.05), radius: 10, y: 4)
-                    
-                    
-                    // --- SECTION: PET NAME ---
+
+                    // --- SECTION 3: PET NAME ---
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("YOUR PET NAME")
-                            .font(.caption.weight(.semibold))
-                            .foregroundColor(.pennySecondaryText)
+                        SectionHeader(title: "YOUR PET NAME")
 
-                        HStack(spacing: 12) {
-                            Image(systemName: "pawprint.fill")
-                                .font(.body.bold())
-                                .foregroundColor(.pennyPurple)
-
-                            TextField("Nama pet kamu (Contoh: Mochi)", text: $petNameInput)
-                                .font(.body.weight(.medium))
-                                .foregroundColor(.pennyText)
-                                .autocorrectionDisabled()
-                        }
-                        .padding(.vertical, 4)
-
-                        Text("💡 Nama ini akan tampil di Home dan bisa diubah di Edit Profile.")
-                            .font(.caption2)
-                            .foregroundColor(.pennySecondaryText.opacity(0.8))
+                        MinimalTextField(
+                            icon: "pawprint",
+                            placeholder: "Nama pet kamu (Contoh: Mochi)",
+                            text: $petNameInput
+                        )
+                        .background(Color.gray.opacity(0.05))
+                        .cornerRadius(12)
                     }
-                    .padding()
-                    .background(Color(UIColor.systemBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 20))
-                    .shadow(color: .black.opacity(0.05), radius: 10, y: 4)
 
-                    // --- SECTION 3: CHOOSE EGG ---
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("CHOOSE YOUR EGG")
-                            .font(.caption.weight(.semibold))
-                            .foregroundColor(.pennySecondaryText)
-                            .padding(.horizontal, 4)
+                    // --- SECTION 4: CHOOSE EGG ---
+                    VStack(alignment: .leading, spacing: 16) {
+                        SectionHeader(title: "CHOOSE YOUR EGG")
 
                         LazyVGrid(
                             columns: [
-                                GridItem(.adaptive(minimum: 90), spacing: 12)
+                                GridItem(.adaptive(minimum: 90), spacing: 16)
                             ],
-                            spacing: 12
+                            spacing: 16
                         ) {
-                            // --- DIUBAH: Menggunakan id dari struct EggOption ---
                             ForEach(eggs, id: \.id) { egg in
-                                let isEggSelected = selectedEgg == egg.id
+                                let isSelected = selectedEgg == egg.id
 
                                 Button(action: {
                                     withAnimation(
@@ -334,64 +245,68 @@ struct OnboardingView: View {
                                             response: 0.3,
                                             dampingFraction: 0.6
                                         )
-                                    ) {
-                                        selectedEgg = egg.id
-                                    }
+                                    ) { selectedEgg = egg.id }
                                 }) {
                                     VStack(spacing: 8) {
-
-                                        // --- DIUBAH: Menggunakan Image Asset ---
                                         Image(egg.assetName)
                                             .resizable()
                                             .scaledToFit()
                                             .frame(width: 60, height: 60)
-                                            .scaleEffect(
-                                                isEggSelected ? 1.08 : 1.0
+                                            .scaleEffect(isSelected ? 1.1 : 1.0)
+                                            .opacity(
+                                                selectedEgg.isEmpty
+                                                    || isSelected ? 1.0 : 0.5
                                             )
 
                                         Text(egg.name)
-                                            .font(.caption.weight(.medium))
-                                            .foregroundColor(.pennyText)
+                                            .font(
+                                                .caption.weight(
+                                                    isSelected
+                                                        ? .bold : .regular
+                                                )
+                                            )
+                                            .foregroundColor(
+                                                isSelected
+                                                    ? .pennyPurple
+                                                    : .pennySecondaryText
+                                            )
                                     }
-                                    .frame(maxWidth: .infinity, minHeight: 100)
-                                    .background(Color(UIColor.systemBackground))
-                                    .clipShape(
-                                        RoundedRectangle(cornerRadius: 16)
+                                    .padding(.vertical, 12)
+                                    .frame(maxWidth: .infinity)
+                                    .background(
+                                        isSelected
+                                            ? Color.pennyPurple.opacity(0.1)
+                                            : Color.clear
                                     )
+                                    .cornerRadius(16)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 16)
                                             .stroke(
-                                                isEggSelected
+                                                isSelected
                                                     ? Color.pennyPurple
-                                                    : Color.clear,
-                                                lineWidth: 2.5
+                                                    : Color.gray.opacity(0.2),
+                                                lineWidth: isSelected ? 2 : 1
                                             )
                                     )
                                 }
                                 .buttonStyle(.plain)
-                                .accessibilityIdentifier("eggButton_\(egg.id)")
                             }
                         }
-                        .padding(.horizontal, 4)
                     }
                 }
-                .padding(.horizontal)
-                .padding(.bottom, 16)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 24)
             }
 
             // --- BOTTOM ACTION BUTTON ---
             Button(action: {
                 Task {
-                    let cleanedAmountString = cleanNumericString(rawAmount)
-                    let amount = Double(cleanedAmountString) ?? 0
-
-                    let cleanedTargetString = cleanNumericString(
-                        targetAmountString
+                    let amount = Double(cleanNumericString(rawAmount)) ?? 0
+                    let targetAmount =
+                        Double(cleanNumericString(targetAmountString)) ?? 0
+                    let petName = petNameInput.trimmingCharacters(
+                        in: .whitespacesAndNewlines
                     )
-                    let targetAmount = Double(cleanedTargetString) ?? 0
-
-                    // --- DIUBAH: Pemanggilan id dan name menggunakan struct baru ---
-                    let petName = petNameInput.trimmingCharacters(in: .whitespacesAndNewlines)
 
                     await onboardingVM.completeOnboarding(
                         initialSavings: amount,
@@ -404,78 +319,82 @@ struct OnboardingView: View {
                 }
             }) {
                 Text("Start Saving →")
+                    .frame(maxWidth: .infinity)
             }
             .buttonStyle(PennyPrimaryButtonStyle())
-            .padding(.horizontal)
+            .padding(.horizontal, 20)
             .padding(.bottom, 16)
+            .padding(.top, 8)
             .disabled(!isFormValid)
             .opacity(isFormValid ? 1.0 : 0.5)
-            .accessibilityIdentifier("startSavingSubmitButton")
         }
         .background(Color.pennyBackground.ignoresSafeArea())
     }
 
-    // --- HELPER LOGIC FUNCTIONS ---
-
-    private func formatDynamicCurrency(_ input: String) {
-        let digits = input.filter { $0.isNumber }
-        if digits.isEmpty {
-            rawAmount = ""
-            return
-        }
-        guard let doubleValue = Double(digits) else {
-            rawAmount = ""
-            return
+    // MARK: - REFACTORED HELPER LOGIC
+    // Tiga fungsi redundant sebelumnya digabung menjadi HANYA SATU fungsi yang pure (mengembalikan nilai)
+    private func formatCurrencyInput(_ input: String) -> String {
+        let digits = cleanNumericString(input)
+        guard let doubleValue = Double(digits), doubleValue > 0 else {
+            return ""
         }
         let finalValue = min(doubleValue, maxSavingsLimit)
-        if finalValue == 0 {
-            rawAmount = ""
-            return
-        }
 
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.groupingSeparator = "."
-
-        if let formatted = formatter.string(from: NSNumber(value: finalValue)) {
-            rawAmount = formatted
-        }
-    }
-
-    private func formatDynamicTargetAmount(_ input: String) {
-        let digits = input.filter { $0.isNumber }
-        if digits.isEmpty {
-            targetAmountString = ""
-            return
-        }
-        guard let doubleValue = Double(digits) else {
-            targetAmountString = ""
-            return
-        }
-        let finalValue = min(doubleValue, maxSavingsLimit)
-        if finalValue == 0 {
-            targetAmountString = ""
-            return
-        }
-
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.groupingSeparator = "."
-
-        if let formatted = formatter.string(from: NSNumber(value: finalValue)) {
-            targetAmountString = formatted
-        }
-    }
-
-    private func formatRawStringToDisplay(_ raw: String) -> String {
-        guard let number = Int(raw) else { return raw }
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.groupingSeparator = "."
-        return formatter.string(from: NSNumber(value: number)) ?? raw
+        return Self.currencyFormatter.string(from: NSNumber(value: finalValue))
+            ?? ""
     }
 
     private func cleanNumericString(_ input: String) -> String {
         return input.filter { $0.isNumber }
+    }
+}
+
+// MARK: - REUSABLE UI COMPONENTS
+
+struct SectionHeader: View {
+    let title: String
+    var body: some View {
+        Text(title)
+            .font(.caption.weight(.bold))
+            .foregroundColor(.gray)
+            .kerning(1.2)
+    }
+}
+
+struct HintText: View {
+    let icon: String
+    let text: String
+    var isWarning: Bool = false
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 6) {
+            Image(systemName: icon)
+            Text(text)
+        }
+        .font(.caption2)
+        .foregroundColor(isWarning ? .red : .gray)
+    }
+}
+
+struct MinimalTextField: View {
+    let icon: String
+    let placeholder: String
+    @Binding var text: String
+    var isNumeric: Bool = false
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .foregroundColor(.gray)
+                .frame(width: 20)
+
+            TextField(placeholder, text: $text)
+                .font(.body.weight(.medium))
+                .foregroundColor(.pennyText)
+                .keyboardType(isNumeric ? .numberPad : .default)
+                .autocorrectionDisabled()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
     }
 }
