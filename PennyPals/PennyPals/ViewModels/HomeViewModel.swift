@@ -9,6 +9,7 @@ internal import Combine
 import FirebaseAuth
 import FirebaseFirestore
 import SwiftUI
+import WidgetKit
 
 @MainActor
 class HomeViewModel: ObservableObject {
@@ -47,6 +48,17 @@ class HomeViewModel: ObservableObject {
                             mood: pet.mood,
                             type: pet.type
                         )
+                        
+                        // Update Shared UserDefaults for Widget
+                        if let sharedDefaults = UserDefaults(suiteName: "group.com.MAD.PennyPals") {
+                            sharedDefaults.set(pet.name, forKey: "widgetPetName")
+                            sharedDefaults.set(pet.level, forKey: "widgetPetLevel")
+                            sharedDefaults.set(pet.xp, forKey: "widgetPetXP")
+                            sharedDefaults.set(pet.maxXP, forKey: "widgetPetMaxXP")
+                            sharedDefaults.set(pet.mood, forKey: "widgetPetMood")
+                            
+                            WidgetCenter.shared.reloadAllTimelines()
+                        }
                     }
                 }
             }

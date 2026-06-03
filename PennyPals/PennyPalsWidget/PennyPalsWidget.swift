@@ -10,49 +10,118 @@ import SwiftUI
 
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date(), emoji: "😀")
+        SimpleEntry(date: Date(), name: "Penny", level: 5, xp: 150, maxXP: 200, mood: "happy")
     }
 
     func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> ()) {
-        let entry = SimpleEntry(date: Date(), emoji: "😀")
+        let entry = getPetData()
         completion(entry)
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
-        var entries: [SimpleEntry] = []
-
-        // Generate a timeline consisting of five entries an hour apart, starting from the current date.
-        let currentDate = Date()
-        for hourOffset in 0 ..< 5 {
-            let entryDate = Calendar.current.date(byAdding: .hour, value: hourOffset, to: currentDate)!
-            let entry = SimpleEntry(date: entryDate, emoji: "😀")
-            entries.append(entry)
-        }
-
-        let timeline = Timeline(entries: entries, policy: .atEnd)
+        let entry = getPetData()
+        // Widget updates mostly triggered by the main app, but we set a 15-min fallback
+        let nextUpdate = Calendar.current.date(byAdding: .minute, value: 15, to: Date())!
+        let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
         completion(timeline)
     }
 
-//    func relevances() async -> WidgetRelevances<Void> {
-//        // Generate a list containing the contexts this widget is relevant in.
-//    }
+    private func getPetData() -> SimpleEntry {
+        let sharedDefaults = UserDefaults(suiteName: "group.com.MAD.PennyPals")
+        let name = sharedDefaults?.string(forKey: "widgetPetName") ?? "Your Pet"
+        let level = sharedDefaults?.integer(forKey: "widgetPetLevel") ?? 1
+        let xp = sharedDefaults?.integer(forKey: "widgetPetXP") ?? 0
+        let maxXP = sharedDefaults?.integer(forKey: "widgetPetMaxXP") ?? 200
+        let mood = sharedDefaults?.string(forKey: "widgetPetMood") ?? "hungry"
+        
+        return SimpleEntry(date: Date(), name: name, level: level, xp: xp, maxXP: maxXP, mood: mood)
+    }
 }
 
 struct SimpleEntry: TimelineEntry {
     let date: Date
-    let emoji: String
+    let name: String
+    let level: Int
+    let xp: Int
+    let maxXP: Int
+    let mood: String
 }
 
 struct PennyPalsWidgetEntryView : View {
     var entry: Provider.Entry
 
     var body: some View {
-        VStack {
-            Text("Time:")
-            Text(entry.date, style: .time)
-
-            Text("Emoji:")
-            Text(entry.emoji)
+        VStack(spacing: 8) {
+            HStack {
+                Text(entry.name)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(Color(red: 42/255, green: 36/255, blue: 64/255))
+                    .minimumScaleFactor(0.8)
+                    .lineLimit(1)
+                
+                Spacer()
+                
+                Text(moodEmoji(entry.mood))
+                    .font(.system(size: 20))
+            }
+            
+            HStack {
+                Image(systemName: "sparkles")
+                    .foregroundColor(Color(red: 155/255, green: 124/255, blue: 255/255))
+                Text("Level \(entry.level)")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(Color(red: 42/255, green: 36/255, blue: 64/255))
+                Spacer()
+            }
+            
+            VStack(spacing: 4) {
+                HStack {
+                    Text("XP")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Text("\(entry.xp) / \(entry.maxXP)")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(Color(red: 155/255, green: 124/255, blue: 255/255))
+                }
+                
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color(red: 42/255, green: 36/255, blue: 64/255).opacity(0.1))
+                            .frame(height: 8)
+                        
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color(red: 255/255, green: 143/255, blue: 181/255), Color(red: 155/255, green: 124/255, blue: 255/255)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .frame(width: max(0, min(CGFloat(entry.xp) / CGFloat(max(1, entry.maxXP)), 1.0)) * geo.size.width, height: 8)
+                    }
+                }
+                .frame(height: 8)
+            }
+            
+            Spacer(minLength: 0)
+        }
+        .widgetURL(URL(string: "pennypals://widget-tap"))
+    }
+    
+    private func moodEmoji(_ mood: String) -> String {
+        switch mood {
+        case "happy": return "😊"
+        case "sad": return "😢"
+        case "hungry": return "🥺"
+        case "angry": return "😡"
+        case "surprised": return "😲"
+        case "cry": return "😭"
+        case "sleepy": return "😴"
+        case "dizzy": return "😵"
+        case "wink": return "😉"
+        default: return "🐾"
         }
     }
 }
@@ -64,21 +133,22 @@ struct PennyPalsWidget: Widget {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             if #available(iOS 17.0, *) {
                 PennyPalsWidgetEntryView(entry: entry)
-                    .containerBackground(.fill.tertiary, for: .widget)
+                    .containerBackground(Color(red: 255/255, green: 241/255, blue: 246/255), for: .widget)
             } else {
                 PennyPalsWidgetEntryView(entry: entry)
                     .padding()
-                    .background()
+                    .background(Color(red: 255/255, green: 241/255, blue: 246/255))
             }
         }
-        .configurationDisplayName("My Widget")
-        .description("This is an example widget.")
+        .configurationDisplayName("PennyPals Status")
+        .description("Keep an eye on your pet's mood and level right from your Home Screen.")
+        .supportedFamilies([.systemSmall, .systemMedium])
     }
 }
 
 #Preview(as: .systemSmall) {
     PennyPalsWidget()
 } timeline: {
-    SimpleEntry(date: .now, emoji: "😀")
-    SimpleEntry(date: .now, emoji: "🤩")
+    SimpleEntry(date: .now, name: "Kitty", level: 12, xp: 450, maxXP: 500, mood: "happy")
+    SimpleEntry(date: .now, name: "Doggo", level: 1, xp: 0, maxXP: 200, mood: "hungry")
 }
