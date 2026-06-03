@@ -108,6 +108,8 @@ class AuthViewModel: ObservableObject {
             self.currentUser = nil
             // 📲 Beritahu WatchOS untuk menghapus data cached
             PhoneConnectivity.shared.sendLogoutToWatch()
+            // 🔕 Batalkan semua notifikasi saat logout
+            NotificationManager.shared.cancelAllNotifications()
         } catch {
             print("Logout error: \(error.localizedDescription)")
         }

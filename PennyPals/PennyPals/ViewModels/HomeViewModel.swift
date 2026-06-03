@@ -159,6 +159,44 @@ class HomeViewModel: ObservableObject {
             type: .deposit
         )
         try? db.collection("transactions").addDocument(from: tx)
+
+        // 🔔 NOTIFICATIONS
+        // Level up notification
+        if newLevel > currentPet.level {
+            NotificationManager.shared.sendLevelUpNotification(
+                petName: currentPet.name,
+                newLevel: newLevel
+            )
+        }
+
+        // Streak celebration (streak naik jika belum nabung hari ini)
+        if !alreadySavedToday {
+            NotificationManager.shared.sendStreakCelebration(
+                streak: currentUser.streak + 1
+            )
+        }
+
+        // Goal progress & completion
+        if newGoalAmount >= currentGoal.targetAmount && currentGoal.targetAmount > 0 {
+            NotificationManager.shared.sendGoalCompletedNotification(
+                goalName: currentGoal.itemName
+            )
+        } else {
+            NotificationManager.shared.sendGoalProgressNotification(
+                goalName: currentGoal.itemName,
+                currentAmount: newGoalAmount,
+                targetAmount: currentGoal.targetAmount
+            )
+        }
+
+        // Jadwalkan peringatan penalti berdasarkan tanggal aman baru
+        NotificationManager.shared.schedulePenaltyWarning(
+            nextPenaltyCheck: nextSafeDate,
+            petName: currentPet.name
+        )
+
+        // Cancel daily reminders karena sudah nabung hari ini
+        NotificationManager.shared.cancelDailyRemindersForToday()
     }
 
     func setNewGoal(itemName: String, targetAmount: Double) {
@@ -288,7 +326,15 @@ class HomeViewModel: ObservableObject {
                 db.collection("pets").document(petId).updateData([
                     "mood": newMood
                 ])
+                // 🔔 Kirim notifikasi pet lapar
+                NotificationManager.shared.sendPetHungryNotification(
+                    petName: currentPet.name
+                )
             }
+            // Jadwalkan pengingat malam jika belum nabung
+            NotificationManager.shared.scheduleEveningReminder(
+                petName: currentPet.name
+            )
         } else if isLateNight {
             // 🌟 PERBAIKAN: Jangan timpa mood spesial (surprised/wink) menjadi sleepy secara instan
             let protectedMoods = ["surprised", "wink"]
