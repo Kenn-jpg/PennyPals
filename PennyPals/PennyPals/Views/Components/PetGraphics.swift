@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+// MARK: - Egg Graphics (Tetap menggunakan Shape karena sudah bagus)
 struct EggShape: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
@@ -46,37 +47,47 @@ struct EggView: View {
     }
 }
 
+// MARK: - Pet Graphics (DIUBAH MENGGUNAKAN ASSET)
 struct PetView: View {
-    var mood: String
+    var petType: String  // "Cat", "Dog", "Owl", "Pig", "Raccoon", "Seal"
+    var mood: String  // "happy", "sad", "hungry", dll
     var size: CGFloat
 
-    var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: size * 0.4).fill(
-                Color(hex: "#FFC9DE")
-            ).frame(width: size * 0.85, height: size * 0.8)
+    // Mapping mood dari HomeVM/Pet ke nama suffix Asset
+    private var moodSuffix: String {
+        switch mood.lowercased() {
+        case "happy": return "Laugh"
 
-            HStack(spacing: size * 0.2) {
-                if mood == "sad" {
-                    Text("T_T").font(.system(size: size * 0.15, weight: .bold))
-                        .foregroundColor(Color(hex: "#2A2440"))
-                    Text("T_T").font(.system(size: size * 0.15, weight: .bold))
-                        .foregroundColor(Color(hex: "#2A2440"))
-                } else if mood == "hungry" {
-                    Text("🥺").font(.system(size: size * 0.25))
-                    Text("🥺").font(.system(size: size * 0.25))
-                } else {
-                    Text("^-^").font(.system(size: size * 0.15, weight: .bold))
-                        .foregroundColor(Color(hex: "#2A2440"))
-                    Text("^-^").font(.system(size: size * 0.15, weight: .bold))
-                        .foregroundColor(Color(hex: "#2A2440"))
+        case "sad": return "Sad"
+        case "hungry": return "TongueOut"
+        case "angry": return "Angry"
+        case "cry": return "Cry"
+        case "dizzy": return "Dizzy"
+        case "sleepy": return "Sleepy"
+        case "surprised": return "Surprised"
+        case "wink": return "WinkTongueOut"
+        default: return "Laugh"  // Default fallback jika mood tidak dikenali
+        }
+    }
+
+    // Gabungan jenis pet dan suffix (Contoh: "Cat" + "Laugh" = "CatLaugh")
+    private var assetName: String {
+        return "\(petType)\(moodSuffix)"
+    }
+
+    var body: some View {
+        Image(assetName)
+            .resizable()
+            .scaledToFit()
+            .frame(width: size, height: size)
+            // Fallback image jika nama aset ternyata salah / belum masuk Xcode
+            .overlay {
+                if UIImage(named: assetName) == nil {
+                    Text("Asset\nMissing")
+                        .font(.caption)
+                        .foregroundColor(.red)
+                        .multilineTextAlignment(.center)
                 }
             }
-            .offset(y: -size * 0.05)
-
-            Text("🔺").font(.system(size: size * 0.08)).foregroundColor(
-                Color(hex: "#F2885F")
-            ).rotationEffect(.degrees(180)).offset(y: size * 0.08)
-        }
     }
 }
