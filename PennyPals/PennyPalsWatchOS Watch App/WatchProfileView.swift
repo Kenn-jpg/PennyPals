@@ -11,115 +11,112 @@ struct WatchProfileView: View {
     @EnvironmentObject var connectivity: IOSConnectivity
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 12) {
+        VStack(spacing: 8) {
 
-                // --- Avatar ---
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(hex: "#FF8FB5"),
-                                Color(hex: "#9B7CFF"),
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+            // --- Avatar ---
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color(hex: "#FF8FB5"),
+                            Color(hex: "#9B7CFF"),
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
                     )
-                    .frame(width: 56, height: 56)
-                    .overlay(
-                        Text(avatarInitials)
-                            .font(.title3.bold())
-                            .foregroundColor(.white)
-                    )
-
-                // --- Name & Email ---
-                VStack(spacing: 2) {
-                    Text(connectivity.username)
-                        .font(.headline)
+                )
+                .frame(width: 40, height: 40)
+                .overlay(
+                    Text(avatarInitials)
+                        .font(.body.bold())
                         .foregroundColor(.white)
-                        .lineLimit(1)
-
-                    Text(connectivity.email)
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
-                }
-
-                // --- Stats Grid ---
-                HStack(spacing: 8) {
-                    StatBadge(
-                        icon: "bitcoinsign.circle.fill",
-                        value: "\(connectivity.coins)",
-                        label: "Coins",
-                        color: Color(hex: "#9B7CFF")
-                    )
-
-                    StatBadge(
-                        icon: "flame.fill",
-                        value: "\(connectivity.streak)d",
-                        label: "Streak",
-                        color: Color(hex: "#FF8F50")
-                    )
-                }
-
-                // --- Total Savings Card ---
-                VStack(spacing: 4) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "wallet.pass.fill")
-                            .font(.caption2)
-                            .foregroundColor(Color(hex: "#9B7CFF"))
-                        Text("Total Savings")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                        Spacer()
-                    }
-
-                    HStack {
-                        Text("Rp \(connectivity.totalSavings.formattedWithDot)")
-                            .font(.subheadline.bold())
-                            .foregroundColor(.white)
-                        Spacer()
-                    }
-                }
-                .padding(10)
-                .background(
-                    Color.white.opacity(0.1),
-                    in: RoundedRectangle(cornerRadius: 12)
                 )
 
-                // --- Penalty Status ---
-                HStack(spacing: 6) {
-                    Image(systemName: penaltyIcon)
-                        .font(.caption2)
-                        .foregroundColor(penaltyColor)
+            // --- Name & Email ---
+            VStack(spacing: 0) {
+                Text(connectivity.username)
+                    .font(.body.bold())
+                    .foregroundColor(.white)
+                    .lineLimit(1)
 
-                    Text(penaltyText)
-                        .font(.caption2.weight(.medium))
-                        .foregroundColor(penaltyColor)
+                Text(connectivity.email)
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+            }
 
+            // --- Stats Grid ---
+            HStack(spacing: 6) {
+                StatBadge(
+                    icon: "bitcoinsign.circle.fill",
+                    value: "\(connectivity.coins)",
+                    label: "Coins",
+                    color: Color(hex: "#9B7CFF")
+                )
+
+                StatBadge(
+                    icon: "flame.fill",
+                    value: "\(connectivity.streak)d",
+                    label: "Streak",
+                    color: Color(hex: "#FF8F50")
+                )
+            }
+
+            // --- Total Savings Card ---
+            VStack(spacing: 2) {
+                HStack(spacing: 4) {
+                    Image(systemName: "wallet.pass.fill")
+                        .font(.system(size: 10))
+                        .foregroundColor(Color(hex: "#9B7CFF"))
+                    Text("Total Savings")
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
                     Spacer()
                 }
-                .padding(10)
-                .background(
-                    penaltyColor.opacity(0.15),
-                    in: RoundedRectangle(cornerRadius: 12)
-                )
 
-                // --- Connection Status ---
-                if !connectivity.isConnected {
-                    HStack(spacing: 4) {
-                        Image(systemName: "iphone.slash")
-                            .font(.caption2)
-                        Text("Waiting for iPhone...")
-                            .font(.caption2)
-                    }
-                    .foregroundColor(.orange)
-                    .padding(.top, 4)
+                HStack {
+                    Text("Rp \(connectivity.totalSavings.formattedWithDot)")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white)
+                    Spacer()
                 }
             }
-            .padding(.horizontal, 4)
+            .padding(8)
+            .background(
+                Color.white.opacity(0.1),
+                in: RoundedRectangle(cornerRadius: 10)
+            )
+
+            // --- Penalty Status ---
+            HStack(spacing: 4) {
+                Image(systemName: penaltyIcon)
+                    .font(.system(size: 10))
+                    .foregroundColor(penaltyColor)
+
+                Text(penaltyText)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(penaltyColor)
+
+                Spacer()
+            }
+            .padding(6)
+            .background(
+                penaltyColor.opacity(0.15),
+                in: RoundedRectangle(cornerRadius: 8)
+            )
+
+            // --- Connection Status ---
+            if !connectivity.isConnected {
+                HStack(spacing: 4) {
+                    Image(systemName: "iphone.slash")
+                        .font(.system(size: 9))
+                    Text("Waiting for iPhone...")
+                        .font(.system(size: 9))
+                }
+                .foregroundColor(.orange)
+            }
         }
+        .padding(.horizontal, 4)
     }
 
     // MARK: - Computed Properties
@@ -169,24 +166,24 @@ struct StatBadge: View {
     var color: Color
 
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 2) {
             Image(systemName: icon)
-                .font(.caption)
+                .font(.system(size: 10))
                 .foregroundColor(color)
 
             Text(value)
-                .font(.subheadline.bold())
+                .font(.system(size: 14, weight: .bold))
                 .foregroundColor(.white)
 
             Text(label)
-                .font(.caption2)
+                .font(.system(size: 9))
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 8)
+        .padding(.vertical, 4)
         .background(
             Color.white.opacity(0.1),
-            in: RoundedRectangle(cornerRadius: 12)
+            in: RoundedRectangle(cornerRadius: 10)
         )
     }
 }

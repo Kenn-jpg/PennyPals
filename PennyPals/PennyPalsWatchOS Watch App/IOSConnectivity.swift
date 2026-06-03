@@ -30,6 +30,10 @@ class IOSConnectivity: NSObject, ObservableObject {
     @Published var petMood: String = "hungry"
     @Published var petType: String = "rose"
 
+    // MARK: - Inventory Data
+    @Published var ownedBackgrounds: [[String: String]] = []
+    @Published var selectedBackgroundId: String = ""
+
     // MARK: - Connection Status
     @Published var isConnected: Bool = false
 
@@ -62,6 +66,25 @@ class IOSConnectivity: NSObject, ObservableObject {
             replyHandler: nil
         ) { error in
             print("⌚ Refresh request error: \(error.localizedDescription)")
+        }
+    }
+
+    /// Kirim permintaan ke iPhone untuk memakai background tertentu
+    func equipBackground(id: String) {
+        guard WCSession.default.isReachable else {
+            print("⌚ iPhone not reachable for equip request")
+            // Update local state speculatively just for UI responsiveness
+            DispatchQueue.main.async {
+                self.selectedBackgroundId = id
+            }
+            return
+        }
+        
+        WCSession.default.sendMessage(
+            ["request": "equipBackground", "id": id],
+            replyHandler: nil
+        ) { error in
+            print("⌚ Equip background error: \(error.localizedDescription)")
         }
     }
 
@@ -120,6 +143,16 @@ class IOSConnectivity: NSObject, ObservableObject {
                 }
                 self.isConnected = true
                 print("⌚ Watch received pet update: \(self.petName) Lv.\(self.petLevel)")
+
+            case "inventoryUpdate":
+                if let bgs = data["ownedBackgrounds"] as? [[String: String]] {
+                    self.ownedBackgrounds = bgs
+                }
+                if let selectedId = data["selectedBackgroundId"] as? String {
+                    self.selectedBackgroundId = selectedId
+                }
+                self.isConnected = true
+                print("⌚ Watch received inventory update: \(self.ownedBackgrounds.count) backgrounds")
 
             default:
                 print("⌚ Unknown message type: \(messageType)")

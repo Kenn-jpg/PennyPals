@@ -13,126 +13,123 @@ struct WatchPetStatsView: View {
     @State private var isBouncing = false
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 12) {
+        VStack(spacing: 8) {
 
-                // --- Pet Character ---
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Color(hex: "#FFE8F1"),
-                                    Color(hex: "#E8DCFF"),
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+            // --- Pet Character ---
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color(hex: "#FFE8F1"),
+                                Color(hex: "#E8DCFF"),
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
                         )
-                        .frame(width: 100, height: 100)
-
-                    WatchPetView(
-                        mood: connectivity.petMood,
-                        size: 90
                     )
-                    .offset(y: isBouncing ? -4 : 4)
-                    .onAppear {
-                        withAnimation(
-                            .easeInOut(duration: 1.5)
-                                .repeatForever(autoreverses: true)
-                        ) {
-                            isBouncing = true
-                        }
-                    }
-                }
+                    .frame(width: 60, height: 60)
 
-                // --- Pet Name & Mood ---
-                VStack(spacing: 4) {
-                    Text(connectivity.petName)
-                        .font(.headline)
-                        .foregroundColor(.white)
-
-                    HStack(spacing: 4) {
-                        Text(moodEmoji)
-                            .font(.caption)
-                        Text(connectivity.petMood.capitalized)
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                    }
-                }
-
-                // --- Level Badge ---
-                HStack(spacing: 6) {
-                    Image(systemName: "sparkles")
-                        .font(.caption2)
-                        .foregroundColor(Color(hex: "#9B7CFF"))
-
-                    Text("Level \(connectivity.petLevel)")
-                        .font(.caption.weight(.bold))
-                        .foregroundColor(.white)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(
-                    Color(hex: "#9B7CFF").opacity(0.25),
-                    in: Capsule()
+                WatchPetView(
+                    mood: connectivity.petMood,
+                    size: 50
                 )
-
-                // --- XP Progress Bar ---
-                VStack(spacing: 6) {
-                    HStack {
-                        Text("XP")
-                            .font(.caption2.weight(.medium))
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        Text("\(connectivity.petXP) / \(connectivity.petMaxXP)")
-                            .font(.caption2.weight(.bold))
-                            .foregroundColor(Color(hex: "#9B7CFF"))
+                .offset(y: isBouncing ? -2 : 2)
+                .onAppear {
+                    withAnimation(
+                        .easeInOut(duration: 1.5)
+                            .repeatForever(autoreverses: true)
+                    ) {
+                        isBouncing = true
                     }
-
-                    GeometryReader { geo in
-                        ZStack(alignment: .leading) {
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Color.white.opacity(0.15))
-                                .frame(height: 8)
-
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [
-                                            Color(hex: "#FF8FB5"),
-                                            Color(hex: "#9B7CFF"),
-                                        ],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                                .frame(
-                                    width: xpProgress * geo.size.width,
-                                    height: 8
-                                )
-                                .animation(.easeOut(duration: 0.5), value: connectivity.petXP)
-                        }
-                    }
-                    .frame(height: 8)
-                }
-                .padding(.horizontal, 4)
-
-                // --- Connection Status ---
-                if !connectivity.isConnected {
-                    HStack(spacing: 4) {
-                        Image(systemName: "iphone.slash")
-                            .font(.caption2)
-                        Text("Not synced")
-                            .font(.caption2)
-                    }
-                    .foregroundColor(.orange)
-                    .padding(.top, 4)
                 }
             }
-            .padding(.horizontal, 8)
+            .padding(.top, 4)
+
+            // --- Pet Name & Mood ---
+            VStack(spacing: 0) {
+                Text(connectivity.petName)
+                    .font(.body.bold())
+                    .foregroundColor(.white)
+
+                HStack(spacing: 4) {
+                    Text(moodEmoji)
+                        .font(.system(size: 10))
+                    Text(connectivity.petMood.capitalized)
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                }
+            }
+
+            // --- Level Badge ---
+            HStack(spacing: 4) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 10))
+                    .foregroundColor(Color(hex: "#9B7CFF"))
+
+                Text("Level \(connectivity.petLevel)")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(.white)
+            }
+            .padding(.horizontal, 10)
             .padding(.vertical, 4)
+            .background(
+                Color(hex: "#9B7CFF").opacity(0.25),
+                in: Capsule()
+            )
+
+            // --- XP Progress Bar ---
+            VStack(spacing: 4) {
+                HStack {
+                    Text("XP")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Text("\(connectivity.petXP) / \(connectivity.petMaxXP)")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(Color(hex: "#9B7CFF"))
+                }
+
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(Color.white.opacity(0.15))
+                            .frame(height: 6)
+
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color(hex: "#FF8FB5"),
+                                        Color(hex: "#9B7CFF"),
+                                    ],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .frame(
+                                width: xpProgress * geo.size.width,
+                                height: 6
+                            )
+                            .animation(.easeOut(duration: 0.5), value: connectivity.petXP)
+                    }
+                }
+                .frame(height: 6)
+            }
+            .padding(.horizontal, 8)
+
+            // --- Connection Status ---
+            if !connectivity.isConnected {
+                HStack(spacing: 4) {
+                    Image(systemName: "iphone.slash")
+                        .font(.system(size: 9))
+                    Text("Not synced")
+                        .font(.system(size: 9))
+                }
+                .foregroundColor(.orange)
+            }
         }
+        .padding(.horizontal, 4)
     }
 
     // MARK: - Computed Properties

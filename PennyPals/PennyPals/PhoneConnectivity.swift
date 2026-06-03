@@ -74,6 +74,19 @@ class PhoneConnectivity: NSObject {
         sendToWatch(data)
     }
 
+    /// Kirim data inventory (backgrounds yang dimiliki) ke Watch
+    func sendInventoryToWatch(
+        ownedBackgrounds: [[String: String]],
+        selectedBackgroundId: String?
+    ) {
+        let data: [String: Any] = [
+            "type": "inventoryUpdate",
+            "ownedBackgrounds": ownedBackgrounds,
+            "selectedBackgroundId": selectedBackgroundId ?? "",
+        ]
+        sendToWatch(data)
+    }
+
     // MARK: - Private Helpers
 
     private func sendToWatch(_ data: [String: Any]) {
@@ -127,11 +140,19 @@ extension PhoneConnectivity: WCSessionDelegate {
     ) {
         if message["request"] as? String == "refresh" {
             print("⌚ Watch requested data refresh")
-            // Post notification so ViewModels can respond
             DispatchQueue.main.async {
                 NotificationCenter.default.post(
                     name: .watchRequestedRefresh,
                     object: nil
+                )
+            }
+        } else if message["request"] as? String == "equipBackground", let id = message["id"] as? String {
+            print("⌚ Watch requested to equip background: \(id)")
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(
+                    name: .watchRequestedEquipBackground,
+                    object: nil,
+                    userInfo: ["id": id]
                 )
             }
         }
@@ -142,4 +163,5 @@ extension PhoneConnectivity: WCSessionDelegate {
 
 extension Notification.Name {
     static let watchRequestedRefresh = Notification.Name("watchRequestedRefresh")
+    static let watchRequestedEquipBackground = Notification.Name("watchRequestedEquipBackground")
 }

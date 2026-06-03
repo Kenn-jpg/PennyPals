@@ -9,10 +9,20 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var connectivity: IOSConnectivity
-    @AppStorage("selectedTheme") private var selectedThemeRaw: String = WatchTheme.midnight.rawValue
 
-    private var currentTheme: WatchTheme {
-        WatchTheme(rawValue: selectedThemeRaw) ?? .midnight
+    private var backgroundGradient: LinearGradient {
+        let selectedId = connectivity.selectedBackgroundId
+        let bgs = connectivity.ownedBackgrounds
+        let currentBg = bgs.first(where: { $0["id"] == selectedId })
+        
+        let colorHex = currentBg?["colorHex"] ?? "#1A1A2E"
+        let spotsHex = currentBg?["spotsHex"] ?? "#16213E"
+        
+        return LinearGradient(
+            colors: [Color(hex: colorHex), Color(hex: spotsHex)],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
     }
 
     var body: some View {
@@ -20,25 +30,25 @@ struct ContentView: View {
             // Tab 1: Pet Stats
             WatchPetStatsView()
                 .containerBackground(
-                    currentTheme.gradient,
+                    backgroundGradient,
                     for: .tabView
                 )
 
             // Tab 2: Profile
             WatchProfileView()
                 .containerBackground(
-                    currentTheme.gradient,
+                    backgroundGradient,
                     for: .tabView
                 )
 
             // Tab 3: Settings
             WatchSettingsView()
                 .containerBackground(
-                    currentTheme.gradient,
+                    backgroundGradient,
                     for: .tabView
                 )
         }
-        .tabViewStyle(.verticalPage)
+        .tabViewStyle(.page)
         .onAppear {
             // Request data terbaru saat Watch app dibuka
             connectivity.requestRefresh()

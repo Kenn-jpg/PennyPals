@@ -23,6 +23,16 @@ class ShopViewModel: ObservableObject {
     init() {
         fetchShopItems()
         fetchUserInventory()
+        
+        NotificationCenter.default.addObserver(
+            forName: .watchRequestedEquipBackground,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            if let id = notification.userInfo?["id"] as? String {
+                self?.useBackground(id: id)
+            }
+        }
     }
 
     func fetchShopItems() {
@@ -60,6 +70,22 @@ class ShopViewModel: ObservableObject {
             let inv = try? snapshot?.data(as: UserInventoryModel.self)
             self.unlockedItemIds = inv?.unlockedItemIds ?? []
             self.selectedBackgroundId = inv?.selectedBackgroundId
+
+            // 📲 Forward owned backgrounds ke Watch
+            let ownedBgs = self.shopItems
+                .filter { $0.category == "Backgrounds" && self.unlockedItemIds.contains($0.id ?? "") }
+                .map { item -> [String: String] in
+                    [
+                        "id": item.id ?? "",
+                        "name": item.name,
+                        "colorHex": item.colorHex ?? "#1A1A2E",
+                        "spotsHex": item.spotsHex ?? "#16213E",
+                    ]
+                }
+            PhoneConnectivity.shared.sendInventoryToWatch(
+                ownedBackgrounds: ownedBgs,
+                selectedBackgroundId: self.selectedBackgroundId
+            )
         }
     }
     
@@ -113,6 +139,21 @@ class ShopViewModel: ObservableObject {
 
         db.collection("inventories").document(uid).setData(
             ["selectedBackgroundId": itemId],
+            merge: true
+        )
+    }
+
+    func useBackground(id: String) {
+        guard let uid = userId else { return }
+
+        // hanya boleh equip kalau sudah dimiliki
+        guard unlockedItemIds.contains(id) else {
+            self.errorMessage = "Beli dulu background-nya!"
+            return
+        }
+
+        db.collection("inventories").document(uid).setData(
+            ["selectedBackgroundId": id],
             merge: true
         )
     }
