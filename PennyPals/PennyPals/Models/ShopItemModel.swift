@@ -22,12 +22,18 @@ struct ShopItemModel: Identifiable, Codable, Equatable {
     /// Harga item yang harus dibayar menggunakan koin virtual (`coins`).
     var price: Int
 
-    /// Properti kode warna Hex opsional, umumnya digunakan untuk kustomisasi warna telur.
+    /// Properti kode warna Hex opsional, umumnya digunakan untuk kustomisasi warna telur atau warna dasar background.
     var colorHex: String?
 
-    /// Properti kode warna Hex opsional untuk memberikan pola/corak pada telur.
+    /// Properti kode warna Hex opsional untuk memberikan pola/corak pada telur atau background.
     var spotsHex: String?
 
     /// Nama file gambar aset yang dipanggil dari Xcode Assets Catalog (contoh: "tshirt.fill").
     var imageName: String?
+
+    /// Menandakan apakah latar belakang menggunakan efek warna degradasi (gradient).
+    var isGradient: Bool?
+
+    /// Properti kode warna Hex ujung/akhir jika properti `isGradient` bernilai true.
+    var endColorHex: String?
 }

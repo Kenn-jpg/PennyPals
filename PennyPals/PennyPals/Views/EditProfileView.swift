@@ -1,6 +1,13 @@
-import SwiftUI
+//
+//  EditProfileView.swift
+//  PennyPals
+//
+//  Created by Kelompok 8 on 28/05/26.
+//
+
 import FirebaseAuth
 import FirebaseFirestore
+import SwiftUI
 
 struct EditProfileView: View {
     @EnvironmentObject var authVM: AuthViewModel
@@ -110,7 +117,8 @@ struct EditProfileView: View {
                 .getDocuments()
 
             if let doc = snap.documents.first,
-               let name = doc.data()["name"] as? String {
+                let name = doc.data()["name"] as? String
+            {
                 petName = name
             }
         } catch {
@@ -123,8 +131,12 @@ struct EditProfileView: View {
         localError = nil
         authVM.errorMessage = nil
 
-        let trimmedUsername = username.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedPetName = petName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedUsername = username.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        let trimmedPetName = petName.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
 
         // validasi password hanya kalau user isi
         if !newPassword.isEmpty || !confirmPassword.isEmpty {
@@ -176,9 +188,10 @@ struct EditProfileView: View {
                 return
             }
 
-            try await db.collection("pets").document(doc.documentID).updateData([
-                "name": newName
-            ])
+            try await db.collection("pets").document(doc.documentID).updateData(
+                [
+                    "name": newName
+                ])
         } catch {
             await MainActor.run { localError = error.localizedDescription }
         }

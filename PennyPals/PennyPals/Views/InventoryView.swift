@@ -1,6 +1,13 @@
-import SwiftUI
+//
+//  InventoryView.swift
+//  PennyPals
+//
+//  Created by Kelompok 8 on 28/05/26.
+//
+
 import FirebaseAuth
 import FirebaseFirestore
+import SwiftUI
 
 struct InventoryView: View {
     @Environment(\.dismiss) private var dismiss
@@ -13,7 +20,8 @@ struct InventoryView: View {
 
     private var ownedAccessories: [ShopItemModel] {
         shopItems.filter {
-            $0.category == "Accessories" && unlockedItemIds.contains($0.id ?? "")
+            $0.category == "Accessories"
+                && unlockedItemIds.contains($0.id ?? "")
         }
     }
 
@@ -31,16 +39,20 @@ struct InventoryView: View {
                     ContentUnavailableView(
                         "No Accessories Yet",
                         systemImage: "bag",
-                        description: Text("Beli accessories di Shop, nanti muncul di sini.")
+                        description: Text(
+                            "Beli accessories di Shop, nanti muncul di sini."
+                        )
                     )
                     .padding()
                 } else {
                     List {
                         ForEach(ownedAccessories) { item in
                             HStack(spacing: 12) {
-                                Image(systemName: item.imageName ?? "tshirt.fill")
-                                    .foregroundColor(.pennyPurple)
-                                    .frame(width: 28)
+                                Image(
+                                    systemName: item.imageName ?? "tshirt.fill"
+                                )
+                                .foregroundColor(.pennyPurple)
+                                .frame(width: 28)
 
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(item.name).font(.headline)
@@ -73,7 +85,9 @@ struct InventoryView: View {
 
     private func startInventoryListener() {
         guard let uid = Auth.auth().currentUser?.uid else { return }
-        db.collection("inventories").document(uid).addSnapshotListener { snapshot, error in
+        db.collection("inventories").document(uid).addSnapshotListener {
+            snapshot,
+            error in
             if let error {
                 self.errorMessage = error.localizedDescription
                 return
@@ -101,7 +115,10 @@ struct InventoryView: View {
                     let item = try doc.data(as: ShopItemModel.self)
                     return item
                 } catch {
-                    print("❌ Decode shopItem failed for docID=\(doc.documentID):", error)
+                    print(
+                        "❌ Decode shopItem failed for docID=\(doc.documentID):",
+                        error
+                    )
                     print("Raw data:", doc.data())
                     return nil
                 }

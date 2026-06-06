@@ -36,7 +36,8 @@ class ShopViewModel: ObservableObject {
     }
 
     func fetchShopItems() {
-        self.shopItems = [
+        // Data default sebagai fallback jika Firebase gagal atau kosong
+        let defaultItems = [
             ShopItemModel(
                 id: "acc_hat",
                 name: "Cute Hat",
@@ -44,7 +45,9 @@ class ShopViewModel: ObservableObject {
                 price: 150,
                 colorHex: nil,
                 spotsHex: nil,
-                imageName: "tshirt.fill"
+                imageName: "tshirt.fill",
+                isGradient: false,  // Ditambahkan
+                endColorHex: nil  // Ditambahkan
             ),
             ShopItemModel(
                 id: "bg_softpink",
@@ -53,16 +56,50 @@ class ShopViewModel: ObservableObject {
                 price: 200,
                 colorHex: "#FFF1F6",
                 spotsHex: "#E8F4FF",
-                imageName: nil
+                imageName: nil,
+                isGradient: false,  // Ditambahkan
+                endColorHex: nil  // Ditambahkan
             ),
         ]
 
-        db.collection("shopItems").getDocuments { snapshot, _ in
-            if let docs = snapshot?.documents, !docs.isEmpty {
-                self.shopItems = docs.compactMap {
-                    try? $0.data(as: ShopItemModel.self)
+        db.collection("shopItems").getDocuments { [weak self] snapshot, error in
+            guard let self = self else { return }
+
+            if let error = error {
+                print(
+                    "❌ Error fetching shop items: \(error.localizedDescription)"
+                )
+                self.shopItems = defaultItems
+                return
+            }
+
+            guard let docs = snapshot?.documents, !docs.isEmpty else {
+                print("⚠️ Collection shopItems kosong di Firebase!")
+                self.shopItems = defaultItems
+                return
+            }
+
+            var fetchedItems: [ShopItemModel] = []
+
+            for doc in docs {
+                do {
+                    let item = try doc.data(as: ShopItemModel.self)
+                    fetchedItems.append(item)
+                } catch {
+                    print(
+                        "❌ Error Decoding Item di Firebase (ID: \(doc.documentID)): \(error)"
+                    )
                 }
             }
+
+            var finalItems = fetchedItems
+            for dItem in defaultItems {
+                if !finalItems.contains(where: { $0.id == dItem.id }) {
+                    finalItems.append(dItem)
+                }
+            }
+
+            self.shopItems = finalItems
         }
     }
 
@@ -87,6 +124,8 @@ class ShopViewModel: ObservableObject {
                         "name": item.name,
                         "colorHex": item.colorHex ?? "#1A1A2E",
                         "spotsHex": item.spotsHex ?? "#16213E",
+                        "isGradient": String(item.isGradient ?? false),  // Kirim status gradient ke Watch
+                        "endColorHex": item.endColorHex ?? item.colorHex ?? "",  // Kirim endColor ke Watch
                     ]
                 }
             PhoneConnectivity.shared.sendInventoryToWatch(
@@ -99,7 +138,6 @@ class ShopViewModel: ObservableObject {
     func purchaseItem(item: ShopItemModel, currentUserCoins: Int) {
         guard let uid = userId, let itemId = item.id else { return }
 
-        // FIX: kalau sudah punya, jangan bisa beli lagi
         if unlockedItemIds.contains(itemId) {
             self.errorMessage = "Item sudah dimiliki!"
             return
@@ -125,7 +163,6 @@ class ShopViewModel: ObservableObject {
             "unlockedItemIds": FieldValue.arrayUnion([itemId]),
         ]
 
-        // Auto-equip kalau beli background
         if item.category == "Backgrounds" {
             data["selectedBackgroundId"] = itemId
         }
@@ -136,7 +173,6 @@ class ShopViewModel: ObservableObject {
             if let err = error {
                 self.errorMessage = err.localizedDescription
             } else {
-                // 🌟 TRIGGER WINK: Setelah pembelian berhasil, ubah mood pet menjadi wink!
                 self.db.collection("pets").whereField("userId", isEqualTo: uid)
                     .getDocuments { snap, _ in
                         if let petDoc = snap?.documents.first {
@@ -150,7 +186,6 @@ class ShopViewModel: ObservableObject {
     func useBackground(item: ShopItemModel) {
         guard let uid = userId, let itemId = item.id else { return }
 
-        // hanya boleh equip kalau sudah dimiliki
         guard unlockedItemIds.contains(itemId) else {
             self.errorMessage = "Beli dulu background-nya!"
             return
@@ -165,7 +200,6 @@ class ShopViewModel: ObservableObject {
     func useBackground(id: String) {
         guard let uid = userId else { return }
 
-        // hanya boleh equip kalau sudah dimiliki
         guard unlockedItemIds.contains(id) else {
             self.errorMessage = "Beli dulu background-nya!"
             return
