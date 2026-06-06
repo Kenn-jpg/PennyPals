@@ -12,18 +12,29 @@ import SwiftUI
 struct InventoryView: View {
     @Environment(\.dismiss) private var dismiss
 
+    let category: String
+
     @State private var unlockedItemIds: [String] = []
     @State private var shopItems: [ShopItemModel] = []
     @State private var errorMessage: String?
 
+    // State untuk item yang sedang dipakai (Equipped)
+    @State private var equippedItemId: String? = nil
+
     private let db = Firestore.firestore()
 
-    private var ownedAccessories: [ShopItemModel] {
+    private var ownedItems: [ShopItemModel] {
         shopItems.filter {
-            $0.category == "Accessories"
+            $0.category == self.category
                 && unlockedItemIds.contains($0.id ?? "")
         }
     }
+
+    // Konfigurasi Grid 2 Kolom
+    private let gridColumns = [
+        GridItem(.flexible(), spacing: 16),
+        GridItem(.flexible(), spacing: 16),
+    ]
 
     var body: some View {
         NavigationStack {
@@ -35,50 +46,161 @@ struct InventoryView: View {
                         .padding()
                 }
 
-                if ownedAccessories.isEmpty {
+                if ownedItems.isEmpty {
                     ContentUnavailableView(
-                        "No Accessories Yet",
-                        systemImage: "bag",
+                        "No \(category) Yet",
+                        systemImage: category == "Accessories"
+                            ? "bag" : "photo",
                         description: Text(
-                            "Beli accessories di Shop, nanti muncul di sini."
+                            "Beli \(category.lowercased()) di Shop, nanti muncul di sini."
                         )
                     )
                     .padding()
                 } else {
-                    List {
-                        ForEach(ownedAccessories) { item in
-                            HStack(spacing: 12) {
-                                Image(
-                                    systemName: item.imageName ?? "tshirt.fill"
-                                )
-                                .foregroundColor(.pennyPurple)
-                                .frame(width: 28)
-
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(item.name).font(.headline)
-                                    Text("Owned")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-
-                                Spacer()
+                    ScrollView(showsIndicators: false) {
+                        LazyVGrid(columns: gridColumns, spacing: 20) {
+                            ForEach(ownedItems) { item in
+                                inventoryCard(for: item)
                             }
-                            .padding(.vertical, 6)
                         }
+                        .padding()
                     }
-                    .listStyle(.insetGrouped)
                 }
             }
-            .navigationTitle("Inventory")
+            .navigationTitle(category)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Close") { dismiss() }
                 }
             }
+            .background(
+                Color(UIColor.secondarySystemBackground).ignoresSafeArea()
+            )
             .onAppear {
                 startInventoryListener()
                 fetchShopItems()
+            }
+        }
+    }
+
+    // MARK: - Komponen Kartu Minimalis
+    @ViewBuilder
+    private func inventoryCard(for item: ShopItemModel) -> some View {
+        let isEquipped = equippedItemId == item.id
+
+        VStack(spacing: 12) {
+            // Preview Item (Kotak Visual)
+            ZStack {
+                if category == "Backgrounds" {
+                    // Cek Gradient
+                    if item.isGradient == true, let endColor = item.endColorHex
+                    {
+                        LinearGradient(
+                            colors: [
+                                Color(hex: item.colorHex ?? "#E8E8E8"),
+                                Color(hex: endColor),
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    } else {
+                        // Fallback warna solid
+                        Color(hex: item.colorHex ?? "#E8E8E8")
+                    }
+
+                    // Cek Spots (Bulatan)
+                    if let spotsHex = item.spotsHex {
+                        VStack {
+                            HStack {
+                                Circle()
+                                    .fill(Color(hex: spotsHex))
+                                    .frame(width: 40)
+                                    .offset(x: -10, y: -10)
+                                Spacer()
+                            }
+                            Spacer()
+                            HStack {
+                                Spacer()
+                                Circle()
+                                    .fill(Color(hex: spotsHex))
+                                    .frame(width: 50)
+                                    .offset(x: 10, y: 15)
+                            }
+                        }
+                    }
+                } else {
+                    // Tampilan default untuk aksesoris
+                    Color.white
+                    Image(systemName: item.imageName ?? "tshirt.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 40, height: 40)
+                        .foregroundColor(.pennyPurple)
+                }
+            }
+            .frame(height: 120)
+            .clipped()  // Pastikan spot tidak keluar batas
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .shadow(color: .black.opacity(0.05), radius: 5, y: 2)
+
+            // Info Text
+            VStack(spacing: 4) {
+                Text(item.name)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                    .lineLimit(1)
+
+                // Tombol Use / Equipped
+                Button(action: {
+                    equipItem(item)
+                }) {
+                    Text(isEquipped ? "Equipped" : "Use")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(isEquipped ? .white : .pennyPurple)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .background(
+                            isEquipped
+                                ? Color.pennyPurple
+                                : Color.pennyPurple.opacity(0.1)
+                        )
+                        .clipShape(Capsule())
+                }
+            }
+            .padding(.horizontal, 8)
+            .padding(.bottom, 12)
+        }
+        .background(Color(UIColor.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .shadow(color: .black.opacity(0.03), radius: 8, y: 4)
+    }
+
+    // MARK: - Functions
+    private func equipItem(_ item: ShopItemModel) {
+        guard let uid = Auth.auth().currentUser?.uid, let itemId = item.id
+        else { return }
+
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+            equippedItemId = itemId
+        }
+
+        // 🌟 PERBAIKAN: Update field di Firestore agar item tersimpan dan sinkron dengan HomeView
+        var updateData: [String: Any] = [:]
+        if category == "Backgrounds" {
+            updateData["selectedBackgroundId"] = itemId
+        } else if category == "Accessories" {
+            updateData["selectedAccessoryId"] = itemId
+        }
+
+        db.collection("inventories").document(uid).setData(
+            updateData,
+            merge: true
+        ) { error in
+            if let error = error {
+                self.errorMessage = error.localizedDescription
             }
         }
     }
@@ -92,11 +214,19 @@ struct InventoryView: View {
                 self.errorMessage = error.localizedDescription
                 return
             }
-            let inv = try? snapshot?.data(as: UserInventoryModel.self)
-            self.unlockedItemIds = inv?.unlockedItemIds ?? []
 
-            // Debug (hapus kalau sudah oke)
-            print("Inventory unlockedItemIds:", self.unlockedItemIds)
+            // 🌟 PERBAIKAN: Membaca dictionary dari Firestore untuk mengetahui item apa yang sedang di-equip
+            if let data = snapshot?.data() {
+                self.unlockedItemIds =
+                    data["unlockedItemIds"] as? [String] ?? []
+
+                if self.category == "Backgrounds" {
+                    self.equippedItemId =
+                        data["selectedBackgroundId"] as? String
+                } else if self.category == "Accessories" {
+                    self.equippedItemId = data["selectedAccessoryId"] as? String
+                }
+            }
         }
     }
 
@@ -107,24 +237,10 @@ struct InventoryView: View {
                 return
             }
 
-            let docs = snapshot?.documents ?? []
-            print("Shop items docs count:", docs.count)
-
-            self.shopItems = docs.compactMap { doc in
-                do {
-                    let item = try doc.data(as: ShopItemModel.self)
-                    return item
-                } catch {
-                    print(
-                        "❌ Decode shopItem failed for docID=\(doc.documentID):",
-                        error
-                    )
-                    print("Raw data:", doc.data())
-                    return nil
-                }
-            }
-
-            print("Shop items ids:", self.shopItems.compactMap { $0.id })
+            self.shopItems =
+                snapshot?.documents.compactMap { doc in
+                    try? doc.data(as: ShopItemModel.self)
+                } ?? []
         }
     }
 }

@@ -14,7 +14,7 @@ import SwiftUI
 class AuthViewModel: ObservableObject {
     @Published var isAuthenticated = false
     @Published var currentUser: UserModel?
-    
+
     @Published var errorMessage: String?
     private var db = Firestore.firestore()
 
@@ -28,7 +28,6 @@ class AuthViewModel: ObservableObject {
             self.isAuthenticated = false
         }
     }
-    
 
     func updateUsername(_ newUsername: String) async {
         guard let uid = Auth.auth().currentUser?.uid else { return }
@@ -84,7 +83,9 @@ class AuthViewModel: ObservableObject {
                 totalSavings: 0,
                 isSafeFromPenalty: true,
                 nextPenaltyCheck: nextCheck,
-                isOnboarded: false
+                isOnboarded: false,
+                equippedBackground: nil,  // 🌟 Initialize item
+                equippedAccessory: nil  // 🌟 Initialize item
             )
             try db.collection("users").document(result.user.uid).setData(
                 from: newUser
@@ -112,6 +113,24 @@ class AuthViewModel: ObservableObject {
             NotificationManager.shared.cancelAllNotifications()
         } catch {
             print("Logout error: \(error.localizedDescription)")
+        }
+    }
+
+    // 🌟 FUNGSI BARU UNTUK DIPANGGIL DARI INVENTORY VIEW
+    func equipItem(isBackground: Bool, itemName: String) {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+
+        // Tentukan field mana yang akan diupdate
+        let field = isBackground ? "equippedBackground" : "equippedAccessory"
+
+        db.collection("users").document(uid).updateData([
+            field: itemName
+        ]) { error in
+            if let error = error {
+                print("Error equipping item: \(error.localizedDescription)")
+            } else {
+                print("Successfully equipped \(itemName)!")
+            }
         }
     }
 

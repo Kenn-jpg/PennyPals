@@ -36,7 +36,7 @@ class ShopViewModel: ObservableObject {
     }
 
     func fetchShopItems() {
-        // Data default sebagai fallback jika Firebase gagal atau kosong
+        // Data default sebagai fallback jika Firebase kosong/gagal (HANYA CUTE HAT)
         let defaultItems = [
             ShopItemModel(
                 id: "acc_hat",
@@ -46,23 +46,15 @@ class ShopViewModel: ObservableObject {
                 colorHex: nil,
                 spotsHex: nil,
                 imageName: "tshirt.fill",
-                isGradient: false,  // Ditambahkan
-                endColorHex: nil  // Ditambahkan
-            ),
-            ShopItemModel(
-                id: "bg_softpink",
-                name: "Soft Pink",
-                category: "Backgrounds",
-                price: 200,
-                colorHex: "#FFF1F6",
-                spotsHex: "#E8F4FF",
-                imageName: nil,
-                isGradient: false,  // Ditambahkan
-                endColorHex: nil  // Ditambahkan
-            ),
+                isGradient: false,
+                endColorHex: nil
+            )
+            // ❌ bg_softpink SUDAH DIHAPUS DARI SINI
         ]
 
-        db.collection("shopItems").getDocuments { [weak self] snapshot, error in
+        // 🔥 UBAH KE SnapshotListener AGAR REAL-TIME SINKRON DENGAN FIREBASE
+        db.collection("shopItems").addSnapshotListener {
+            [weak self] snapshot, error in
             guard let self = self else { return }
 
             if let error = error {
@@ -92,6 +84,7 @@ class ShopViewModel: ObservableObject {
                 }
             }
 
+            // Gabungkan dengan defaultItems (Cute Hat) jika belum ada di Firebase
             var finalItems = fetchedItems
             for dItem in defaultItems {
                 if !finalItems.contains(where: { $0.id == dItem.id }) {
@@ -124,8 +117,8 @@ class ShopViewModel: ObservableObject {
                         "name": item.name,
                         "colorHex": item.colorHex ?? "#1A1A2E",
                         "spotsHex": item.spotsHex ?? "#16213E",
-                        "isGradient": String(item.isGradient ?? false),  // Kirim status gradient ke Watch
-                        "endColorHex": item.endColorHex ?? item.colorHex ?? "",  // Kirim endColor ke Watch
+                        "isGradient": String(item.isGradient ?? false),
+                        "endColorHex": item.endColorHex ?? item.colorHex ?? "",
                     ]
                 }
             PhoneConnectivity.shared.sendInventoryToWatch(

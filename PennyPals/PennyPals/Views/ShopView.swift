@@ -1,5 +1,5 @@
 //
-//  ShopScreen.swift
+//  ShopView.swift
 //  PennyPals
 //
 //  Created by Kelompok 8 on 28/05/26.
@@ -89,15 +89,11 @@ struct ShopView: View {
                                 item.id ?? ""
                             )
                             let isBackground = item.category == "Backgrounds"
-                            let isUsing =
-                                isBackground
-                                && (shopVM.selectedBackgroundId == item.id)
 
                             VStack(spacing: 0) {
                                 // 1. Bagian Atas (Icon / Preview Warna)
                                 ZStack {
                                     if isBackground {
-                                        // 🔥 FIX GRADIENT: Cek apakah item berbentuk gradient
                                         if item.isGradient == true,
                                             let endColor = item.endColorHex
                                         {
@@ -113,13 +109,11 @@ struct ShopView: View {
                                                 endPoint: .bottom
                                             )
                                         } else {
-                                            // Fallback ke warna solid jika bukan gradient
                                             Color(
                                                 hex: item.colorHex ?? "#E8E8E8"
                                             )
                                         }
 
-                                        // Tambahkan sedikit aksen 'spots' agar mirip dengan aslinya
                                         if let spotsHex = item.spotsHex {
                                             VStack {
                                                 HStack {
@@ -144,7 +138,6 @@ struct ShopView: View {
                                             }
                                         }
                                     } else {
-                                        // Tampilkan Icon jika Accessories
                                         Color(hex: "#F3F0FF")
 
                                         Image(
@@ -158,7 +151,7 @@ struct ShopView: View {
                                     }
                                 }
                                 .frame(height: 100)
-                                .clipped()  // Pastikan spots/circle tidak keluar dari batas
+                                .clipped()
 
                                 // 2. Bagian Bawah (Detail & Tombol)
                                 VStack(spacing: 8) {
@@ -179,19 +172,9 @@ struct ShopView: View {
                                             .foregroundColor(.pennyText)
                                     }
 
-                                    // 3. Tombol Aksi
+                                    // 3. Tombol Aksi (Hanya BUY atau OWNED)
                                     Button {
-                                        if isBackground {
-                                            if isOwned {
-                                                shopVM.useBackground(item: item)
-                                            } else {
-                                                shopVM.purchaseItem(
-                                                    item: item,
-                                                    currentUserCoins: authVM
-                                                        .currentUser?.coins ?? 0
-                                                )
-                                            }
-                                        } else {
+                                        if !isOwned {
                                             shopVM.purchaseItem(
                                                 item: item,
                                                 currentUserCoins: authVM
@@ -199,35 +182,25 @@ struct ShopView: View {
                                             )
                                         }
                                     } label: {
-                                        Text(
-                                            isBackground
-                                                ? (isUsing
-                                                    ? "Using"
-                                                    : (isOwned ? "Use" : "Buy"))
-                                                : (isOwned ? "Owned" : "Buy")
-                                        )
-                                        .font(.footnote.weight(.bold))
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 10)
-                                        .background(Color(hex: "#F3F0FF"))
-                                        .foregroundColor(
-                                            isUsing
-                                                ? .gray
-                                                : (isOwned && !isBackground
-                                                    ? .gray : .pennyPurple)
-                                        )
-                                        .clipShape(
-                                            RoundedRectangle(cornerRadius: 12)
-                                        )
+                                        Text(isOwned ? "Owned" : "Buy")
+                                            .font(.footnote.weight(.bold))
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.vertical, 10)
+                                            .background(Color(hex: "#F3F0FF"))
+                                            .foregroundColor(
+                                                isOwned ? .gray : .pennyPurple
+                                            )
+                                            .clipShape(
+                                                RoundedRectangle(
+                                                    cornerRadius: 12
+                                                )
+                                            )
                                     }
-                                    .disabled(
-                                        isUsing || (!isBackground && isOwned)
-                                    )
+                                    .disabled(isOwned)
                                     .padding(.top, 4)
                                 }
                                 .padding(12)
                             }
-                            // Styling Container
                             .background(Color(UIColor.systemBackground))
                             .clipShape(RoundedRectangle(cornerRadius: 16))
                             .shadow(

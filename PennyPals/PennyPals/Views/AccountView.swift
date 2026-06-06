@@ -11,7 +11,9 @@ struct AccountView: View {
     @EnvironmentObject var authVM: AuthViewModel
     var onLogout: () -> Void
     @State private var showInventory = false
-    // TAMBAHAN (tidak mengubah UI layout): untuk buka sheet Edit Profile
+    // State untuk membuka sheet Background Inventory
+    @State private var showBackgroundInventory = false
+    // State untuk membuka sheet Edit Profile
     @State private var showEditProfile = false
 
     var body: some View {
@@ -101,7 +103,7 @@ struct AccountView: View {
                                 .padding(.horizontal, 8)
 
                             VStack(spacing: 0) {
-                                // PERBAIKAN: Inventory -> Accessories
+                                // PERBAIKAN: Membuka InventoryView dengan kategori "Accessories"
                                 SettingRow(
                                     icon: "bag.fill",
                                     color: .blue,
@@ -109,21 +111,25 @@ struct AccountView: View {
                                     action: { showInventory = true }
                                 )
                                 .sheet(isPresented: $showInventory) {
-                                    InventoryView()
+                                    InventoryView(category: "Accessories")
                                 }
 
                                 Divider().padding(.leading, 56)
 
-                                // PERBAIKAN: Theme -> Background
+                                // PERBAIKAN: Membuka InventoryView dengan kategori "Backgrounds"
                                 SettingRow(
                                     icon: "moon.fill",
                                     color: .indigo,
-                                    title: "Background"
+                                    title: "Background",
+                                    action: { showBackgroundInventory = true }
                                 )
+                                .sheet(isPresented: $showBackgroundInventory) {
+                                    InventoryView(category: "Backgrounds")
+                                }
 
                                 Divider().padding(.leading, 56)
 
-                                // DIUBAH: Language -> Edit Profile (sisanya tidak disentuh)
+                                // Edit Profile tetap dipertahankan
                                 SettingRow(
                                     icon: "person.crop.circle.fill",
                                     color: .green,
@@ -187,7 +193,6 @@ struct AccountView: View {
             }
             .background(Color.pennyBackground.ignoresSafeArea())
         }
-        // TAMBAHAN: present EditProfileView tanpa mengubah layout AccountView
         .sheet(isPresented: $showEditProfile) {
             EditProfileView()
                 .environmentObject(authVM)
@@ -199,8 +204,6 @@ struct SettingRow: View {
     var icon: String
     var color: Color
     var title: String
-
-    // TAMBAHAN: supaya row bisa punya aksi (default kosong => row lain tidak berubah)
     var action: () -> Void = {}
 
     var body: some View {

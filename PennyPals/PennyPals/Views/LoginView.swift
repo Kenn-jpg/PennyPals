@@ -1,5 +1,5 @@
 //
-//  LoginScreen.swift
+//  LoginView.swift
 //  PennyPals
 //
 //  Created by Kelompok 8 on 28/05/26.

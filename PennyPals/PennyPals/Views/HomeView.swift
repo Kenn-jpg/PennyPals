@@ -1,5 +1,5 @@
 //
-//  HomeScreen.swift
+//  HomeView.swift
 //  PennyPals
 //
 //  Created by Kelompok 8 on 28/05/26.
@@ -12,7 +12,7 @@ struct HomeView: View {
     @EnvironmentObject var authVM: AuthViewModel
 
     @State private var isBouncing = false
-    
+
     // 🌟 Menggabungkan state modal menjadi satu karena AddSavingsModal sudah multifungsi
     @State private var showTransactionModal = false
     @State private var showNewGoalModal = false
@@ -66,6 +66,7 @@ struct HomeView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.pennyBackground.ignoresSafeArea())
             .onAppear {
+                // ✅ Memanggil method langsung tanpa menggunakan '$'
                 homeVM.checkDailyPenalty()
                 if let currentUser = authVM.currentUser {
                     homeVM.checkDailyHunger(currentUser: currentUser)
@@ -83,10 +84,16 @@ struct HomeView: View {
                     if let currentUser = authVM.currentUser {
                         if isExpense {
                             // Jika toggle Pengeluaran yang dipilih
-                            homeVM.addExpense(amount: amount, currentUser: currentUser)
+                            homeVM.addExpense(
+                                amount: amount,
+                                currentUser: currentUser
+                            )
                         } else {
-                            // Jika toggle Tabungan yang dipilih
-                            homeVM.addSavings(amount: amount, currentUser: currentUser)
+                            // ✅ Memanggil method langsung tanpa menggunakan '$'
+                            homeVM.addSavings(
+                                amount: amount,
+                                currentUser: currentUser
+                            )
                         }
                     }
                 }
@@ -95,6 +102,7 @@ struct HomeView: View {
                 SetNewGoalModal(
                     completedGoalName: homeVM.goal?.itemName ?? "Goal",
                     onSave: { itemName, targetAmount in
+                        // ✅ Memanggil method langsung tanpa menggunakan '$'
                         homeVM.setNewGoal(
                             itemName: itemName,
                             targetAmount: targetAmount
@@ -201,31 +209,57 @@ extension HomeView {
 
             ZStack(alignment: .topTrailing) {
                 ZStack {
-                    Circle().fill(
-                        LinearGradient(
-                            colors: [
-                                Color(hex: "#FFE8F1"),
-                                Color(hex: "#E8DCFF"),
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    ).frame(width: 200, height: 200)
+                    // 🌟 RENDER BACKGROUND
+                    if let bgImageName = authVM.currentUser?.equippedBackground,
+                        !bgImageName.isEmpty
+                    {
+                        Image(bgImageName)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 200, height: 200)
+                            .clipShape(Circle())
+                            .shadow(
+                                color: .black.opacity(0.08),
+                                radius: 10,
+                                x: 0,
+                                y: 4
+                            )
+                    } else {
+                        Circle()
+                            .fill(Color.white)
+                            .shadow(
+                                color: .black.opacity(0.08),
+                                radius: 10,
+                                x: 0,
+                                y: 4
+                            )
+                            .frame(width: 200, height: 200)
+                    }
 
                     PetView(
                         petType: homeVM.pet?.type ?? "Cat",
                         mood: homeVM.pet?.mood ?? "hungry",
                         size: 180
                     )
-                    .offset(y: isBouncing ? -8 : 8)
-                    .onAppear {
-                        withAnimation(
-                            .easeInOut(duration: 1.5).repeatForever(
-                                autoreverses: true
-                            )
-                        ) {
-                            isBouncing = true
-                        }
+
+                    // 🌟 RENDER AKSESORIS DI ATAS PET
+                    if let accImageName = authVM.currentUser?.equippedAccessory,
+                        !accImageName.isEmpty
+                    {
+                        Image(accImageName)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 180, height: 180)
+                    }
+                }
+                .offset(y: isBouncing ? -8 : 8)
+                .onAppear {
+                    withAnimation(
+                        .easeInOut(duration: 1.5).repeatForever(
+                            autoreverses: true
+                        )
+                    ) {
+                        isBouncing = true
                     }
                 }
 
@@ -300,7 +334,7 @@ extension HomeView {
             }) {
                 Label("Add Transaction", systemImage: "plus.circle")
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 4) // Opsional: Sedikit menebalkan tombol
+                    .padding(.vertical, 4)
             }
             .buttonStyle(PennyPrimaryButtonStyle())
         }
