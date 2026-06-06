@@ -39,6 +39,7 @@ struct AuthViewModelTests {
             streak: 0,
             lastLoginDate: Date(),
             createdAt: Date(),
+            totalSavings: 0,
             isSafeFromPenalty: true,
             nextPenaltyCheck: Calendar.current.date(
                 byAdding: .day,
