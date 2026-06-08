@@ -9,6 +9,7 @@ import SwiftUI
 
 struct WatchPetStatsView: View {
     @EnvironmentObject var connectivity: IOSConnectivity
+    @State private var isBouncing = false
 
     var body: some View {
         VStack(spacing: 4) {
@@ -30,10 +31,18 @@ struct WatchPetStatsView: View {
                     .frame(width: 54, height: 54)
                     .shadow(color: Color.black.opacity(0.1), radius: 2, y: 1)
 
-                Image("\(connectivity.petType)Laugh")
+                Image("\(connectivity.petType)\(moodSuffix)")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 44, height: 44)
+            }
+            .offset(y: isBouncing ? -4 : 4)
+            .onAppear {
+                withAnimation(
+                    .easeInOut(duration: 1.5).repeatForever(autoreverses: true)
+                ) {
+                    isBouncing = true
+                }
             }
 
             // MARK: - 2. Pet Name & Mood
@@ -141,11 +150,32 @@ struct WatchPetStatsView: View {
     }
 
     private var moodEmoji: String {
-        switch connectivity.petMood {
+        switch connectivity.petMood.lowercased() {
         case "happy": return "😊"
         case "sad": return "😢"
         case "hungry": return "🥺"
+        case "angry": return "😡"
+        case "cry": return "😭"
+        case "dizzy": return "😵"
+        case "sleepy": return "😴"
+        case "surprised": return "😲"
+        case "wink": return "😉"
         default: return "🐾"
+        }
+    }
+    
+    private var moodSuffix: String {
+        switch connectivity.petMood.lowercased() {
+        case "happy": return "Laugh"
+        case "sad": return "Sad"
+        case "hungry": return "TongueOut"
+        case "angry": return "Angry"
+        case "cry": return "Cry"
+        case "dizzy": return "Dizzy"
+        case "sleepy": return "Sleepy"
+        case "surprised": return "Surprised"
+        case "wink": return "WinkTongueOut"
+        default: return "Laugh"
         }
     }
 }

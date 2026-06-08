@@ -67,8 +67,13 @@ struct ContentView: View {
 
                     case .app:
                         if UIDevice.current.userInterfaceIdiom == .pad {
+                            let listSelection = Binding<TabItem?>(
+                                get: { selectedTab },
+                                set: { if let val = $0 { selectedTab = val } }
+                            )
+                            
                             NavigationSplitView {
-                                List(TabItem.allCases, id: \.self, selection: $selectedTab) { tab in
+                                List(TabItem.allCases, id: \.self, selection: listSelection) { tab in
                                     NavigationLink(value: tab) {
                                         Label(tab.rawValue, systemImage: tab.icon)
                                     }
