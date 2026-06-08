@@ -11,10 +11,25 @@ enum AppStage {
     case onboarding, hatching, app
 }
 
+enum TabItem: String, CaseIterable {
+    case home = "Home"
+    case shop = "Shop"
+    case account = "Account"
+    
+    var icon: String {
+        switch self {
+        case .home: return "house.fill"
+        case .shop: return "bag.fill"
+        case .account: return "person.fill"
+        }
+    }
+}
+
 struct ContentView: View {
     @EnvironmentObject var authVM: AuthViewModel
 
     @State private var stage: AppStage = .app
+    @State private var selectedTab: TabItem = .home
     @State private var initialSavings: String = ""
     @State private var selectedEggId: String = "rose"
     @State private var wishlistName: String = ""
@@ -51,32 +66,55 @@ struct ContentView: View {
                         .transition(.opacity)
 
                     case .app:
-                        TabView {
-                            HomeView()
-                                .tabItem {
-                                    Label("Home", systemImage: "house.fill")
+                        if UIDevice.current.userInterfaceIdiom == .pad {
+                            NavigationSplitView {
+                                List(TabItem.allCases, id: \.self, selection: $selectedTab) { tab in
+                                    NavigationLink(value: tab) {
+                                        Label(tab.rawValue, systemImage: tab.icon)
+                                    }
                                 }
-
-                            // Pastikan ShopView menerima data/environment jika dibutuhkan
-                            ShopView()
-                                .tabItem {
-                                    Label("Shop", systemImage: "bag.fill")
+                                .navigationTitle("PennyPals")
+                            } detail: {
+                                switch selectedTab {
+                                case .home:
+                                    HomeView()
+                                case .shop:
+                                    ShopView()
+                                case .account:
+                                    AccountView(onLogout: { authVM.logout() })
                                 }
-
-                            AccountView(onLogout: {
-                                authVM.logout()
-                            })
-                            .tabItem {
-                                Label("Account", systemImage: "person.fill")
                             }
+                            .transition(.opacity)
+                        } else {
+                            TabView(selection: $selectedTab) {
+                                HomeView()
+                                    .tabItem {
+                                        Label("Home", systemImage: "house.fill")
+                                    }
+                                    .tag(TabItem.home)
+
+                                ShopView()
+                                    .tabItem {
+                                        Label("Shop", systemImage: "bag.fill")
+                                    }
+                                    .tag(TabItem.shop)
+
+                                AccountView(onLogout: {
+                                    authVM.logout()
+                                })
+                                .tabItem {
+                                    Label("Account", systemImage: "person.fill")
+                                }
+                                .tag(TabItem.account)
+                            }
+                            .tint(Color.pennyPurple)
+                            .toolbarBackground(.visible, for: .tabBar)
+                            .toolbarBackground(
+                                Color(UIColor.systemBackground),
+                                for: .tabBar
+                            )
+                            .transition(.opacity)
                         }
-                        .tint(Color.pennyPurple)
-                        .toolbarBackground(.visible, for: .tabBar)
-                        .toolbarBackground(
-                            Color(UIColor.systemBackground),
-                            for: .tabBar
-                        )
-                        .transition(.opacity)
                     }
                 } else {
                     // Loading Screen saat AuthViewModel sedang addSnapshotListener pertama kali
