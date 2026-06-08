@@ -21,4 +21,7 @@ struct UserInventoryModel: Identifiable, Codable, Equatable {
 
     /// ID dari background yang saat ini sedang aktif atau dipakai di HomeView.
     var selectedBackgroundId: String?
+
+    /// ID dari aksesoris yang saat ini sedang aktif atau dipakai di HomeView.
+    var selectedAccessoryId: String?
 }

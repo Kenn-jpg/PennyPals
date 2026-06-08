@@ -16,6 +16,7 @@ class ShopViewModel: ObservableObject {
     @Published var unlockedItemIds: [String] = []
     @Published var errorMessage: String?
     @Published var selectedBackgroundId: String?
+    @Published var selectedAccessoryId: String?
 
     private var db = Firestore.firestore()
     private var userId: String? { Auth.auth().currentUser?.uid }
@@ -104,6 +105,7 @@ class ShopViewModel: ObservableObject {
             let inv = try? snapshot?.data(as: UserInventoryModel.self)
             self.unlockedItemIds = inv?.unlockedItemIds ?? []
             self.selectedBackgroundId = inv?.selectedBackgroundId
+            self.selectedAccessoryId = inv?.selectedAccessoryId
 
             // 📲 Forward owned backgrounds ke Watch
             let ownedBgs = self.shopItems
@@ -202,5 +204,33 @@ class ShopViewModel: ObservableObject {
             ["selectedBackgroundId": id],
             merge: true
         )
+    }
+
+    func toggleEquipItem(item: ShopItemModel) {
+        guard let uid = userId, let itemId = item.id else { return }
+
+        guard unlockedItemIds.contains(itemId) else {
+            self.errorMessage = "Beli dulu item-nya!"
+            return
+        }
+
+        var updateData: [String: Any] = [:]
+        
+        if item.category == "Backgrounds" {
+            let isCurrentlyEquipped = (self.selectedBackgroundId == itemId)
+            updateData["selectedBackgroundId"] = isCurrentlyEquipped ? FieldValue.delete() : itemId
+        } else if item.category == "Accessories" {
+            let isCurrentlyEquipped = (self.selectedAccessoryId == itemId)
+            updateData["selectedAccessoryId"] = isCurrentlyEquipped ? FieldValue.delete() : itemId
+        }
+
+        db.collection("inventories").document(uid).setData(
+            updateData,
+            merge: true
+        ) { error in
+            if let error = error {
+                self.errorMessage = error.localizedDescription
+            }
+        }
     }
 }

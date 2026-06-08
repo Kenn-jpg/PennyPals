@@ -16,6 +16,8 @@ struct AccountView: View {
     // State untuk membuka sheet Edit Profile
     @State private var showEditProfile = false
 
+    @StateObject private var shopVM = ShopViewModel()
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -112,6 +114,7 @@ struct AccountView: View {
                                 )
                                 .sheet(isPresented: $showInventory) {
                                     InventoryView(category: "Accessories")
+                                        .environmentObject(shopVM)
                                 }
 
                                 Divider().padding(.leading, 56)
@@ -125,6 +128,7 @@ struct AccountView: View {
                                 )
                                 .sheet(isPresented: $showBackgroundInventory) {
                                     InventoryView(category: "Backgrounds")
+                                        .environmentObject(shopVM)
                                 }
 
                                 Divider().padding(.leading, 56)

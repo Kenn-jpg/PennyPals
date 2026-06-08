@@ -48,6 +48,42 @@ class AuthViewModel: ObservableObject {
         }
     }
 
+    func updatePetName(_ newName: String) async {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        do {
+            let snap = try await db.collection("pets")
+                .whereField("userId", isEqualTo: uid)
+                .limit(to: 1)
+                .getDocuments()
+
+            if let doc = snap.documents.first {
+                try await db.collection("pets").document(doc.documentID).updateData([
+                    "name": newName
+                ])
+            }
+        } catch {
+            self.errorMessage = error.localizedDescription
+        }
+    }
+
+    func fetchPetName() async -> String? {
+        guard let uid = Auth.auth().currentUser?.uid else { return nil }
+        do {
+            let snap = try await db.collection("pets")
+                .whereField("userId", isEqualTo: uid)
+                .limit(to: 1)
+                .getDocuments()
+
+            if let doc = snap.documents.first,
+               let name = doc.data()["name"] as? String {
+                return name
+            }
+        } catch {
+            print("Error fetching pet name: \(error.localizedDescription)")
+        }
+        return nil
+    }
+
     func login(email: String, password: String) async {
         do {
             let result = try await Auth.auth().signIn(

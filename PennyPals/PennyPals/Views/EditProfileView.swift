@@ -6,7 +6,6 @@
 //
 
 import FirebaseAuth
-import FirebaseFirestore
 import SwiftUI
 
 struct EditProfileView: View {
@@ -107,22 +106,15 @@ struct EditProfileView: View {
     }
 
     private func loadPetName() async {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-        let db = Firestore.firestore()
-
-        do {
-            let snap = try await db.collection("pets")
-                .whereField("userId", isEqualTo: uid)
-                .limit(to: 1)
-                .getDocuments()
-
-            if let doc = snap.documents.first,
-                let name = doc.data()["name"] as? String
-            {
-                petName = name
-            }
-        } catch {
-            // optional: tampilkan error jika mau
+        // Just use authVM for logic, but pet fetching requires a query we can either put in HomeViewModel or AuthViewModel
+        // Since EditProfileView doesn't have HomeViewModel injected, we can read the existing petName from Firestore via authVM or we can just keep the name empty initially if we don't have it.
+        // Wait, since we are doing an MVVM fix, authVM or homeVM should provide it.
+        // I will add fetchPetName to AuthViewModel just for this UI.
+        
+        // Wait, HomeViewModel has `pet` and it is usually kept updated.
+        // But since this is a global view, we'll fetch it via authVM for now to keep things clean and MVVM compliant.
+        if let petName = await authVM.fetchPetName() {
+            self.petName = petName
         }
     }
 
@@ -158,9 +150,9 @@ struct EditProfileView: View {
             await authVM.updateUsername(trimmedUsername)
         }
 
-        // 2) update pet name (Firestore pets)
+        // 2) update pet name (Firestore pets via authVM)
         if !trimmedPetName.isEmpty {
-            await updatePetName(trimmedPetName)
+            await authVM.updatePetName(trimmedPetName)
         }
 
         // 3) update password (FirebaseAuth)
@@ -173,27 +165,4 @@ struct EditProfileView: View {
         }
     }
 
-    private func updatePetName(_ newName: String) async {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-        let db = Firestore.firestore()
-
-        do {
-            let snap = try await db.collection("pets")
-                .whereField("userId", isEqualTo: uid)
-                .limit(to: 1)
-                .getDocuments()
-
-            guard let doc = snap.documents.first else {
-                await MainActor.run { localError = "Pet not found." }
-                return
-            }
-
-            try await db.collection("pets").document(doc.documentID).updateData(
-                [
-                    "name": newName
-                ])
-        } catch {
-            await MainActor.run { localError = error.localizedDescription }
-        }
-    }
 }

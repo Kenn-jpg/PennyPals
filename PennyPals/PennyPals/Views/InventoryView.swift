@@ -6,27 +6,20 @@
 //
 
 import FirebaseAuth
-import FirebaseFirestore
 import SwiftUI
 
 struct InventoryView: View {
     @Environment(\.dismiss) private var dismiss
 
     let category: String
-
-    @State private var unlockedItemIds: [String] = []
-    @State private var shopItems: [ShopItemModel] = []
-    @State private var errorMessage: String?
-
-    // State untuk item yang sedang dipakai (Equipped)
-    @State private var equippedItemId: String? = nil
-
-    private let db = Firestore.firestore()
+    
+    // Inject ShopViewModel to handle inventory logic
+    @EnvironmentObject var shopVM: ShopViewModel
 
     private var ownedItems: [ShopItemModel] {
-        shopItems.filter {
+        shopVM.shopItems.filter {
             $0.category == self.category
-                && unlockedItemIds.contains($0.id ?? "")
+                && shopVM.unlockedItemIds.contains($0.id ?? "")
         }
     }
 
@@ -39,7 +32,7 @@ struct InventoryView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if let errorMessage {
+                if let errorMessage = shopVM.errorMessage {
                     Text(errorMessage)
                         .font(.footnote)
                         .foregroundColor(.red)
@@ -78,8 +71,7 @@ struct InventoryView: View {
                 Color(UIColor.secondarySystemBackground).ignoresSafeArea()
             )
             .onAppear {
-                startInventoryListener()
-                fetchShopItems()
+                // shopVM already listens to inventory and items from its init
             }
         }
     }
@@ -87,7 +79,7 @@ struct InventoryView: View {
     // MARK: - Komponen Kartu Minimalis
     @ViewBuilder
     private func inventoryCard(for item: ShopItemModel) -> some View {
-        let isEquipped = equippedItemId == item.id
+        let isEquipped = (category == "Backgrounds" ? shopVM.selectedBackgroundId == item.id : shopVM.selectedAccessoryId == item.id)
 
         VStack(spacing: 12) {
             // Preview Item (Kotak Visual)
@@ -154,7 +146,7 @@ struct InventoryView: View {
 
                 // Tombol Use / Equipped
                 Button(action: {
-                    equipItem(item)
+                    shopVM.toggleEquipItem(item: item)
                 }) {
                     Text(isEquipped ? "Equipped" : "Use")
                         .font(.caption)
@@ -178,73 +170,4 @@ struct InventoryView: View {
         .shadow(color: .black.opacity(0.03), radius: 8, y: 4)
     }
 
-    // MARK: - Functions
-    private func equipItem(_ item: ShopItemModel) {
-        guard let uid = Auth.auth().currentUser?.uid, let itemId = item.id
-        else { return }
-
-        // 🌟 PERBAIKAN: Cek apakah item ini yang sedang dipakai. Jika iya, unequip (lepas).
-        let isCurrentlyEquipped = (equippedItemId == itemId)
-
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-            equippedItemId = isCurrentlyEquipped ? nil : itemId
-        }
-
-        var updateData: [String: Any] = [:]
-        if category == "Backgrounds" {
-            // Jika dilepas hapus field, jika tidak set fieldnya
-            updateData["selectedBackgroundId"] =
-                isCurrentlyEquipped ? FieldValue.delete() : itemId
-        } else if category == "Accessories" {
-            updateData["selectedAccessoryId"] =
-                isCurrentlyEquipped ? FieldValue.delete() : itemId
-        }
-
-        db.collection("inventories").document(uid).setData(
-            updateData,
-            merge: true
-        ) { error in
-            if let error = error {
-                self.errorMessage = error.localizedDescription
-            }
-        }
-    }
-
-    private func startInventoryListener() {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-        db.collection("inventories").document(uid).addSnapshotListener {
-            snapshot,
-            error in
-            if let error {
-                self.errorMessage = error.localizedDescription
-                return
-            }
-
-            if let data = snapshot?.data() {
-                self.unlockedItemIds =
-                    data["unlockedItemIds"] as? [String] ?? []
-
-                if self.category == "Backgrounds" {
-                    self.equippedItemId =
-                        data["selectedBackgroundId"] as? String
-                } else if self.category == "Accessories" {
-                    self.equippedItemId = data["selectedAccessoryId"] as? String
-                }
-            }
-        }
-    }
-
-    private func fetchShopItems() {
-        db.collection("shopItems").getDocuments { snapshot, error in
-            if let error {
-                self.errorMessage = error.localizedDescription
-                return
-            }
-
-            self.shopItems =
-                snapshot?.documents.compactMap { doc in
-                    try? doc.data(as: ShopItemModel.self)
-                } ?? []
-        }
-    }
 }

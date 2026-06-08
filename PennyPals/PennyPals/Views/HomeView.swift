@@ -6,7 +6,6 @@
 //
 
 import FirebaseAuth
-import FirebaseFirestore
 import SwiftUI
 
 struct HomeView: View {
@@ -19,21 +18,7 @@ struct HomeView: View {
     @State private var showTransactionModal = false
     @State private var showNewGoalModal = false
 
-    // 🌟 PERBAIKAN: State untuk menampung item yang sedang dilengkapi secara real-time
-    @State private var shopItems: [ShopItemModel] = []
-    @State private var equippedBackgroundId: String? = nil
-    @State private var equippedAccessoryId: String? = nil
-
-    private let db = Firestore.firestore()
-
-    // 🌟 PERBAIKAN: Computed property untuk mendapatkan objek item utuh
-    private var equippedBackground: ShopItemModel? {
-        shopItems.first { $0.id == equippedBackgroundId }
-    }
-
-    private var equippedAccessory: ShopItemModel? {
-        shopItems.first { $0.id == equippedAccessoryId }
-    }
+    // Removed direct Firestore tracking of equipment because it is already handled by HomeViewModel
 
     // --- Penalty Status Logic ---
     private enum PenaltyStatus {
@@ -90,9 +75,7 @@ struct HomeView: View {
                     homeVM.checkDailyHunger(currentUser: currentUser)
                 }
 
-                // 🌟 PERBAIKAN: Jalankan fungsi fetch & listener saat layar muncul
-                startEquipmentListener()
-                fetchShopItems()
+                // HomeViewModel already listens to inventory changes and fetches shop items
             }
             .onChange(of: authVM.currentUser) { _, newUser in
                 if let user = newUser {
@@ -232,7 +215,7 @@ extension HomeView {
             ZStack(alignment: .topTrailing) {
                 ZStack {
                     // 🌟 PERBAIKAN: RENDER BACKGROUND SECARA DINAMIS (Sama seperti InventoryView)
-                    if let bg = equippedBackground {
+                    if let bg = homeVM.equippedBackground {
                         ZStack {
                             if bg.isGradient == true,
                                 let endColor = bg.endColorHex
@@ -300,8 +283,8 @@ extension HomeView {
                         size: 180
                     )
 
-                    // 🌟 PERBAIKAN: RENDER AKSESORIS DI ATAS PET MENGGUNAKAN SF SYMBOL
-                    if let acc = equippedAccessory {
+                    // 🌟 AKSESORIS PET
+                    if let acc = homeVM.equippedAccessory {
                         Image(systemName: acc.imageName ?? "tshirt.fill")
                             .resizable()
                             .scaledToFit()
@@ -536,49 +519,6 @@ extension HomeView {
         )
     }
 
-    // MARK: - Helper Functions (Firestore Sync)
-    // 🌟 PERBAIKAN: Menangkap perubahan database item equipped dari koleksi inventories secara real-time
-    private func startEquipmentListener() {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-
-        db.collection("inventories").document(uid).addSnapshotListener {
-            snapshot,
-            error in
-            if let error = error {
-                print(
-                    "Error listening to equipment: \(error.localizedDescription)"
-                )
-                return
-            }
-
-            if let data = snapshot?.data() {
-                withAnimation(.spring()) {
-                    self.equippedBackgroundId =
-                        data["selectedBackgroundId"] as? String
-                    self.equippedAccessoryId =
-                        data["selectedAccessoryId"] as? String
-                }
-            }
-        }
-    }
-
-    // 🌟 PERBAIKAN: Mengambil daftar katalog toko untuk mencocokkan ID dengan data detail item (Warna Hex, Icon, dll)
-    private func fetchShopItems() {
-        db.collection("shopItems").getDocuments { snapshot, error in
-            if let error = error {
-                print(
-                    "Error fetching shop items: \(error.localizedDescription)"
-                )
-                return
-            }
-
-            if let documents = snapshot?.documents {
-                self.shopItems = documents.compactMap { doc in
-                    try? doc.data(as: ShopItemModel.self)
-                }
-            }
-        }
-    }
 }
 
 extension Int {
