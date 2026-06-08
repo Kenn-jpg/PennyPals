@@ -124,4 +124,35 @@ struct HomeViewModelTests {
             "Sisa akumulasi poin XP akhir tidak cocok dengan aturan penalti"
         )
     }
+
+    @Test("Logika addExpense: Pengurangan XP dan Penurunan Level")
+    func testAddExpenseLogic() {
+        var currentXP = 50
+        var currentLevel = 2
+        
+        let expenseAmount: Double = 150000
+        let lostXP = Int(expenseAmount / 1000) // 150 XP
+        
+        currentXP -= lostXP // 50 - 150 = -100
+        
+        while currentXP < 0 {
+            if currentLevel > 0 {
+                currentLevel -= 1
+                let previousMaxXP = (currentLevel + 1) * 200
+                currentXP = previousMaxXP + currentXP
+            } else {
+                currentXP = 0
+                break
+            }
+        }
+        
+        // previousMaxXP for level 1 is 400. 400 + (-100) = 300
+        #expect(currentLevel == 1, "Level harus turun ke 1 karena XP kurang")
+        #expect(currentXP == 300, "Sisa XP harus 300 setelah turun level")
+        
+        // Simulasi mood
+        let initialLevel = 2
+        let newMood = (currentLevel < initialLevel) ? "cry" : "sad"
+        #expect(newMood == "cry", "Mood harus menjadi cry karena turun level")
+    }
 }

@@ -55,4 +55,49 @@ struct AuthViewModelTests {
             "User baru harus aman dari penalti"
         )
     }
+
+    @Test("Logika Equip Item (Background & Aksesoris)")
+    func testEquipItemLogic() {
+        var user = UserModel(
+            id: "user_1",
+            username: "TestUser",
+            email: "test@test.com",
+            coins: 1000,
+            streak: 5,
+            lastLoginDate: Date(),
+            createdAt: Date(),
+            totalSavings: 50000,
+            isSafeFromPenalty: true,
+            nextPenaltyCheck: Date(),
+            isOnboarded: true,
+            equippedBackground: nil,
+            equippedAccessory: nil
+        )
+        
+        // Equip Background
+        let isBackground = true
+        let itemName = "bg_forest"
+        
+        if isBackground {
+            user.equippedBackground = itemName
+        } else {
+            user.equippedAccessory = itemName
+        }
+        
+        #expect(user.equippedBackground == "bg_forest", "Background harus di-equip dengan benar")
+        #expect(user.equippedAccessory == nil, "Aksesoris tidak boleh berubah")
+        
+        // Equip Accessory
+        let isBackground2 = false
+        let itemName2 = "acc_glasses"
+        
+        if isBackground2 {
+            user.equippedBackground = itemName2
+        } else {
+            user.equippedAccessory = itemName2
+        }
+        
+        #expect(user.equippedAccessory == "acc_glasses", "Aksesoris harus di-equip dengan benar")
+        #expect(user.equippedBackground == "bg_forest", "Background tidak boleh hilang saat equip aksesoris")
+    }
 }

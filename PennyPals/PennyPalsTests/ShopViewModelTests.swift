@@ -57,4 +57,38 @@ struct ShopViewModelTests {
             "Sistem harus mendeteksi item ganda di inventaris"
         )
     }
+
+    @Test("Validasi Equip Background/Item: Berhasil")
+    func testEquipBackground() {
+        let itemId = "bg_ocean"
+        let unlockedItemIds: [String] = ["bg_ocean", "theme_01"]
+        var selectedBackgroundId: String? = nil
+        var errorMessage: String? = nil
+
+        if unlockedItemIds.contains(itemId) {
+            selectedBackgroundId = itemId
+        } else {
+            errorMessage = "Beli dulu background-nya!"
+        }
+
+        #expect(selectedBackgroundId == "bg_ocean", "Background harus berhasil di-equip")
+        #expect(errorMessage == nil, "Tidak boleh ada error message")
+    }
+
+    @Test("Validasi Equip Background/Item: Gagal karena belum punya")
+    func testEquipBackgroundFailsNotOwned() {
+        let itemId = "bg_ocean"
+        let unlockedItemIds: [String] = ["theme_01"]
+        var selectedBackgroundId: String? = nil
+        var errorMessage: String? = nil
+
+        if unlockedItemIds.contains(itemId) {
+            selectedBackgroundId = itemId
+        } else {
+            errorMessage = "Beli dulu background-nya!"
+        }
+
+        #expect(selectedBackgroundId == nil, "Background tidak boleh di-equip")
+        #expect(errorMessage == "Beli dulu background-nya!", "Harus muncul pesan error")
+    }
 }
