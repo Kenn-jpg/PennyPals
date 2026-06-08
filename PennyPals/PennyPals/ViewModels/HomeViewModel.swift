@@ -467,6 +467,11 @@ class HomeViewModel: ObservableObject {
             let petId = currentPet.id
         else { return }
 
+        // Mencegah pengeluaran melebihi total saldo tabungan
+        if amount > Double(currentUser.totalSavings) {
+            return
+        }
+
         // 1. Hitung penalti XP berdasarkan jumlah uang yang di-spend (Misal: 1000 rupiah = 1 XP hilang)
         let lostXP = Int(amount / 1000)
         var newXP = currentPet.xp - lostXP

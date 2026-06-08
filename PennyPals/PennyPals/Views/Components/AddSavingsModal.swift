@@ -10,7 +10,7 @@ import SwiftUI
 struct AddSavingsModal: View {
     @Environment(\.dismiss) var dismiss
     
-    // 1. Change closure to accept 2 arguments: (Amount, IsExpense)
+    var currentTotalSavings: Double
     var onSave: (Double, Bool) -> Void
 
     @State private var amountString: String = ""
@@ -26,6 +26,9 @@ struct AddSavingsModal: View {
         guard let amount = Double(cleanDigits),
               amount > 0 && amount <= maxSavingsLimit
         else {
+            return false
+        }
+        if isExpense && amount > currentTotalSavings {
             return false
         }
         return true
@@ -66,9 +69,14 @@ struct AddSavingsModal: View {
                 .background(Color(UIColor.secondarySystemBackground))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
 
-                // Warning message if it exceeds the limit
+                // Warning message if it exceeds the limit or savings
                 let currentAmount = Double(cleanNumericString(amountString)) ?? 0
-                if currentAmount >= maxSavingsLimit {
+                if isExpense && currentAmount > currentTotalSavings {
+                    Text("⚠️ Saldo tabungan tidak mencukupi!")
+                        .font(.caption2)
+                        .foregroundColor(.red.opacity(0.9))
+                        .padding(.leading, 4)
+                } else if currentAmount >= maxSavingsLimit {
                     Text("⚠️ Maximum input limit is Rp 100,000,000")
                         .font(.caption2)
                         .foregroundColor(.red.opacity(0.9))

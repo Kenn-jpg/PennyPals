@@ -80,7 +80,9 @@ struct HomeView: View {
                 }
             }
             .sheet(isPresented: $showTransactionModal) {
-                AddSavingsModal { amount, isExpense in
+                AddSavingsModal(
+                    currentTotalSavings: Double(authVM.currentUser?.totalSavings ?? 0)
+                ) { amount, isExpense in
                     if let currentUser = authVM.currentUser {
                         if isExpense {
                             homeVM.addExpense(

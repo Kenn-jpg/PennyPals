@@ -61,8 +61,12 @@ class AuthViewModel: ObservableObject {
     func updatePassword(_ newPassword: String) async {
         do {
             try await Auth.auth().currentUser?.updatePassword(to: newPassword)
-        } catch {
-            self.errorMessage = error.localizedDescription
+        } catch let error as NSError {
+            if error.code == AuthErrorCode.requiresRecentLogin.rawValue {
+                self.errorMessage = "For security reasons, please log out and log in again before changing your password."
+            } else {
+                self.errorMessage = error.localizedDescription
+            }
         }
     }
 
