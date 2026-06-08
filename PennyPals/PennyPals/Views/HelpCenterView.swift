@@ -8,49 +8,60 @@ import SwiftUI
 struct HelpCenterView: View {
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(spacing: 24) {
                 Text("How can we help you?")
                     .font(.title2.bold())
                     .foregroundColor(.pennyText)
-                    .padding(.bottom, 8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal)
 
-                // MARK: - FAQ 1
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("How do I hatch my pet?")
-                        .font(.headline)
-                        .foregroundColor(.pennyText)
-                    Text("Simply set a savings goal and start saving! Once you make your first deposit, your egg will hatch into a surprise PennyPal.")
-                        .font(.body)
-                        .foregroundColor(.pennySecondaryText)
+                VStack(spacing: 16) {
+                    // MARK: - FAQ 1
+                    faqCard(
+                        question: "How do I hatch my pet?",
+                        answer: "Simply set a savings goal and start saving! Once you make your first deposit, your egg will hatch into a surprise PennyPal."
+                    )
+                    
+                    // MARK: - FAQ 2
+                    faqCard(
+                        question: "What happens if I miss a day?",
+                        answer: "If you miss a day, your pet might become hungry or sad. Continuing to miss days could result in losing some XP, so keep your streak alive!"
+                    )
+                    
+                    // MARK: - FAQ 3
+                    faqCard(
+                        question: "How do I buy accessories?",
+                        answer: "Every time you save, you earn coins! Use these coins in the Shop tab to buy cute hats, glasses, and backgrounds for your pet."
+                    )
                 }
+                .padding(.horizontal)
 
-                // MARK: - FAQ 2
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("What happens if I miss a day?")
-                        .font(.headline)
-                        .foregroundColor(.pennyText)
-                    Text("If you miss a day, your pet might become hungry or sad. Continuing to miss days could result in losing some XP, so keep your streak alive!")
-                        .font(.body)
-                        .foregroundColor(.pennySecondaryText)
-                }
-
-                // MARK: - FAQ 3
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("How do I buy accessories?")
-                        .font(.headline)
-                        .foregroundColor(.pennyText)
-                    Text("Every time you save, you earn coins! Use these coins in the Shop tab to buy cute hats, glasses, and backgrounds for your pet.")
-                        .font(.body)
-                        .foregroundColor(.pennySecondaryText)
-                }
-
-                Spacer()
+                Spacer(minLength: 40)
             }
-            .padding()
+            .padding(.top, 24)
         }
         .background(Color.pennyBackground.ignoresSafeArea())
         .navigationTitle("Help Center")
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    // Komponen Reusable untuk FAQ Card
+    private func faqCard(question: String, answer: String) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(question)
+                .font(.headline)
+                .foregroundColor(.pennyText)
+            
+            Text(answer)
+                .font(.body)
+                .foregroundColor(.pennySecondaryText)
+                .lineSpacing(4)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(20)
+        .background(Color(UIColor.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
     }
 }
 
