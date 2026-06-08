@@ -16,6 +16,11 @@ class HomeViewModel: ObservableObject {
     @Published var pet: PetModel?
     @Published var goal: GoalModel?
 
+    // 🌟 TAMBAHAN UNTUK INVENTORY/EQUIP:
+    @Published var shopItems: [ShopItemModel] = []
+    @Published var selectedBackgroundId: String? = nil
+    @Published var selectedAccessoryId: String? = nil
+
     private var db = Firestore.firestore()
     private var userId: String? { Auth.auth().currentUser?.uid }
 
@@ -23,10 +28,64 @@ class HomeViewModel: ObservableObject {
     private var modalOpenCount = 0
     private var lastModalOpenTime = Date()
 
+    // 🌟 TAMBAHAN: Computed properties agar HomeView tahu item mana yang aktif
+    var equippedBackground: ShopItemModel? {
+        shopItems.first {
+            $0.id == selectedBackgroundId && $0.category == "Backgrounds"
+        }
+    }
+
+    var equippedAccessory: ShopItemModel? {
+        shopItems.first {
+            $0.id == selectedAccessoryId && $0.category == "Accessories"
+        }
+    }
+
     init() {
         fetchPetData()
         fetchGoalData()
+        fetchShopItems()  // Panggil fungsi ambil data item toko
+        startInventoryListener()  // Panggil listener inventory secara real-time
     }
+
+    // MARK: - 🌟 TAMBAHAN FUNGSI FETCH EQUIP/INVENTORY 🌟
+
+    func fetchShopItems() {
+        db.collection("shopItems").addSnapshotListener { snapshot, error in
+            if let error = error {
+                print(
+                    "Error fetching shop items: \(error.localizedDescription)"
+                )
+                return
+            }
+            self.shopItems =
+                snapshot?.documents.compactMap { doc in
+                    try? doc.data(as: ShopItemModel.self)
+                } ?? []
+        }
+    }
+
+    func startInventoryListener() {
+        guard let uid = userId else { return }
+        db.collection("inventories").document(uid).addSnapshotListener {
+            snapshot,
+            error in
+            if let error = error {
+                print(
+                    "Error listening to inventory changes: \(error.localizedDescription)"
+                )
+                return
+            }
+            if let data = snapshot?.data() {
+                self.selectedBackgroundId =
+                    data["selectedBackgroundId"] as? String
+                self.selectedAccessoryId =
+                    data["selectedAccessoryId"] as? String
+            }
+        }
+    }
+
+    // MARK: - FUNGSI BAWAAN HOMEVIEWMODEL KAMU
 
     func fetchPetData() {
         guard let uid = userId else { return }
@@ -48,15 +107,29 @@ class HomeViewModel: ObservableObject {
                             mood: pet.mood,
                             type: pet.type
                         )
-                        
+
                         // Update Shared UserDefaults for Widget
-                        if let sharedDefaults = UserDefaults(suiteName: "group.com.MAD.PennyPals") {
-                            sharedDefaults.set(pet.name, forKey: "widgetPetName")
-                            sharedDefaults.set(pet.level, forKey: "widgetPetLevel")
+                        if let sharedDefaults = UserDefaults(
+                            suiteName: "group.com.MAD.PennyPals"
+                        ) {
+                            sharedDefaults.set(
+                                pet.name,
+                                forKey: "widgetPetName"
+                            )
+                            sharedDefaults.set(
+                                pet.level,
+                                forKey: "widgetPetLevel"
+                            )
                             sharedDefaults.set(pet.xp, forKey: "widgetPetXP")
-                            sharedDefaults.set(pet.maxXP, forKey: "widgetPetMaxXP")
-                            sharedDefaults.set(pet.mood, forKey: "widgetPetMood")
-                            
+                            sharedDefaults.set(
+                                pet.maxXP,
+                                forKey: "widgetPetMaxXP"
+                            )
+                            sharedDefaults.set(
+                                pet.mood,
+                                forKey: "widgetPetMood"
+                            )
+
                             WidgetCenter.shared.reloadAllTimelines()
                         }
                     }
@@ -177,7 +250,9 @@ class HomeViewModel: ObservableObject {
         }
 
         // Goal progress & completion
-        if newGoalAmount >= currentGoal.targetAmount && currentGoal.targetAmount > 0 {
+        if newGoalAmount >= currentGoal.targetAmount
+            && currentGoal.targetAmount > 0
+        {
             NotificationManager.shared.sendGoalCompletedNotification(
                 goalName: currentGoal.itemName
             )
@@ -375,72 +450,70 @@ class HomeViewModel: ObservableObject {
             modalOpenCount = 0
         }
     }
-    
-        func addExpense(amount: Double, currentUser: UserModel) {
-            guard let uid = userId,
-                  let currentPet = pet,
-                  let petId = currentPet.id
-            else { return }
 
-            // 1. Hitung penalti XP berdasarkan jumlah uang yang di-spend (Misal: 1000 rupiah = 1 XP hilang)
-            let lostXP = Int(amount / 1000)
-            var newXP = currentPet.xp - lostXP
-            var newLevel = currentPet.level
+    func addExpense(amount: Double, currentUser: UserModel) {
+        guard let uid = userId,
+            let currentPet = pet,
+            let petId = currentPet.id
+        else { return }
 
-            // 2. Logika Level Down (Turun Level jika XP kurang dari 0)
-            while newXP < 0 {
-                if newLevel > 0 {
-                    newLevel -= 1
-                    // XP maksimal di level sebelumnya
-                    let previousMaxXP = (newLevel + 1) * 200
-                    newXP = previousMaxXP + newXP // newXP bernilai minus, jadi ini sama dengan menguranginya
-                } else {
-                    newXP = 0
-                    break
-                }
+        // 1. Hitung penalti XP berdasarkan jumlah uang yang di-spend (Misal: 1000 rupiah = 1 XP hilang)
+        let lostXP = Int(amount / 1000)
+        var newXP = currentPet.xp - lostXP
+        var newLevel = currentPet.level
+
+        // 2. Logika Level Down (Turun Level jika XP kurang dari 0)
+        while newXP < 0 {
+            if newLevel > 0 {
+                newLevel -= 1
+                // XP maksimal di level sebelumnya
+                let previousMaxXP = (newLevel + 1) * 200
+                newXP = previousMaxXP + newXP  // newXP bernilai minus, jadi ini sama dengan menguranginya
+            } else {
+                newXP = 0
+                break
             }
-
-            // 3. Tentukan Mood Pet berdasarkan pengeluaran atau penurunan level
-            // Jika level turun, pet menangis ("cry"). Jika hanya pengeluaran biasa, pet sedih ("sad")
-            let newMood = (newLevel < currentPet.level) ? "cry" : "sad"
-
-            // 4. Update data Pet di Firestore
-            db.collection("pets").document(petId).updateData([
-                "xp": newXP,
-                "level": newLevel,
-                "mood": newMood
-            ])
-
-            // 5. Update Tabungan User & Goal (Opsional: Jika pengeluaran memengaruhi progress Goal saat ini)
-            let newTotalSavings = max(0, currentUser.totalSavings - Int(amount)) // Pastikan tidak minus
-            
-            var userUpdates: [String: Any] = [
-                "totalSavings": newTotalSavings
-            ]
-            
-            // Hapus streak jika melakukan pengeluaran (Opsional: tegantung rules game kamu)
-            userUpdates["streak"] = 0
-            
-            db.collection("users").document(uid).updateData(userUpdates)
-            
-            // Kurangi progress Goal jika ada goal yang aktif
-            if let currentGoal = goal, let goalId = currentGoal.id {
-                let newGoalAmount = max(0, currentGoal.currentAmount - amount) // Progress tidak boleh minus
-                db.collection("goals").document(goalId).updateData([
-                    "currentAmount": newGoalAmount
-                ])
-            }
-
-            // 6. Catat Transaksi Pengeluaran
-            // Catatan: Pastikan enum TransactionType di model kamu memiliki case `.expense` atau `.withdrawal`
-            let tx = TransactionModel(
-                userId: uid,
-                amount: amount, // Bisa kamu set minus jika perlu di laporan, atau tetap positif tergantung struktur UI report kamu
-                date: Date(),
-                type: .expense 
-            )
-            try? db.collection("transactions").addDocument(from: tx)
         }
+
+        // 3. Tentukan Mood Pet berdasarkan pengeluaran atau penurunan level
+        // Jika level turun, pet menangis ("cry"). Jika hanya pengeluaran biasa, pet sedih ("sad")
+        let newMood = (newLevel < currentPet.level) ? "cry" : "sad"
+
+        // 4. Update data Pet di Firestore
+        db.collection("pets").document(petId).updateData([
+            "xp": newXP,
+            "level": newLevel,
+            "mood": newMood,
+        ])
+
+        // 5. Update Tabungan User & Goal (Opsional: Jika pengeluaran memengaruhi progress Goal saat ini)
+        let newTotalSavings = max(0, currentUser.totalSavings - Int(amount))  // Pastikan tidak minus
+
+        var userUpdates: [String: Any] = [
+            "totalSavings": newTotalSavings
+        ]
+
+        // Hapus streak jika melakukan pengeluaran (Opsional: tegantung rules game kamu)
+        userUpdates["streak"] = 0
+
+        db.collection("users").document(uid).updateData(userUpdates)
+
+        // Kurangi progress Goal jika ada goal yang aktif
+        if let currentGoal = goal, let goalId = currentGoal.id {
+            let newGoalAmount = max(0, currentGoal.currentAmount - amount)  // Progress tidak boleh minus
+            db.collection("goals").document(goalId).updateData([
+                "currentAmount": newGoalAmount
+            ])
+        }
+
+        // 6. Catat Transaksi Pengeluaran
+        // Catatan: Pastikan enum TransactionType di model kamu memiliki case `.expense` atau `.withdrawal`
+        let tx = TransactionModel(
+            userId: uid,
+            amount: amount,  // Bisa kamu set minus jika perlu di laporan, atau tetap positif tergantung struktur UI report kamu
+            date: Date(),
+            type: .expense
+        )
+        try? db.collection("transactions").addDocument(from: tx)
+    }
 }
-
-

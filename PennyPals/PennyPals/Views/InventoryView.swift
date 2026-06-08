@@ -183,16 +183,21 @@ struct InventoryView: View {
         guard let uid = Auth.auth().currentUser?.uid, let itemId = item.id
         else { return }
 
+        // 🌟 PERBAIKAN: Cek apakah item ini yang sedang dipakai. Jika iya, unequip (lepas).
+        let isCurrentlyEquipped = (equippedItemId == itemId)
+
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-            equippedItemId = itemId
+            equippedItemId = isCurrentlyEquipped ? nil : itemId
         }
 
-        // 🌟 PERBAIKAN: Update field di Firestore agar item tersimpan dan sinkron dengan HomeView
         var updateData: [String: Any] = [:]
         if category == "Backgrounds" {
-            updateData["selectedBackgroundId"] = itemId
+            // Jika dilepas hapus field, jika tidak set fieldnya
+            updateData["selectedBackgroundId"] =
+                isCurrentlyEquipped ? FieldValue.delete() : itemId
         } else if category == "Accessories" {
-            updateData["selectedAccessoryId"] = itemId
+            updateData["selectedAccessoryId"] =
+                isCurrentlyEquipped ? FieldValue.delete() : itemId
         }
 
         db.collection("inventories").document(uid).setData(
@@ -215,7 +220,6 @@ struct InventoryView: View {
                 return
             }
 
-            // 🌟 PERBAIKAN: Membaca dictionary dari Firestore untuk mengetahui item apa yang sedang di-equip
             if let data = snapshot?.data() {
                 self.unlockedItemIds =
                     data["unlockedItemIds"] as? [String] ?? []

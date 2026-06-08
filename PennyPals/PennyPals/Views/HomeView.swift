@@ -5,6 +5,8 @@
 //  Created by Kelompok 8 on 28/05/26.
 //
 
+import FirebaseAuth
+import FirebaseFirestore
 import SwiftUI
 
 struct HomeView: View {
@@ -16,6 +18,22 @@ struct HomeView: View {
     // 🌟 Menggabungkan state modal menjadi satu karena AddSavingsModal sudah multifungsi
     @State private var showTransactionModal = false
     @State private var showNewGoalModal = false
+
+    // 🌟 PERBAIKAN: State untuk menampung item yang sedang dilengkapi secara real-time
+    @State private var shopItems: [ShopItemModel] = []
+    @State private var equippedBackgroundId: String? = nil
+    @State private var equippedAccessoryId: String? = nil
+
+    private let db = Firestore.firestore()
+
+    // 🌟 PERBAIKAN: Computed property untuk mendapatkan objek item utuh
+    private var equippedBackground: ShopItemModel? {
+        shopItems.first { $0.id == equippedBackgroundId }
+    }
+
+    private var equippedAccessory: ShopItemModel? {
+        shopItems.first { $0.id == equippedAccessoryId }
+    }
 
     // --- Penalty Status Logic ---
     private enum PenaltyStatus {
@@ -71,6 +89,10 @@ struct HomeView: View {
                 if let currentUser = authVM.currentUser {
                     homeVM.checkDailyHunger(currentUser: currentUser)
                 }
+
+                // 🌟 PERBAIKAN: Jalankan fungsi fetch & listener saat layar muncul
+                startEquipmentListener()
+                fetchShopItems()
             }
             .onChange(of: authVM.currentUser) { _, newUser in
                 if let user = newUser {
@@ -209,47 +231,83 @@ extension HomeView {
 
             ZStack(alignment: .topTrailing) {
                 ZStack {
-                    // 🌟 RENDER BACKGROUND
-                    if let bgImageName = authVM.currentUser?.equippedBackground,
-                        !bgImageName.isEmpty
-                    {
-                        Image(bgImageName)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 200, height: 200)
-                            .clipShape(Circle())
-                            .shadow(
-                                color: .black.opacity(0.08),
-                                radius: 10,
-                                x: 0,
-                                y: 4
-                            )
+                    // 🌟 PERBAIKAN: RENDER BACKGROUND SECARA DINAMIS (Sama seperti InventoryView)
+                    if let bg = equippedBackground {
+                        ZStack {
+                            if bg.isGradient == true,
+                                let endColor = bg.endColorHex
+                            {
+                                LinearGradient(
+                                    colors: [
+                                        Color(hex: bg.colorHex ?? "#E8E8E8"),
+                                        Color(hex: endColor),
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            } else {
+                                Color(hex: bg.colorHex ?? "#E8E8E8")
+                            }
+
+                            // Render Bulatan/Spots jika ada
+                            if let spotsHex = bg.spotsHex {
+                                VStack {
+                                    HStack {
+                                        Circle()
+                                            .fill(Color(hex: spotsHex))
+                                            .frame(width: 40)
+                                            .offset(x: -10, y: -10)
+                                        Spacer()
+                                    }
+                                    Spacer()
+                                    HStack {
+                                        Spacer()
+                                        Circle()
+                                            .fill(Color(hex: spotsHex))
+                                            .frame(width: 50)
+                                            .offset(x: 10, y: 15)
+                                    }
+                                }
+                            }
+                        }
+                        .frame(width: 200, height: 200)
+                        .clipped()  // Mencegah spots keluar lingkaran background
+                        .clipShape(Circle())
+                        .shadow(
+                            color: .black.opacity(0.08),
+                            radius: 10,
+                            x: 0,
+                            y: 4
+                        )
+
                     } else {
+                        // Default bulatan putih jika tidak ada background yang dipakai
                         Circle()
                             .fill(Color.white)
+                            .frame(width: 200, height: 200)
                             .shadow(
                                 color: .black.opacity(0.08),
                                 radius: 10,
                                 x: 0,
                                 y: 4
                             )
-                            .frame(width: 200, height: 200)
                     }
 
+                    // Tampilan Pet Utama
                     PetView(
                         petType: homeVM.pet?.type ?? "Cat",
                         mood: homeVM.pet?.mood ?? "hungry",
                         size: 180
                     )
 
-                    // 🌟 RENDER AKSESORIS DI ATAS PET
-                    if let accImageName = authVM.currentUser?.equippedAccessory,
-                        !accImageName.isEmpty
-                    {
-                        Image(accImageName)
+                    // 🌟 PERBAIKAN: RENDER AKSESORIS DI ATAS PET MENGGUNAKAN SF SYMBOL
+                    if let acc = equippedAccessory {
+                        Image(systemName: acc.imageName ?? "tshirt.fill")
                             .resizable()
                             .scaledToFit()
-                            .frame(width: 180, height: 180)
+                            .frame(width: 85, height: 85)
+                            .foregroundColor(.pennyPurple)
+                            .offset(y: -25)  // Sesuaikan posisi y agar aksesoris (misal topi/kacamata) pas di badan/kepala pet
                     }
                 }
                 .offset(y: isBouncing ? -8 : 8)
@@ -476,6 +534,50 @@ extension HomeView {
             Color(UIColor.systemBackground),
             in: RoundedRectangle(cornerRadius: 20)
         )
+    }
+
+    // MARK: - Helper Functions (Firestore Sync)
+    // 🌟 PERBAIKAN: Menangkap perubahan database item equipped dari koleksi inventories secara real-time
+    private func startEquipmentListener() {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+
+        db.collection("inventories").document(uid).addSnapshotListener {
+            snapshot,
+            error in
+            if let error = error {
+                print(
+                    "Error listening to equipment: \(error.localizedDescription)"
+                )
+                return
+            }
+
+            if let data = snapshot?.data() {
+                withAnimation(.spring()) {
+                    self.equippedBackgroundId =
+                        data["selectedBackgroundId"] as? String
+                    self.equippedAccessoryId =
+                        data["selectedAccessoryId"] as? String
+                }
+            }
+        }
+    }
+
+    // 🌟 PERBAIKAN: Mengambil daftar katalog toko untuk mencocokkan ID dengan data detail item (Warna Hex, Icon, dll)
+    private func fetchShopItems() {
+        db.collection("shopItems").getDocuments { snapshot, error in
+            if let error = error {
+                print(
+                    "Error fetching shop items: \(error.localizedDescription)"
+                )
+                return
+            }
+
+            if let documents = snapshot?.documents {
+                self.shopItems = documents.compactMap { doc in
+                    try? doc.data(as: ShopItemModel.self)
+                }
+            }
+        }
     }
 }
 
