@@ -547,11 +547,9 @@ class HomeViewModel: ObservableObject {
         // 6. Catat Transaksi Pengeluaran
         let tx = TransactionModel(
             userId: uid,
-            amount: amount,  // Bisa kamu set minus jika perlu di laporan, atau tetap positif tergantung struktur UI report kamu
+            amount: amount,
             date: Date(),
-            type: "expense",
-            category: "Expense",
-            note: "Penarikan tabungan"
+            type: .expense
         )
         try? db.collection("transactions").addDocument(from: tx)
     }
