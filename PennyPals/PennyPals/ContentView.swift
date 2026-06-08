@@ -32,7 +32,7 @@ struct ContentView: View {
                             wishlistName: $wishlistName,
                             targetAmountString: $targetAmountString,
                             onStart: {
-                                // 🌟 Transisikan ke hatching terlebih dahulu secara lokal
+                                // Transisikan ke hatching terlebih dahulu secara lokal
                                 // agar blok .onReceive tidak memotong urutan animasi saat Firestore terupdate!
                                 withAnimation(.easeInOut(duration: 0.5)) {
                                     stage = .hatching

@@ -9,8 +9,9 @@ import WatchConnectivity
 import Foundation
 import Combine
 
-/// ObservableObject yang menerima data dari iPhone via WatchConnectivity
-/// Semua @Published properties otomatis update UI Watch saat data masuk
+/// Kelas `ObservableObject` yang bertindak sebagai jembatan komunikasi antara Apple Watch dan iPhone.
+/// Menggunakan `WatchConnectivity` untuk menerima pembaruan data secara *real-time* atau lewat antrean (queue),
+/// sehingga antarmuka pengguna (UI) di Apple Watch bisa merespon perubahan secara instan.
 class IOSConnectivity: NSObject, ObservableObject {
 
     // MARK: - User Data
@@ -44,6 +45,7 @@ class IOSConnectivity: NSObject, ObservableObject {
 
     // MARK: - Session Activation
 
+    /// Mengaktifkan sesi `WCSession` agar Apple Watch dapat mulai mengirim dan menerima pesan dari iPhone.
     private func activateSession() {
         guard WCSession.isSupported() else {
             print("⌚ WCSession not supported on this Watch")
@@ -55,7 +57,8 @@ class IOSConnectivity: NSObject, ObservableObject {
 
     // MARK: - Request Refresh from iPhone
 
-    /// Kirim permintaan ke iPhone untuk mengirim data terbaru
+    /// Mengirim permintaan ke iPhone untuk menyegarkan dan mengirimkan ulang semua data terbaru 
+    /// (seperti profil pengguna, pet, dan inventori). Biasanya dipanggil saat Apple Watch baru saja aktif.
     func requestRefresh() {
         guard WCSession.default.isReachable else {
             print("⌚ iPhone not reachable for refresh request")
@@ -69,7 +72,8 @@ class IOSConnectivity: NSObject, ObservableObject {
         }
     }
 
-    /// Kirim permintaan ke iPhone untuk memakai background tertentu
+    /// Mengirim perintah ke iPhone untuk mengganti latar belakang (Background) yang sedang digunakan.
+    /// - Parameter id: ID latar belakang yang ingin dipakai.
     func equipBackground(id: String) {
         guard WCSession.default.isReachable else {
             print("⌚ iPhone not reachable for equip request")
@@ -90,6 +94,9 @@ class IOSConnectivity: NSObject, ObservableObject {
 
     // MARK: - Process Incoming Data
 
+    /// Memproses pesan atau *payload* yang diterima dari iPhone dan memperbarui variabel *state* lokal.
+    /// Pembaruan ini akan secara otomatis memicu pembaruan antarmuka pengguna (UI) berkat `@Published`.
+    /// - Parameter data: *Dictionary* berisi pasangan kunci-nilai data.
     private func processMessage(_ data: [String: Any]) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
@@ -164,6 +171,8 @@ class IOSConnectivity: NSObject, ObservableObject {
         }
     }
 
+    /// Menghapus semua data lokal yang tersimpan di memori Apple Watch.
+    /// Dipanggil saat menerima sinyal `logout` dari iPhone.
     private func clearData() {
         self.username = "—"
         self.email = "—"

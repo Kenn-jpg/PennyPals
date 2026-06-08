@@ -14,7 +14,7 @@ struct HomeView: View {
 
     @State private var isBouncing = false
 
-    // 🌟 Menggabungkan state modal menjadi satu karena AddSavingsModal sudah multifungsi
+
     @State private var showTransactionModal = false
     @State private var showNewGoalModal = false
 
@@ -82,7 +82,7 @@ struct HomeView: View {
                     homeVM.checkDailyHunger(currentUser: user)
                 }
             }
-            // 🌟 SATU SHEET UNTUK SEMUA TRANSAKSI (Tabungan & Pengeluaran)
+            // Modal Transaksi (Tabungan & Pengeluaran)
             .sheet(isPresented: $showTransactionModal) {
                 // Menangkap 2 value: amount dan isExpense dari Modal
                 AddSavingsModal { amount, isExpense in
@@ -214,7 +214,7 @@ extension HomeView {
 
             ZStack(alignment: .topTrailing) {
                 ZStack {
-                    // 🌟 PERBAIKAN: RENDER BACKGROUND SECARA DINAMIS (Sama seperti InventoryView)
+                    // Render Background Secera Dinamis
                     if let bg = homeVM.equippedBackground {
                         ZStack {
                             if bg.isGradient == true,
@@ -283,7 +283,7 @@ extension HomeView {
                         size: 180
                     )
 
-                    // 🌟 AKSESORIS PET
+                    // Aksesoris Pet
                     if let acc = homeVM.equippedAccessory {
                         Image(systemName: acc.imageName ?? "tshirt.fill")
                             .resizable()
@@ -368,7 +368,7 @@ extension HomeView {
             }
             .fixedSize(horizontal: false, vertical: true)
 
-            // 🌟 MENGGABUNGKAN TOMBOL MENJADI SATU KARENA MODAL SUDAH MULTIFUNGSI
+
             Button(action: {
                 showTransactionModal = true
                 homeVM.registerModalOpen()

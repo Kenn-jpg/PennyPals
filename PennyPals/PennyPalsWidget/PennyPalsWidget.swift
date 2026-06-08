@@ -8,16 +8,22 @@
 import WidgetKit
 import SwiftUI
 
+/// Provider (penyedia) timeline untuk widget yang menentukan kapan widget harus diperbarui.
+/// Provider bertugas mengambil data statis (placeholder) dan data asli (snapshot & timeline) dari `UserDefaults`.
 struct Provider: TimelineProvider {
+    /// Menghasilkan status *dummy* atau *placeholder* yang ditampilkan saat widget pertama kali dimuat.
     func placeholder(in context: Context) -> SimpleEntry {
         SimpleEntry(date: Date(), name: "Penny", level: 5, xp: 150, maxXP: 200, mood: "happy")
     }
 
+    /// Mengambil *snapshot* atau gambaran sekilas dari data widget saat ini untuk keperluan *preview*.
     func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> ()) {
         let entry = getPetData()
         completion(entry)
     }
 
+    /// Mengatur jadwal (timeline) kapan widget akan diperbarui secara otomatis.
+    /// Di PennyPals, pembaruan utamanya dipicu dari aplikasi utama, namun ada waktu *fallback* 15 menit.
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
         let entry = getPetData()
         // Widget updates mostly triggered by the main app, but we set a 15-min fallback
@@ -26,6 +32,8 @@ struct Provider: TimelineProvider {
         completion(timeline)
     }
 
+    /// Mengambil data peliharaan secara lokal melalui *App Group* `UserDefaults`.
+    /// Hal ini memungkinkan widget untuk membaca data yang disimpan oleh aplikasi utama (iOS).
     private func getPetData() -> SimpleEntry {
         let sharedDefaults = UserDefaults(suiteName: "group.com.MAD.PennyPals")
         let name = sharedDefaults?.string(forKey: "widgetPetName") ?? "Your Pet"
@@ -38,8 +46,11 @@ struct Provider: TimelineProvider {
     }
 }
 
+/// Struktur data entri yang akan ditampilkan di dalam widget pada waktu tertentu.
 struct SimpleEntry: TimelineEntry {
+    /// Tanggal di mana entri ini menjadi aktif.
     let date: Date
+    /// Nama dari peliharaan.
     let name: String
     let level: Int
     let xp: Int
@@ -47,6 +58,8 @@ struct SimpleEntry: TimelineEntry {
     let mood: String
 }
 
+/// Antarmuka Visual (View) dari PennyPals Widget.
+/// Mengatur bagaimana data statis seperti nama, level, XP, dan mood peliharaan digambar di layar Home.
 struct PennyPalsWidgetEntryView : View {
     var entry: Provider.Entry
 
@@ -110,6 +123,7 @@ struct PennyPalsWidgetEntryView : View {
         .widgetURL(URL(string: "pennypals://widget-tap"))
     }
     
+    /// Mengonversi nilai String mood ke representasi *emoji* yang akan dirender.
     private func moodEmoji(_ mood: String) -> String {
         switch mood {
         case "happy": return "😊"
@@ -126,6 +140,8 @@ struct PennyPalsWidgetEntryView : View {
     }
 }
 
+/// Konfigurasi struktur utama untuk Widget PennyPals.
+/// Menggabungkan provider, konfigurasi UI (termasuk warna latar), dan keluarga ukuran (SystemSmall & SystemMedium).
 struct PennyPalsWidget: Widget {
     let kind: String = "PennyPalsWidget"
 

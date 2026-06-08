@@ -46,7 +46,7 @@ struct UserModel: Identifiable, Codable, Equatable {
     /// Waktu terakhir kali pengguna menabung (digunakan untuk mendeteksi streak harian).
     var lastSavingsDate: Date?
 
-    // 🌟 BARU: Menyimpan ID/Nama Item yang sedang dipakai
+
     /// Background yang sedang dipakai user (jika nil, akan pakai background putih default)
     var equippedBackground: String?
 

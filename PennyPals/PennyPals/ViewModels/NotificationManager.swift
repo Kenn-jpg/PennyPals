@@ -65,7 +65,7 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
         }
     }
 
-    // MARK: - 1. Daily Savings Reminder (Setiap hari jam 8 pagi)
+    // MARK: - 1. Daily Savings Reminder
 
     /// Jadwalkan pengingat harian untuk menabung
     func scheduleDailyReminder() {
@@ -100,7 +100,7 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
         }
     }
 
-    // MARK: - 2. Penalty Warning (Peringatan sebelum kena penalti)
+    // MARK: - 2. Penalty Warning
 
     /// Jadwalkan peringatan penalti berdasarkan nextPenaltyCheck dari UserModel
     func schedulePenaltyWarning(nextPenaltyCheck: Date, petName: String) {
@@ -150,7 +150,7 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
         }
     }
 
-    // MARK: - 3. Pet Hungry Notification (Saat pet jadi lapar)
+    // MARK: - 3. Pet Hungry Notification
 
     /// Kirim notifikasi instan bahwa pet lapar
     func sendPetHungryNotification(petName: String) {
@@ -297,7 +297,7 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
         UNUserNotificationCenter.current().add(request)
     }
 
-    // MARK: - Evening Reminder (Pengingat malam untuk yang belum nabung)
+    // MARK: - Evening Reminder
 
     /// Jadwalkan pengingat malam jam 20:00 jika belum menabung hari ini
     func scheduleEveningReminder(petName: String) {

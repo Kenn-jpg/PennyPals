@@ -10,16 +10,24 @@ import FirebaseAuth
 import FirebaseFirestore
 import SwiftUI
 
+/// ViewModel yang mengatur status autentikasi dan manajemen akun pengguna.
+/// Berkomunikasi langsung dengan Firebase Authentication dan koleksi `users` di Firestore.
 @MainActor
 class AuthViewModel: ObservableObject {
+    /// Status apakah pengguna saat ini sedang login atau tidak.
     @Published var isAuthenticated = false
+    
+    /// Model data pengguna yang sedang login saat ini. Akan diperbarui otomatis jika ada perubahan di Firestore.
     @Published var currentUser: UserModel?
 
+    /// Pesan error yang bisa ditampilkan di UI jika proses autentikasi gagal.
     @Published var errorMessage: String?
     private var db = Firestore.firestore()
 
     init() { checkAuthStatus() }
 
+    /// Mengecek apakah ada *session* pengguna yang tersimpan secara lokal oleh Firebase Auth.
+    /// Jika ada, akan otomatis mengambil data dari Firestore dan masuk ke aplikasi utama.
     func checkAuthStatus() {
         if let user = Auth.auth().currentUser {
             self.isAuthenticated = true
@@ -29,6 +37,8 @@ class AuthViewModel: ObservableObject {
         }
     }
 
+    /// Memperbarui nama pengguna (username) dari akun yang sedang login di Firestore.
+    /// - Parameter newUsername: Nama baru yang ingin digunakan.
     func updateUsername(_ newUsername: String) async {
         guard let uid = Auth.auth().currentUser?.uid else { return }
         do {
@@ -40,6 +50,8 @@ class AuthViewModel: ObservableObject {
         }
     }
 
+    /// Mengganti kata sandi (password) dari akun pengguna saat ini di Firebase Authentication.
+    /// - Parameter newPassword: Password baru yang diinginkan.
     func updatePassword(_ newPassword: String) async {
         do {
             try await Auth.auth().currentUser?.updatePassword(to: newPassword)
@@ -48,6 +60,8 @@ class AuthViewModel: ObservableObject {
         }
     }
 
+    /// Memperbarui nama peliharaan (Pet Name) milik pengguna di dalam database.
+    /// - Parameter newName: Nama baru untuk peliharaan.
     func updatePetName(_ newName: String) async {
         guard let uid = Auth.auth().currentUser?.uid else { return }
         do {
@@ -66,6 +80,8 @@ class AuthViewModel: ObservableObject {
         }
     }
 
+    /// Mengambil nama peliharaan milik pengguna dari database Firestore.
+    /// - Returns: String nama peliharaan jika ditemukan, `nil` jika gagal atau kosong.
     func fetchPetName() async -> String? {
         guard let uid = Auth.auth().currentUser?.uid else { return nil }
         do {
@@ -84,6 +100,11 @@ class AuthViewModel: ObservableObject {
         return nil
     }
 
+    /// Masuk (Login) menggunakan email dan kata sandi yang terdaftar.
+    ///
+    /// - Parameters:
+    ///   - email: Email pengguna.
+    ///   - password: Kata sandi akun.
     func login(email: String, password: String) async {
         do {
             let result = try await Auth.auth().signIn(
@@ -97,6 +118,12 @@ class AuthViewModel: ObservableObject {
         }
     }
 
+    /// Mendaftar akun baru (Register) di Firebase Authentication dan membuat dokumen baru di Firestore.
+    ///
+    /// - Parameters:
+    ///   - email: Email pengguna baru.
+    ///   - password: Kata sandi untuk akun.
+    ///   - username: Nama panggilan pengguna.
     func register(email: String, password: String, username: String) async {
         do {
             let result = try await Auth.auth().createUser(
@@ -120,8 +147,8 @@ class AuthViewModel: ObservableObject {
                 isSafeFromPenalty: true,
                 nextPenaltyCheck: nextCheck,
                 isOnboarded: false,
-                equippedBackground: nil,  // 🌟 Initialize item
-                equippedAccessory: nil  // 🌟 Initialize item
+                equippedBackground: nil,
+                equippedAccessory: nil
             )
             try db.collection("users").document(result.user.uid).setData(
                 from: newUser
@@ -130,7 +157,7 @@ class AuthViewModel: ObservableObject {
             self.currentUser = newUser
             self.isAuthenticated = true
 
-            // 🌟 TAMBAHKAN BARIS INI: Aktifkan listener real-time langsung setelah register selesai!
+            // Aktifkan listener real-time langsung setelah register selesai
             fetchUserData(uid: result.user.uid)
 
         } catch {
@@ -138,6 +165,8 @@ class AuthViewModel: ObservableObject {
         }
     }
 
+    /// Mengeluarkan pengguna (Log out) dari aplikasi.
+    /// Menghapus *session*, data *cache* dari WatchOS, serta membatalkan seluruh jadwal notifikasi yang aktif.
     func logout() {
         do {
             try Auth.auth().signOut()
@@ -152,7 +181,7 @@ class AuthViewModel: ObservableObject {
         }
     }
 
-    // 🌟 FUNGSI BARU UNTUK DIPANGGIL DARI INVENTORY VIEW
+
     func equipItem(isBackground: Bool, itemName: String) {
         guard let uid = Auth.auth().currentUser?.uid else { return }
 

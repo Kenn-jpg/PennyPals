@@ -8,6 +8,8 @@
 import WidgetKit
 import SwiftUI
 
+/// Entry point atau titik awal untuk keseluruhan Widget Extension.
+/// Bundle ini bisa memuat lebih dari satu jenis widget jika diperlukan ke depannya.
 @main
 struct PennyPalsWidgetBundle: WidgetBundle {
     var body: some Widget {
