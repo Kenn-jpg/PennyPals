@@ -25,69 +25,120 @@ struct EditProfileView: View {
     // MARK: - 2. Body
     var body: some View {
         NavigationStack {
-            VStack(spacing: 24) {
-                // MARK: - 3. Profile Information
-                VStack(spacing: 0) {
-                    TextField("Username", text: $username)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .padding(.horizontal, 16)
-                        .frame(height: 52)
+            ScrollView {
+                VStack(spacing: 32) {
                     
-                    Divider().padding(.leading, 16)
-                    
-                    TextField("Pet Name", text: $petName)
-                        .padding(.horizontal, 16)
-                        .frame(height: 52)
-                }
-                .background(Color(UIColor.systemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 16))
+                    // MARK: - 3. Avatar Section
+                    ZStack {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.pennyPurple.opacity(0.6), Color.pennyPurple],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 100, height: 100)
+                            .shadow(color: Color.pennyPurple.opacity(0.3), radius: 10, x: 0, y: 5)
+                            
+                        // Menampilkan inisial user (2 huruf pertama) di tengah lingkaran
+                        Text(username.isEmpty ? "US" : String(username.prefix(2)).uppercased())
+                            .font(.system(size: 36, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                    }
+                    .padding(.top, 16) // Padding diperkecil untuk mengurangi dead space
 
-                // MARK: - 4. Password Section
-                VStack(spacing: 0) {
-                    SecureField("New Password", text: $newPassword)
-                        .padding(.horizontal, 16)
-                        .frame(height: 52)
+                    // MARK: - 4. Profile Information Section
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("PERSONAL INFO")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundColor(.pennySecondaryText)
+                            .padding(.leading, 16)
+                        
+                        VStack(spacing: 0) {
+                            inputRow(icon: "person.fill", placeholder: "Username", text: $username)
+                            
+                            Divider().padding(.leading, 56)
+                            
+                            inputRow(icon: "pawprint.fill", placeholder: "Pet Name", text: $petName)
+                        }
+                        .background(Color(UIColor.systemBackground))
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .shadow(color: Color.black.opacity(0.03), radius: 8, x: 0, y: 4)
+                    }
 
-                    Divider().padding(.leading, 16)
+                    // MARK: - 5. Password Section
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("SECURITY")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundColor(.pennySecondaryText)
+                            .padding(.leading, 16)
+                        
+                        VStack(spacing: 0) {
+                            inputRow(icon: "lock.fill", placeholder: "New Password", text: $newPassword, isSecure: true)
+                            
+                            Divider().padding(.leading, 56)
+                            
+                            inputRow(icon: "lock.rotation", placeholder: "Confirm Password", text: $confirmPassword, isSecure: true)
+                        }
+                        .background(Color(UIColor.systemBackground))
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .shadow(color: Color.black.opacity(0.03), radius: 8, x: 0, y: 4)
+                    }
 
-                    SecureField("Confirm Password", text: $confirmPassword)
-                        .padding(.horizontal, 16)
-                        .frame(height: 52)
-                }
-                .background(Color(UIColor.systemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 16))
-
-                // MARK: - 5. Error Message
-                if let msg = (localError ?? authVM.errorMessage) {
-                    Text(msg)
+                    // MARK: - 6. Error Message
+                    if let msg = (localError ?? authVM.errorMessage) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                            Text(msg)
+                        }
                         .font(.footnote)
                         .foregroundColor(.red)
+                        .padding(.horizontal, 16)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                }
+                    }
 
-                Spacer(minLength: 0)
+                    Spacer(minLength: 20)
 
-                // MARK: - 6. Save Button
-                Button {
-                    Task { await save() }
-                } label: {
-                    Text(isSaving ? "Saving..." : "Save Changes")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity, minHeight: 52)
-                        .background(isSaving ? Color.gray : Color.pennyPurple)
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                    // MARK: - 7. Save Button (Premium Gradient)
+                    Button {
+                        Task { await save() }
+                    } label: {
+                        Text(isSaving ? "Saving..." : "Save Changes")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity, minHeight: 54)
+                            .background(
+                                Group {
+                                    if isSaving {
+                                        Color.gray
+                                    } else {
+                                        LinearGradient(
+                                            colors: [Color.pink.opacity(0.6), Color.pennyPurple],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    }
+                                }
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                            .shadow(color: Color.pennyPurple.opacity(isSaving ? 0 : 0.3), radius: 10, x: 0, y: 5)
+                    }
+                    .disabled(isSaving)
+                    .padding(.bottom, 24)
                 }
-                .disabled(isSaving)
+                .padding(.horizontal, 20)
             }
-            .padding(20)
             .background(Color.pennyBackground.ignoresSafeArea())
             .navigationTitle("Edit Profile")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Close") { dismiss() }
+                        .foregroundColor(.pennyPurple)
+                        .fontWeight(.medium)
                 }
             }
             .onAppear {
@@ -95,6 +146,26 @@ struct EditProfileView: View {
                 Task { await loadPetName() }
             }
         }
+    }
+
+    // MARK: - Reusable Input Row Component
+    private func inputRow(icon: String, placeholder: String, text: Binding<String>, isSecure: Bool = false) -> some View {
+        HStack(spacing: 16) {
+            Image(systemName: icon)
+                .font(.system(size: 16))
+                .foregroundColor(.pennyPurple.opacity(0.7))
+                .frame(width: 24)
+            
+            if isSecure {
+                SecureField(placeholder, text: text)
+            } else {
+                TextField(placeholder, text: text)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+            }
+        }
+        .padding(.horizontal, 16)
+        .frame(height: 54)
     }
 
     // MARK: - 8. Methods
@@ -146,5 +217,9 @@ struct EditProfileView: View {
             dismiss()
         }
     }
+}
 
+#Preview {
+    EditProfileView()
+        //.environmentObject(AuthViewModel()) // Uncomment jika ingin di-preview dengan Mock VM
 }
