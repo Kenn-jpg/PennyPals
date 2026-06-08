@@ -109,12 +109,14 @@ struct AccountView: View {
                                 .padding(.horizontal, 8)
 
                             VStack(spacing: 0) {
-                                SettingRow(
-                                    icon: "bag.fill",
-                                    color: .blue,
-                                    title: "Accessories",
-                                    action: { showInventory = true }
-                                )
+                                Button(action: { showInventory = true }) {
+                                    SettingRow(
+                                        icon: "bag.fill",
+                                        color: .blue,
+                                        title: "Accessories"
+                                    )
+                                }
+                                .buttonStyle(.plain)
                                 .sheet(isPresented: $showInventory) {
                                     InventoryView(category: "Accessories")
                                         .environmentObject(shopVM)
@@ -122,12 +124,14 @@ struct AccountView: View {
 
                                 Divider().padding(.leading, 56)
 
-                                SettingRow(
-                                    icon: "moon.fill",
-                                    color: .indigo,
-                                    title: "Background",
-                                    action: { showBackgroundInventory = true }
-                                )
+                                Button(action: { showBackgroundInventory = true }) {
+                                    SettingRow(
+                                        icon: "moon.fill",
+                                        color: .indigo,
+                                        title: "Background"
+                                    )
+                                }
+                                .buttonStyle(.plain)
                                 .sheet(isPresented: $showBackgroundInventory) {
                                     InventoryView(category: "Backgrounds")
                                         .environmentObject(shopVM)
@@ -135,14 +139,14 @@ struct AccountView: View {
 
                                 Divider().padding(.leading, 56)
 
-                                SettingRow(
-                                    icon: "person.crop.circle.fill",
-                                    color: .green,
-                                    title: "Edit Profile",
-                                    action: {
-                                        showEditProfile = true
-                                    }
-                                )
+                                Button(action: { showEditProfile = true }) {
+                                    SettingRow(
+                                        icon: "person.crop.circle.fill",
+                                        color: .green,
+                                        title: "Edit Profile"
+                                    )
+                                }
+                                .buttonStyle(.plain)
                             }
                             .background(Color(UIColor.systemBackground))
                             .clipShape(RoundedRectangle(cornerRadius: 20))
@@ -161,17 +165,25 @@ struct AccountView: View {
                                 .padding(.horizontal, 8)
 
                             VStack(spacing: 0) {
-                                SettingRow(
-                                    icon: "questionmark.circle.fill",
-                                    color: .orange,
-                                    title: "Help Center"
-                                )
+                                NavigationLink(destination: HelpCenterView()) {
+                                    SettingRow(
+                                        icon: "questionmark.circle.fill",
+                                        color: .orange,
+                                        title: "Help Center"
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                                
                                 Divider().padding(.leading, 56)
-                                SettingRow(
-                                    icon: "doc.text.fill",
-                                    color: .gray,
-                                    title: "Terms of Service"
-                                )
+                                
+                                NavigationLink(destination: TermsOfServiceView()) {
+                                    SettingRow(
+                                        icon: "doc.text.fill",
+                                        color: .gray,
+                                        title: "Terms of Service"
+                                    )
+                                }
+                                .buttonStyle(.plain)
                             }
                             .background(Color(UIColor.systemBackground))
                             .clipShape(RoundedRectangle(cornerRadius: 20))
@@ -213,31 +225,26 @@ struct SettingRow: View {
     var icon: String
     var color: Color
     var title: String
-    var action: () -> Void = {}
-
     var body: some View {
-        Button(action: action) {
-            HStack(spacing: 16) {
-                ZStack {
-                    Circle()
-                        .fill(color.opacity(0.15))
-                        .frame(width: 32, height: 32)
-                    Image(systemName: icon)
-                        .foregroundColor(color)
-                        .font(.system(size: 14, weight: .semibold))
-                }
-                Text(title)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.pennyText)
-                Spacer()
-                Image(systemName: "chevron.right")
+        HStack(spacing: 16) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.15))
+                    .frame(width: 32, height: 32)
+                Image(systemName: icon)
+                    .foregroundColor(color)
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(Color(hex: "#D0C9E0"))
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .contentShape(Rectangle())
+            Text(title)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(.pennyText)
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(Color(hex: "#D0C9E0"))
         }
-        .buttonStyle(.plain)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .contentShape(Rectangle())
     }
 }

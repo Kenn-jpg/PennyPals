@@ -26,52 +26,37 @@ struct EditProfileView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 16) {
-                // MARK: - 3. Username Section
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Username")
-                        .font(.caption.weight(.semibold))
-                        .foregroundColor(.pennySecondaryText)
-
+                // MARK: - 3. Profile Information
+                VStack(spacing: 0) {
                     TextField("Username", text: $username)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .padding(.horizontal, 16)
-                        .frame(height: 48)
-                        .background(Color(UIColor.systemBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                }
-
-                // MARK: - 4. Pet Name Section
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Pet Name")
-                        .font(.caption.weight(.semibold))
-                        .foregroundColor(.pennySecondaryText)
-
+                        .frame(height: 52)
+                    
+                    Divider().padding(.leading, 16)
+                    
                     TextField("Pet Name", text: $petName)
                         .padding(.horizontal, 16)
-                        .frame(height: 48)
-                        .background(Color(UIColor.systemBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .frame(height: 52)
                 }
+                .background(Color(UIColor.systemBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
 
-                // MARK: - 5. Password Section
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("New Password")
-                        .font(.caption.weight(.semibold))
-                        .foregroundColor(.pennySecondaryText)
-
+                // MARK: - 4. Password Section
+                VStack(spacing: 0) {
                     SecureField("New Password", text: $newPassword)
                         .padding(.horizontal, 16)
-                        .frame(height: 48)
-                        .background(Color(UIColor.systemBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .frame(height: 52)
+
+                    Divider().padding(.leading, 16)
 
                     SecureField("Confirm Password", text: $confirmPassword)
                         .padding(.horizontal, 16)
-                        .frame(height: 48)
-                        .background(Color(UIColor.systemBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .frame(height: 52)
                 }
+                .background(Color(UIColor.systemBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
 
                 // MARK: - 6. Error Message
                 if let msg = (localError ?? authVM.errorMessage) {
