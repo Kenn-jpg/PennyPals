@@ -262,35 +262,7 @@ class HomeViewModel: ObservableObject {
         try? db.collection("transactions").addDocument(from: tx)
 
         // 🔔 NOTIFICATIONS
-        // Level up notification
-        if newLevel > currentPet.level {
-            NotificationManager.shared.sendLevelUpNotification(
-                petName: currentPet.name,
-                newLevel: newLevel
-            )
-        }
-
-        // Streak celebration (streak naik jika belum nabung hari ini)
-        if !alreadySavedToday {
-            NotificationManager.shared.sendStreakCelebration(
-                streak: currentUser.streak + 1
-            )
-        }
-
-        // Goal progress & completion
-        if newGoalAmount >= currentGoal.targetAmount
-            && currentGoal.targetAmount > 0
-        {
-            NotificationManager.shared.sendGoalCompletedNotification(
-                goalName: currentGoal.itemName
-            )
-        } else {
-            NotificationManager.shared.sendGoalProgressNotification(
-                goalName: currentGoal.itemName,
-                currentAmount: newGoalAmount,
-                targetAmount: currentGoal.targetAmount
-            )
-        }
+        // Hanya menyisakan penalty warning dan pembatalan daily reminder
 
         // Jadwalkan peringatan penalti berdasarkan tanggal aman baru
         NotificationManager.shared.schedulePenaltyWarning(

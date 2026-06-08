@@ -22,10 +22,6 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
         static let dailyReminder = "pennypals.daily.reminder"
         static let penaltyWarning = "pennypals.penalty.warning"
         static let petHungry = "pennypals.pet.hungry"
-        static let streakCelebration = "pennypals.streak.celebration"
-        static let levelUp = "pennypals.level.up"
-        static let goalProgress = "pennypals.goal.progress"
-        static let goalCompleted = "pennypals.goal.completed"
     }
 
     // MARK: - Initialization
@@ -168,128 +164,6 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
 
         let request = UNNotificationRequest(
             identifier: NotificationID.petHungry,
-            content: content,
-            trigger: trigger
-        )
-
-        UNUserNotificationCenter.current().add(request)
-    }
-
-    // MARK: - 4. Streak Celebration
-
-    // Kirim notifikasi merayakan streak milestone
-    func sendStreakCelebration(streak: Int) {
-        // Hanya kirim di milestone tertentu
-        let milestones = [3, 7, 14, 30, 60, 100, 365]
-        guard milestones.contains(streak) else { return }
-
-        let content = UNMutableNotificationContent()
-        content.title = "🔥 Streak \(streak) Hari!"
-
-        switch streak {
-        case 3:
-            content.body = "Wah, kamu sudah nabung 3 hari berturut-turut! Pertahankan ya! 💪"
-        case 7:
-            content.body = "Satu minggu penuh nabung terus! Pet kamu bangga banget! 🎉"
-        case 14:
-            content.body = "2 minggu non-stop! Kamu luar biasa konsisten! 🌟"
-        case 30:
-            content.body = "SEBULAN PENUH! Kamu adalah master penabung sejati! 🏆"
-        case 60:
-            content.body = "60 hari nabung terus! Pencapaian yang luar biasa! 👑"
-        case 100:
-            content.body = "100 HARI! Legenda penabung! Pet kamu paling bahagia sedunia! 🎊"
-        case 365:
-            content.body = "SATU TAHUN PENUH! Kamu benar-benar inspirasi! 🥇🎆"
-        default:
-            content.body = "Streak-mu terus berlanjut! Hebat! 🔥"
-        }
-
-        content.sound = .default
-
-        let trigger = UNTimeIntervalNotificationTrigger(
-            timeInterval: 1,
-            repeats: false
-        )
-
-        let request = UNNotificationRequest(
-            identifier: "\(NotificationID.streakCelebration).\(streak)",
-            content: content,
-            trigger: trigger
-        )
-
-        UNUserNotificationCenter.current().add(request)
-    }
-
-    // MARK: - 5. Level Up Notification
-
-    // Kirim notifikasi saat pet naik level
-    func sendLevelUpNotification(petName: String, newLevel: Int) {
-        let content = UNMutableNotificationContent()
-        content.title = "⭐ Level Up!"
-        content.body = "\(petName) naik ke Level \(newLevel)! Terus nabung biar makin kuat! ✨"
-        content.sound = .default
-
-        let trigger = UNTimeIntervalNotificationTrigger(
-            timeInterval: 1,
-            repeats: false
-        )
-
-        let request = UNNotificationRequest(
-            identifier: "\(NotificationID.levelUp).\(newLevel)",
-            content: content,
-            trigger: trigger
-        )
-
-        UNUserNotificationCenter.current().add(request)
-    }
-
-    // MARK: - 6. Goal Progress Notification
-
-    // Kirim notifikasi progress goal saat mencapai milestone persentase
-    func sendGoalProgressNotification(goalName: String, currentAmount: Double, targetAmount: Double) {
-        guard targetAmount > 0 else { return }
-        let percentage = Int((currentAmount / targetAmount) * 100)
-
-        // Hanya kirim di milestone 25%, 50%, 75%
-        let milestones = [25, 50, 75]
-        guard milestones.contains(percentage) else { return }
-
-        let content = UNMutableNotificationContent()
-        content.title = "📊 Progress Wishlist!"
-        content.body = "Kamu sudah mencapai \(percentage)% dari target \"\(goalName)\"! Ayo terus nabung! 🎯"
-        content.sound = .default
-
-        let trigger = UNTimeIntervalNotificationTrigger(
-            timeInterval: 1,
-            repeats: false
-        )
-
-        let request = UNNotificationRequest(
-            identifier: "\(NotificationID.goalProgress).\(percentage)",
-            content: content,
-            trigger: trigger
-        )
-
-        UNUserNotificationCenter.current().add(request)
-    }
-
-    // MARK: - 7. Goal Completed Notification
-
-    // Kirim notifikasi saat goal tercapai
-    func sendGoalCompletedNotification(goalName: String) {
-        let content = UNMutableNotificationContent()
-        content.title = "🎉 Wishlist Tercapai!"
-        content.body = "Selamat! Kamu berhasil mengumpulkan tabungan untuk \"\(goalName)\"! Waktunya set goal baru! 🎊"
-        content.sound = .default
-
-        let trigger = UNTimeIntervalNotificationTrigger(
-            timeInterval: 1,
-            repeats: false
-        )
-
-        let request = UNNotificationRequest(
-            identifier: NotificationID.goalCompleted,
             content: content,
             trigger: trigger
         )
