@@ -12,7 +12,7 @@ struct WatchSettingsView: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            // --- Header ---
+            // MARK: - 1. Header
             HStack {
                 Image(systemName: "photo.fill")
                     .font(.caption)
@@ -34,7 +34,7 @@ struct WatchSettingsView: View {
                     .foregroundColor(Color(hex: "#6B6580"))
                 Spacer()
             } else {
-                // --- Theme List ---
+                // MARK: - 2. Theme List
                 ScrollView {
                     VStack(spacing: 8) {
                         ForEach(connectivity.ownedBackgrounds, id: \.self) { bg in
@@ -49,7 +49,7 @@ struct WatchSettingsView: View {
                                 }
                             }) {
                                 HStack {
-                                    // Color Preview Circle
+                                    // MARK: - 3. Color Preview Circle
                                     Circle()
                                         .fill(
                                             LinearGradient(

@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct ShopView: View {
+    // MARK: - 1. Properties
+
     @StateObject private var shopVM = ShopViewModel()
     @EnvironmentObject var authVM: AuthViewModel
 
@@ -20,10 +22,12 @@ struct ShopView: View {
         GridItem(.flexible(), spacing: 16),
     ]
 
+    // MARK: - 2. Body
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // MARK: - HEADER
+                // MARK: - 3. Header
                 HStack {
                     Text("Shop")
                         .font(.largeTitle.bold())
@@ -45,7 +49,7 @@ struct ShopView: View {
                 .padding(.top, 20)
                 .padding(.bottom, 16)
 
-                // MARK: - CATEGORY PICKER
+                // MARK: - 4. Category Picker
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
                         ForEach(categories, id: \.self) { category in
@@ -76,7 +80,7 @@ struct ShopView: View {
                 }
                 .padding(.bottom, 20)
 
-                // MARK: - SHOP GRID ITEMS
+                // MARK: - 5. Shop Grid Items
                 ScrollView(showsIndicators: false) {
                     LazyVGrid(columns: columns, spacing: 16) {
                         ForEach(
@@ -91,7 +95,7 @@ struct ShopView: View {
                             let isBackground = item.category == "Backgrounds"
 
                             VStack(spacing: 0) {
-                                // 1. Bagian Atas (Icon / Preview Warna)
+                                // MARK: - 6. Preview Icon
                                 ZStack {
                                     if isBackground {
                                         if item.isGradient == true,
@@ -153,7 +157,7 @@ struct ShopView: View {
                                 .frame(height: 100)
                                 .clipped()
 
-                                // 2. Bagian Bawah (Detail & Tombol)
+                                // MARK: - 7. Detail Information
                                 VStack(spacing: 8) {
                                     Text(item.name)
                                         .font(.subheadline.weight(.bold))
@@ -172,7 +176,7 @@ struct ShopView: View {
                                             .foregroundColor(.pennyText)
                                     }
 
-                                    // 3. Tombol Aksi (Hanya BUY atau OWNED)
+                                    // MARK: - 8. Action Button
                                     Button {
                                         if !isOwned {
                                             shopVM.purchaseItem(

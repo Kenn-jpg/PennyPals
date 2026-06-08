@@ -9,12 +9,10 @@ import WatchConnectivity
 import Foundation
 import Combine
 
-/// Kelas `ObservableObject` yang bertindak sebagai jembatan komunikasi antara Apple Watch dan iPhone.
-/// Menggunakan `WatchConnectivity` untuk menerima pembaruan data secara *real-time* atau lewat antrean (queue),
-/// sehingga antarmuka pengguna (UI) di Apple Watch bisa merespon perubahan secara instan.
+// MARK: - 1. Connectivity Manager
 class IOSConnectivity: NSObject, ObservableObject {
 
-    // MARK: - User Data
+    // MARK: - 2. User Data
     @Published var username: String = "—"
     @Published var email: String = "—"
     @Published var coins: Int = 0
@@ -23,7 +21,7 @@ class IOSConnectivity: NSObject, ObservableObject {
     @Published var isSafeFromPenalty: Bool = true
     @Published var nextPenaltyCheck: Date = Date()
 
-    // MARK: - Pet Data
+    // MARK: - 3. Pet Data
     @Published var petName: String = "Pal"
     @Published var petLevel: Int = 0
     @Published var petXP: Int = 0
@@ -31,11 +29,11 @@ class IOSConnectivity: NSObject, ObservableObject {
     @Published var petMood: String = "hungry"
     @Published var petType: String = "rose"
 
-    // MARK: - Inventory Data
+    // MARK: - 4. Inventory Data
     @Published var ownedBackgrounds: [[String: String]] = []
     @Published var selectedBackgroundId: String = ""
 
-    // MARK: - Connection Status
+    // MARK: - 5. Connection Status
     @Published var isConnected: Bool = false
 
     override init() {
@@ -43,9 +41,7 @@ class IOSConnectivity: NSObject, ObservableObject {
         activateSession()
     }
 
-    // MARK: - Session Activation
-
-    /// Mengaktifkan sesi `WCSession` agar Apple Watch dapat mulai mengirim dan menerima pesan dari iPhone.
+    // MARK: - 6. Session Activation
     private func activateSession() {
         guard WCSession.isSupported() else {
             print("⌚ WCSession not supported on this Watch")
@@ -55,10 +51,7 @@ class IOSConnectivity: NSObject, ObservableObject {
         WCSession.default.activate()
     }
 
-    // MARK: - Request Refresh from iPhone
-
-    /// Mengirim permintaan ke iPhone untuk menyegarkan dan mengirimkan ulang semua data terbaru 
-    /// (seperti profil pengguna, pet, dan inventori). Biasanya dipanggil saat Apple Watch baru saja aktif.
+    // MARK: - 7. Request Refresh from iPhone
     func requestRefresh() {
         guard WCSession.default.isReachable else {
             print("⌚ iPhone not reachable for refresh request")
@@ -72,8 +65,6 @@ class IOSConnectivity: NSObject, ObservableObject {
         }
     }
 
-    /// Mengirim perintah ke iPhone untuk mengganti latar belakang (Background) yang sedang digunakan.
-    /// - Parameter id: ID latar belakang yang ingin dipakai.
     func equipBackground(id: String) {
         guard WCSession.default.isReachable else {
             print("⌚ iPhone not reachable for equip request")
@@ -92,11 +83,7 @@ class IOSConnectivity: NSObject, ObservableObject {
         }
     }
 
-    // MARK: - Process Incoming Data
-
-    /// Memproses pesan atau *payload* yang diterima dari iPhone dan memperbarui variabel *state* lokal.
-    /// Pembaruan ini akan secara otomatis memicu pembaruan antarmuka pengguna (UI) berkat `@Published`.
-    /// - Parameter data: *Dictionary* berisi pasangan kunci-nilai data.
+    // MARK: - 8. Process Incoming Data
     private func processMessage(_ data: [String: Any]) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
@@ -171,8 +158,7 @@ class IOSConnectivity: NSObject, ObservableObject {
         }
     }
 
-    /// Menghapus semua data lokal yang tersimpan di memori Apple Watch.
-    /// Dipanggil saat menerima sinyal `logout` dari iPhone.
+    // MARK: - 9. Clear Data
     private func clearData() {
         self.username = "—"
         self.email = "—"
@@ -196,7 +182,7 @@ class IOSConnectivity: NSObject, ObservableObject {
     }
 }
 
-// MARK: - WCSessionDelegate
+// MARK: - 10. WCSessionDelegate
 
 extension IOSConnectivity: WCSessionDelegate {
 

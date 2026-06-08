@@ -10,17 +10,17 @@ import FirebaseAuth
 import FirebaseFirestore
 import Foundation
 
-/// ViewModel untuk mengelola proses onboarding pengguna baru di PennyPals.
-/// Menangani pembuatan data pet awal, target wishlist, dan inisialisasi status user.
+// ViewModel untuk mengelola proses onboarding pengguna baru di PennyPals.
+// Menangani pembuatan data pet awal, target wishlist, dan inisialisasi status user.
 @MainActor
 class OnboardingViewModel: ObservableObject {
     
     // MARK: - Properties
     private var db = Firestore.firestore()
 
-    // MARK: - Onboarding Process
+    // MARK: - 1. Onboarding Process
 
-    /// Menyelesaikan proses onboarding dan menyimpan semua data konfigurasi awal ke Firestore
+    // Menyelesaikan proses onboarding dan menyimpan semua data konfigurasi awal ke Firestore
     func completeOnboarding(
         initialSavings: Double,
         targetAmount: Double,

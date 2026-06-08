@@ -7,27 +7,24 @@
 
 import SwiftUI
 
-// MARK: - Models
+// MARK: - 1. Models
 
-/// Struktur data khusus untuk memetakan opsi pilihan telur di antarmuka onboarding
 struct EggOption {
     let id: String
     let name: String
     let assetName: String
 }
 
-// MARK: - Main View
+// MARK: - 2. Main View
 
-/// Layar antarmuka utama untuk pengguna baru yang sedang melakukan onboarding.
-/// Mengelola input tabungan awal, target wishlist, nama peliharaan, dan pemilihan telur (gacha).
 struct OnboardingView: View {
 
-    // MARK: - Environment & ViewModels
+    // MARK: - 3. Properties
 
     @StateObject private var onboardingVM = OnboardingViewModel()
     @EnvironmentObject var authVM: AuthViewModel
 
-    // MARK: - State & Bindings
+
 
     @State private var petNameInput: String = ""
     @Binding var rawAmount: String
@@ -35,12 +32,10 @@ struct OnboardingView: View {
     @Binding var wishlistName: String
     @Binding var targetAmountString: String
 
-    // MARK: - Callbacks & Constants
 
-    /// Callback yang dipicu untuk berpindah halaman saat seluruh form disubmit
+
     var onStart: () -> Void
 
-    /// Daftar pilihan telur yang dapat di-tap oleh pengguna
     let eggs: [EggOption] = [
         EggOption(id: "rose", name: "Rosie", assetName: "PinkEgg01"),
         EggOption(id: "mint", name: "Sprout", assetName: "GreenEgg01"),
@@ -50,16 +45,12 @@ struct OnboardingView: View {
         EggOption(id: "peach", name: "Pip", assetName: "PeachEgg01"),
     ]
 
-    /// Daftar ras hewan yang akan diacak (sistem Gacha) setelah user menetaskan telur
     private let availablePets = ["Cat", "Dog", "Owl", "Pig", "Raccoon", "Seal"]
 
-    /// Batas maksimal input tabungan (Rp 100 Juta) untuk mencegah error tipe data
     private let maxSavingsLimit: Double = 100_000_000
 
-    // MARK: - Formatters
+    // MARK: - 4. Formatters
 
-    /// Formatter statis (Singleton) untuk memformat angka menjadi format mata uang.
-    /// Dibuat static agar menghemat memori dan tidak di-instansiasi berulang kali saat user mengetik.
     private static let currencyFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
@@ -67,9 +58,8 @@ struct OnboardingView: View {
         return formatter
     }()
 
-    // MARK: - Computed Properties
+    // MARK: - 5. Computed Properties
 
-    /// Validasi form komprehensif untuk menentukan apakah tombol Start (Submit) bisa ditekan
     private var isFormValid: Bool {
         let initialAmount = Double(cleanNumericString(rawAmount)) ?? 0
         let targetAmount = Double(cleanNumericString(targetAmountString)) ?? 0
@@ -86,12 +76,12 @@ struct OnboardingView: View {
                 .isEmpty
     }
 
-    // MARK: - View Body
+    // MARK: - 6. Body
 
     var body: some View {
         VStack(spacing: 0) {
 
-            // --- TOP ACTION BAR ---
+            // Top Action Bar
             HStack {
                 Spacer()
                 Button(action: { authVM.logout() }) {
@@ -103,7 +93,7 @@ struct OnboardingView: View {
                 .padding(.top, 16)
             }
 
-            // --- HEADER TITLE ---
+            // Header Title
             VStack(alignment: .leading, spacing: 4) {
                 Text("Let's set you up")
                     .font(.largeTitle.bold())
@@ -120,7 +110,7 @@ struct OnboardingView: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 32) {
 
-                    // --- SECTION 1: INITIAL SAVINGS ---
+                    // Section 1: Initial Savings
                     VStack(alignment: .leading, spacing: 12) {
                         SectionHeader(title: "INITIAL SAVINGS")
 
@@ -158,7 +148,7 @@ struct OnboardingView: View {
                             )
                         }
 
-                        // Presets
+                        // MARK: - Presets
                         HStack(spacing: 8) {
                             ForEach(
                                 ["100000", "500000", "1000000", "5000000"],
@@ -196,7 +186,7 @@ struct OnboardingView: View {
                         .padding(.top, 4)
                     }
 
-                    // --- SECTION 2: WISHLIST GOAL & TARGET PRICE ---
+                    // Section 2: Wishlist Goal & Target Price
                     VStack(alignment: .leading, spacing: 16) {
                         SectionHeader(title: "YOUR FIRST WISHLIST GOAL")
 
@@ -222,7 +212,7 @@ struct OnboardingView: View {
                         .background(Color.gray.opacity(0.05))
                         .cornerRadius(12)
 
-                        // Validation Warnings
+                        // MARK: - Validation Warnings
                         let currentInitial =
                             Double(cleanNumericString(rawAmount)) ?? 0
                         let currentTarget =
@@ -238,7 +228,7 @@ struct OnboardingView: View {
                         }
                     }
 
-                    // --- SECTION 3: PET NAME ---
+                    // Section 3: Pet Name
                     VStack(alignment: .leading, spacing: 12) {
                         SectionHeader(title: "YOUR PET NAME")
 
@@ -251,7 +241,7 @@ struct OnboardingView: View {
                         .cornerRadius(12)
                     }
 
-                    // --- SECTION 4: CHOOSE EGG ---
+                    // Section 4: Choose Egg
                     VStack(alignment: .leading, spacing: 16) {
                         SectionHeader(title: "CHOOSE YOUR EGG")
 
@@ -323,7 +313,7 @@ struct OnboardingView: View {
                 .padding(.bottom, 24)
             }
 
-            // --- BOTTOM ACTION BUTTON ---
+            // MARK: - Bottom Action Button
             Button(action: {
                 Task {
                     let amount = Double(cleanNumericString(rawAmount)) ?? 0
@@ -361,9 +351,8 @@ struct OnboardingView: View {
         .background(Color.pennyBackground.ignoresSafeArea())
     }
 
-    // MARK: - Helper Methods
+    // MARK: - 7. Helper Methods
 
-    /// Memformat input String mentah menjadi format mata uang menggunakan currencyFormatter
     private func formatCurrencyInput(_ input: String) -> String {
         let digits = cleanNumericString(input)
         guard let doubleValue = Double(digits), doubleValue > 0 else {
@@ -375,15 +364,13 @@ struct OnboardingView: View {
             ?? ""
     }
 
-    /// Membersihkan karakter selain angka dari string input (mencegah error saat parsing)
     private func cleanNumericString(_ input: String) -> String {
         return input.filter { $0.isNumber }
     }
 }
 
-// MARK: - Reusable UI Components
+// MARK: - 8. UI Components
 
-/// Komponen teks kecil sebagai judul setiap section form
 struct SectionHeader: View {
     let title: String
     var body: some View {
@@ -394,7 +381,6 @@ struct SectionHeader: View {
     }
 }
 
-/// Komponen teks bantuan kecil di bawah text field (bisa berwarna merah jika ada warning)
 struct HintText: View {
     let icon: String
     let text: String
@@ -410,7 +396,6 @@ struct HintText: View {
     }
 }
 
-/// Modifikasi TextField bersih dengan ikon bawaan sistem (SF Symbols)
 struct MinimalTextField: View {
     let icon: String
     let placeholder: String

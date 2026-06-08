@@ -9,6 +9,7 @@ import AppIntents
 import SwiftUI
 import WidgetKit
 
+// MARK: - 1. Widget Control
 struct PennyPalsWidgetControl: ControlWidget {
     var body: some ControlWidgetConfiguration {
         StaticControlConfiguration(
@@ -28,6 +29,7 @@ struct PennyPalsWidgetControl: ControlWidget {
     }
 }
 
+// MARK: - 2. Value Provider
 extension PennyPalsWidgetControl {
     struct Provider: ControlValueProvider {
         var previewValue: Bool {
@@ -41,6 +43,7 @@ extension PennyPalsWidgetControl {
     }
 }
 
+// MARK: - 3. Timer Intent
 struct StartTimerIntent: SetValueIntent {
     static let title: LocalizedStringResource = "Start a timer"
 

@@ -10,6 +10,8 @@ import SwiftUI
 enum LoginMode { case login, register }
 
 struct LoginView: View {
+    // MARK: - 1. Properties
+
     @EnvironmentObject var authVM: AuthViewModel
     var onLoginSuccess: (Bool) -> Void
 
@@ -28,12 +30,14 @@ struct LoginView: View {
         }
     }
 
+    // MARK: - 2. Body
+
     var body: some View {
         VStack(spacing: 0) {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 0) {
 
-                    // --- HEADER & LOGO ---
+                    // MARK: - 3. Header & Logo
                     VStack(spacing: 12) {
                         ZStack {
                             RoundedRectangle(
@@ -46,12 +50,12 @@ struct LoginView: View {
                                     y: 8
                                 )
 
-                            // MENGGUNAKAN ICON APP DARI ASSETS
+                            // Image App Icon
                             Image("PennyPals")
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 72, height: 72)
-                                .clipShape(RoundedRectangle(cornerRadius: 16))  // Opsional: Membulatkan ujung icon jika aslinya kotak lancip
+                                .clipShape(RoundedRectangle(cornerRadius: 16))
                         }
                         .padding(.bottom, 12).scaleEffect(animateLogo ? 1 : 0.8)
                         .opacity(animateLogo ? 1 : 0)
@@ -69,7 +73,7 @@ struct LoginView: View {
                         ).foregroundColor(.pennySecondaryText)
                     }.padding(.top, 64).padding(.bottom, 24)
 
-                    // --- TAB PICKER (LOG IN / SIGN UP) ---
+                    // MARK: - 4. Tab Picker (Log In / Sign Up)
                     HStack(spacing: 0) {
                         ForEach(["Log In", "Sign Up"], id: \.self) { label in
                             let isSelected =
@@ -106,7 +110,7 @@ struct LoginView: View {
                         Capsule()
                     ).padding(.bottom, 20)
 
-                    // --- INPUT FIELDS ---
+                    // MARK: - 5. Input Fields
                     VStack(spacing: 12) {
                         if mode == .register {
                             TextField("Username", text: $username).padding(
@@ -118,7 +122,8 @@ struct LoginView: View {
                                     color: .black.opacity(0.03),
                                     radius: 5,
                                     y: 2
-                                ).transition(
+                                )
+                                .transition(
                                     .move(edge: .top).combined(with: .opacity)
                                 )
                                 .accessibilityIdentifier("usernameTextField")  // ID untuk UI Test
@@ -134,7 +139,7 @@ struct LoginView: View {
                                 radius: 5,
                                 y: 2
                             )
-                            .accessibilityIdentifier("emailTextField")  // ID untuk UI Test
+                            .accessibilityIdentifier("emailTextField")
 
                         SecureField("Password", text: $password).padding(
                             .horizontal,
@@ -142,10 +147,10 @@ struct LoginView: View {
                         ).frame(height: 48).background(Color.white).clipShape(
                             RoundedRectangle(cornerRadius: 16)
                         ).shadow(color: .black.opacity(0.03), radius: 5, y: 2)
-                            .accessibilityIdentifier("passwordSecureField")  // ID untuk UI Test
+                            .accessibilityIdentifier("passwordSecureField")
                     }
 
-                    // --- SUBMIT BUTTON ---
+                    // MARK: - 6. Submit Button
                     Button(action: {
                         Task {
                             if mode == .login {
@@ -172,12 +177,12 @@ struct LoginView: View {
                     }
                     .buttonStyle(PennyPrimaryButtonStyle())
                     .padding(.top, 20)
-                    .disabled(!isFormValid)  // Disable tombol jika form tidak valid
-                    .opacity(isFormValid ? 1.0 : 0.5)  // Buat sedikit transparan jika disabled
+                    .disabled(!isFormValid)
+                    .opacity(isFormValid ? 1.0 : 0.5)
                     .accessibilityIdentifier(
                         mode == .login
                             ? "loginSubmitButton" : "registerSubmitButton"
-                    )  // ID untuk UI Test
+                    )
 
                     Spacer(minLength: 40)
                 }.padding(.horizontal, 24)

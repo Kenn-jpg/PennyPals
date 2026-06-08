@@ -9,8 +9,8 @@ import UserNotifications
 import UIKit
 internal import Combine
 
-/// Singleton manager untuk mengelola semua Local Notifications di PennyPals.
-/// Menangani permission request, scheduling, dan pembatalan notifikasi.
+// Singleton manager untuk mengelola semua Local Notifications di PennyPals.
+// Menangani permission request, scheduling, dan pembatalan notifikasi.
 class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterDelegate {
 
     static let shared = NotificationManager()
@@ -38,7 +38,7 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
 
     // MARK: - Permission Handling
 
-    /// Minta izin notifikasi dari user
+    // Minta izin notifikasi dari user
     func requestAuthorization() {
         UNUserNotificationCenter.current().requestAuthorization(
             options: [.alert, .badge, .sound]
@@ -56,7 +56,7 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
         }
     }
 
-    /// Cek status izin notifikasi saat ini
+    // Cek status izin notifikasi saat ini
     func checkAuthorizationStatus() {
         UNUserNotificationCenter.current().getNotificationSettings { [weak self] settings in
             DispatchQueue.main.async {
@@ -67,7 +67,7 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
 
     // MARK: - 1. Daily Savings Reminder
 
-    /// Jadwalkan pengingat harian untuk menabung
+    // Jadwalkan pengingat harian untuk menabung
     func scheduleDailyReminder() {
         let content = UNMutableNotificationContent()
         content.title = "Hey, ayo nabung! 🐾"
@@ -102,7 +102,7 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
 
     // MARK: - 2. Penalty Warning
 
-    /// Jadwalkan peringatan penalti berdasarkan nextPenaltyCheck dari UserModel
+    // Jadwalkan peringatan penalti berdasarkan nextPenaltyCheck dari UserModel
     func schedulePenaltyWarning(nextPenaltyCheck: Date, petName: String) {
         // Kirim warning 6 jam sebelum penalty
         guard let warningDate = Calendar.current.date(
@@ -152,7 +152,7 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
 
     // MARK: - 3. Pet Hungry Notification
 
-    /// Kirim notifikasi instan bahwa pet lapar
+    // Kirim notifikasi instan bahwa pet lapar
     func sendPetHungryNotification(petName: String) {
         let content = UNMutableNotificationContent()
         content.title = "\(petName) lapar! 🥺"
@@ -177,7 +177,7 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
 
     // MARK: - 4. Streak Celebration
 
-    /// Kirim notifikasi merayakan streak milestone
+    // Kirim notifikasi merayakan streak milestone
     func sendStreakCelebration(streak: Int) {
         // Hanya kirim di milestone tertentu
         let milestones = [3, 7, 14, 30, 60, 100, 365]
@@ -223,7 +223,7 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
 
     // MARK: - 5. Level Up Notification
 
-    /// Kirim notifikasi saat pet naik level
+    // Kirim notifikasi saat pet naik level
     func sendLevelUpNotification(petName: String, newLevel: Int) {
         let content = UNMutableNotificationContent()
         content.title = "⭐ Level Up!"
@@ -246,7 +246,7 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
 
     // MARK: - 6. Goal Progress Notification
 
-    /// Kirim notifikasi progress goal saat mencapai milestone persentase
+    // Kirim notifikasi progress goal saat mencapai milestone persentase
     func sendGoalProgressNotification(goalName: String, currentAmount: Double, targetAmount: Double) {
         guard targetAmount > 0 else { return }
         let percentage = Int((currentAmount / targetAmount) * 100)
@@ -276,7 +276,7 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
 
     // MARK: - 7. Goal Completed Notification
 
-    /// Kirim notifikasi saat goal tercapai
+    // Kirim notifikasi saat goal tercapai
     func sendGoalCompletedNotification(goalName: String) {
         let content = UNMutableNotificationContent()
         content.title = "🎉 Wishlist Tercapai!"
@@ -299,7 +299,7 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
 
     // MARK: - Evening Reminder
 
-    /// Jadwalkan pengingat malam jam 20:00 jika belum menabung hari ini
+    // Jadwalkan pengingat malam jam 20:00 jika belum menabung hari ini
     func scheduleEveningReminder(petName: String) {
         let content = UNMutableNotificationContent()
         content.title = "🌙 Jangan lupa nabung malam ini!"
@@ -334,7 +334,7 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
 
     // MARK: - Cancel Notifications
 
-    /// Batalkan pengingat harian (misalnya saat user sudah nabung hari ini)
+    // Batalkan pengingat harian (misalnya saat user sudah nabung hari ini)
     func cancelDailyRemindersForToday() {
         // Hapus pet hungry notification karena sudah nabung
         UNUserNotificationCenter.current().removePendingNotificationRequests(
@@ -349,7 +349,7 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
         )
     }
 
-    /// Batalkan semua pending notifications (misalnya saat logout)
+    // Batalkan semua pending notifications (misalnya saat logout)
     func cancelAllNotifications() {
         UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
         UNUserNotificationCenter.current().removeAllDeliveredNotifications()
@@ -358,7 +358,7 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
 
     // MARK: - UNUserNotificationCenterDelegate
 
-    /// Handle notifikasi saat app sedang di foreground
+    // Handle notifikasi saat app sedang di foreground
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification,
@@ -368,7 +368,7 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
         completionHandler([.banner, .sound])
     }
 
-    /// Handle saat user tap notifikasi
+    // Handle saat user tap notifikasi
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse,

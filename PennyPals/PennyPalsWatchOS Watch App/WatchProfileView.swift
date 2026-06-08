@@ -14,7 +14,7 @@ struct WatchProfileView: View {
         VStack(spacing: 4) {
             Spacer(minLength: 0)
 
-            // --- Avatar ---
+            // MARK: - 1. Avatar
             Circle()
                 .fill(
                     LinearGradient(
@@ -34,7 +34,7 @@ struct WatchProfileView: View {
                 )
                 .shadow(color: Color.black.opacity(0.1), radius: 2, y: 1)
 
-            // --- Name ---
+            // MARK: - 2. Name
             Text(connectivity.username)
                 .font(.system(size: 14, weight: .bold))
                 .foregroundColor(Color(hex: "#2A2440"))
@@ -43,7 +43,7 @@ struct WatchProfileView: View {
 
             Spacer(minLength: 0)
 
-            // --- Stats Grid ---
+            // MARK: - 3. Stats Grid
             HStack(spacing: 6) {
                 StatBadge(
                     icon: "bitcoinsign.circle.fill",
@@ -60,7 +60,7 @@ struct WatchProfileView: View {
                 )
             }
 
-            // --- Total Savings Card ---
+            // MARK: - 4. Total Savings Card
             VStack(spacing: 0) {
                 HStack(spacing: 4) {
                     Image(systemName: "wallet.pass.fill")
@@ -87,7 +87,7 @@ struct WatchProfileView: View {
                 in: RoundedRectangle(cornerRadius: 8)
             )
 
-            // --- Penalty Status ---
+            // MARK: - 5. Penalty Status
             HStack(spacing: 4) {
                 Image(systemName: penaltyIcon)
                     .font(.system(size: 9))
@@ -110,7 +110,7 @@ struct WatchProfileView: View {
                     .stroke(penaltyColor.opacity(0.3), lineWidth: 1)
             )
 
-            // --- Connection Status ---
+            // MARK: - 6. Connection Status
             if !connectivity.isConnected {
                 HStack(spacing: 4) {
                     Image(systemName: "iphone.slash")
@@ -126,7 +126,7 @@ struct WatchProfileView: View {
         .padding(.horizontal, 4)
     }
 
-    // MARK: - Computed Properties
+    // MARK: - 7. Computed Properties
 
     private var avatarInitials: String {
         String(connectivity.username.prefix(2)).uppercased()
@@ -164,7 +164,7 @@ struct WatchProfileView: View {
     }
 }
 
-// MARK: - Stat Badge Component
+// MARK: - 8. Stat Badge Component
 
 struct StatBadge: View {
     var icon: String
@@ -195,7 +195,7 @@ struct StatBadge: View {
     }
 }
 
-// MARK: - Number Formatter Extension (Watch-compatible)
+// MARK: - 9. Number Formatter Extension
 
 extension Int {
     var formattedWithDot: String {

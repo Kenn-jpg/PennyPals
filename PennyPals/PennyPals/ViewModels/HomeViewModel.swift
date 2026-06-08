@@ -11,25 +11,27 @@ import FirebaseFirestore
 import SwiftUI
 import WidgetKit
 
-/// ViewModel pusat yang mengelola data utama di beranda (HomeView).
-/// Mengatur status peliharaan (Pet), kemajuan tabungan (Goal), 
-/// hingga memonitor status lapar dan penalti pada peliharaan.
+// ViewModel pusat yang mengelola data utama di beranda (HomeView).
+// Mengatur status peliharaan (Pet), kemajuan tabungan (Goal), 
+// hingga memonitor status lapar dan penalti pada peliharaan.
 @MainActor
 class HomeViewModel: ObservableObject {
-    /// Data peliharaan (Pet) milik pengguna yang sedang aktif.
+    // MARK: - Properties
+    
+    // Data peliharaan (Pet) milik pengguna yang sedang aktif.
     @Published var pet: PetModel?
     
-    /// Target tabungan (Goal) yang sedang aktif dikerjakan pengguna.
+    // Target tabungan (Goal) yang sedang aktif dikerjakan pengguna.
     @Published var goal: GoalModel?
 
 
-    /// Daftar item toko yang akan digunakan untuk mencari data visual item yang dilengkapi.
+    // Daftar item toko yang akan digunakan untuk mencari data visual item yang dilengkapi.
     @Published var shopItems: [ShopItemModel] = []
     
-    /// ID background yang sedang aktif (Equipped).
+    // ID background yang sedang aktif (Equipped).
     @Published var selectedBackgroundId: String? = nil
     
-    /// ID aksesori yang sedang aktif (Equipped).
+    // ID aksesori yang sedang aktif (Equipped).
     @Published var selectedAccessoryId: String? = nil
 
     private var db = Firestore.firestore()
@@ -41,20 +43,23 @@ class HomeViewModel: ObservableObject {
 
 
     
-    /// Objek lengkap untuk background yang sedang aktif. 
-    /// Berguna agar View bisa mengakses properti warna dan gradient.
+    // Objek lengkap untuk background yang sedang aktif. 
+    // Berguna agar View bisa mengakses properti warna dan gradient.
     var equippedBackground: ShopItemModel? {
         shopItems.first {
             $0.id == selectedBackgroundId && $0.category == "Backgrounds"
         }
     }
 
-    /// Objek lengkap untuk aksesoris yang sedang dipakai oleh peliharaan.
+    // Objek lengkap untuk aksesoris yang sedang dipakai oleh peliharaan.
     var equippedAccessory: ShopItemModel? {
         shopItems.first {
             $0.id == selectedAccessoryId && $0.category == "Accessories"
         }
     }
+
+
+    // MARK: - Initialization
 
     init() {
         fetchPetData()
@@ -63,9 +68,11 @@ class HomeViewModel: ObservableObject {
         startInventoryListener()  // Panggil listener inventory secara real-time
     }
 
+    // MARK: - Methods
 
+    // MARK: - 1. Data Fetching & Listeners
 
-    /// Mengambil data seluruh item toko dari Firestore secara *real-time* untuk mencocokkan ID item yang sedang dilengkapi.
+    // Mengambil data seluruh item toko dari Firestore secara *real-time* untuk mencocokkan ID item yang sedang dilengkapi.
     func fetchShopItems() {
         db.collection("shopItems").addSnapshotListener { snapshot, error in
             if let error = error {
@@ -81,7 +88,7 @@ class HomeViewModel: ObservableObject {
         }
     }
 
-    /// Membuka pendengar (listener) ke koleksi `inventories` pengguna untuk mendapatkan `selectedBackgroundId` dan `selectedAccessoryId` secara langsung.
+    // Membuka pendengar (listener) ke koleksi `inventories` pengguna untuk mendapatkan `selectedBackgroundId` dan `selectedAccessoryId` secara langsung.
     func startInventoryListener() {
         guard let uid = userId else { return }
         db.collection("inventories").document(uid).addSnapshotListener {
@@ -102,10 +109,8 @@ class HomeViewModel: ObservableObject {
         }
     }
 
-
-
-    /// Mengambil dan memonitor data Peliharaan (Pet) milik pengguna saat ini.
-    /// Fungsi ini juga akan memperbarui data Widget dan WatchOS saat terjadi perubahan (misalnya Pet naik level).
+    // Mengambil dan memonitor data Peliharaan (Pet) milik pengguna saat ini.
+    // Fungsi ini juga akan memperbarui data Widget dan WatchOS saat terjadi perubahan (misalnya Pet naik level).
     func fetchPetData() {
         guard let uid = userId else { return }
         db.collection("pets").whereField("userId", isEqualTo: uid)
@@ -156,7 +161,7 @@ class HomeViewModel: ObservableObject {
             }
     }
 
-    /// Memantau data Goal pengguna yang belum selesai (isCompleted = false).
+    // Memantau data Goal pengguna yang belum selesai (isCompleted = false).
     func fetchGoalData() {
         guard let uid = userId else { return }
         db.collection("goals")
@@ -174,13 +179,9 @@ class HomeViewModel: ObservableObject {
             }
     }
 
-    /// Memasukkan data uang tabungan (Income) ke dalam sistem.
-    /// Meningkatkan XP peliharaan, memeriksa level-up, mencatat transaksi, 
-    /// serta mengkalkulasi ulang *streak* dan waktu aman pengguna.
-    /// 
-    /// - Parameters:
-    ///   - amount: Jumlah tabungan dalam bentuk mata uang/koin.
-    ///   - currentUser: Objek pengguna yang saat ini melakukan tabungan.
+    // MARK: - 2. Savings & Goal Management
+
+    // Memasukkan data uang tabungan (Income) ke dalam sistem dan menghitung progress.
     func addSavings(amount: Double, currentUser: UserModel) {
         guard let uid = userId,
             let currentPet = pet,
@@ -301,12 +302,7 @@ class HomeViewModel: ObservableObject {
         NotificationManager.shared.cancelDailyRemindersForToday()
     }
 
-    /// Membuat target tabungan (Goal) baru untuk pengguna.
-    /// Jika ada goal yang lama, maka otomatis akan ditandai selesai (`isCompleted = true`).
-    ///
-    /// - Parameters:
-    ///   - itemName: Nama target/barang yang ingin dibeli (contoh: "PS5").
-    ///   - targetAmount: Harga dari target tersebut.
+    // Membuat target tabungan (Goal) baru untuk pengguna.
     func setNewGoal(itemName: String, targetAmount: Double) {
         guard let uid = userId else { return }
         let batch = db.batch()
@@ -328,9 +324,9 @@ class HomeViewModel: ObservableObject {
         batch.commit()
     }
 
-    /// Melakukan pengecekan penalti harian.
-    /// Jika pengguna gagal menabung sebelum waktu `nextPenaltyCheck` habis, maka peliharaan akan 
-    /// kehilangan sejumlah XP dan ada kemungkinan turun level.
+    // MARK: - 3. Pet Logic & Penalties
+
+    // Melakukan pengecekan penalti harian untuk memotong XP jika terlewat batas.
     func checkDailyPenalty() {
         guard let uid = userId,
             let currentPet = pet,
@@ -402,9 +398,7 @@ class HomeViewModel: ObservableObject {
         }
     }
 
-    /// Mengevaluasi kondisi kelaparan peliharaan setiap kali diakses berdasarkan kapan pengguna terakhir menabung.
-    ///
-    /// - Parameter currentUser: Pengguna yang sedang login.
+    // Mengevaluasi kondisi kelaparan peliharaan setiap kali diakses berdasarkan waktu nabung.
     func checkDailyHunger(currentUser: UserModel) {
         guard let currentPet = pet, let petId = currentPet.id else { return }
 
@@ -471,8 +465,8 @@ class HomeViewModel: ObservableObject {
         }
     }
 
-    /// Menghitung seberapa sering pengguna membuka modal dalam waktu berdekatan.
-    /// Jika dibuka terlalu sering (misal 4 kali dalam 30 detik), peliharaan akan menjadi pusing ("dizzy").
+    // Menghitung seberapa sering pengguna membuka modal dalam waktu berdekatan.
+    // Jika dibuka terlalu sering (misal 4 kali dalam 30 detik), peliharaan akan menjadi pusing ("dizzy").
     func registerModalOpen() {
         guard let currentPet = pet, let petId = currentPet.id else { return }
         if currentPet.mood == "sad" || currentPet.mood == "cry" { return }
@@ -492,12 +486,9 @@ class HomeViewModel: ObservableObject {
         }
     }
 
-    /// Mencatat pengeluaran pengguna (Expense) yang akan mengurangi saldo Goal 
-    /// serta menjatuhkan penalti XP secara langsung karena telah membatalkan tabungan.
-    ///
-    /// - Parameters:
-    ///   - amount: Jumlah uang yang dikeluarkan/diambil.
-    ///   - currentUser: Objek pengguna saat ini.
+    // MARK: - 4. Transactions
+
+    // Mencatat pengeluaran pengguna (Expense) yang akan mengurangi saldo Goal.
     func addExpense(amount: Double, currentUser: UserModel) {
         guard let uid = userId,
             let currentPet = pet,
@@ -554,12 +545,13 @@ class HomeViewModel: ObservableObject {
         }
 
         // 6. Catat Transaksi Pengeluaran
-        // Catatan: Pastikan enum TransactionType di model kamu memiliki case `.expense` atau `.withdrawal`
         let tx = TransactionModel(
             userId: uid,
             amount: amount,  // Bisa kamu set minus jika perlu di laporan, atau tetap positif tergantung struktur UI report kamu
             date: Date(),
-            type: .expense
+            type: "expense",
+            category: "Expense",
+            note: "Penarikan tabungan"
         )
         try? db.collection("transactions").addDocument(from: tx)
     }

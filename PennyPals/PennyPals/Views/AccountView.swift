@@ -8,19 +8,21 @@
 import SwiftUI
 
 struct AccountView: View {
+    // MARK: - 1. Properties
+
     @EnvironmentObject var authVM: AuthViewModel
     var onLogout: () -> Void
     @State private var showInventory = false
-    // State untuk membuka sheet Background Inventory
     @State private var showBackgroundInventory = false
-    // State untuk membuka sheet Edit Profile
     @State private var showEditProfile = false
-
     @StateObject private var shopVM = ShopViewModel()
+
+    // MARK: - 2. Body
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
+                // MARK: - 3. Header
                 HStack {
                     Text("Account")
                         .font(.largeTitle.bold())
@@ -33,6 +35,7 @@ struct AccountView: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 24) {
+                        // MARK: - 4. Profile Card
                         VStack(spacing: 16) {
                             Circle().fill(
                                 LinearGradient(
@@ -98,6 +101,7 @@ struct AccountView: View {
                             y: 4
                         )
 
+                        // MARK: - 5. Settings List
                         VStack(alignment: .leading, spacing: 8) {
                             Text("SETTINGS")
                                 .font(.caption.weight(.semibold))
@@ -105,7 +109,6 @@ struct AccountView: View {
                                 .padding(.horizontal, 8)
 
                             VStack(spacing: 0) {
-                                // PERBAIKAN: Membuka InventoryView dengan kategori "Accessories"
                                 SettingRow(
                                     icon: "bag.fill",
                                     color: .blue,
@@ -119,7 +122,6 @@ struct AccountView: View {
 
                                 Divider().padding(.leading, 56)
 
-                                // PERBAIKAN: Membuka InventoryView dengan kategori "Backgrounds"
                                 SettingRow(
                                     icon: "moon.fill",
                                     color: .indigo,
@@ -133,7 +135,6 @@ struct AccountView: View {
 
                                 Divider().padding(.leading, 56)
 
-                                // Edit Profile tetap dipertahankan
                                 SettingRow(
                                     icon: "person.crop.circle.fill",
                                     color: .green,
@@ -152,6 +153,7 @@ struct AccountView: View {
                             )
                         }
 
+                        // MARK: - 6. Support List
                         VStack(alignment: .leading, spacing: 8) {
                             Text("SUPPORT")
                                 .font(.caption.weight(.semibold))
@@ -180,6 +182,7 @@ struct AccountView: View {
                             )
                         }
 
+                        // MARK: - 7. Logout Button
                         Button(action: onLogout) {
                             Text("Log Out")
                                 .font(.headline)
@@ -203,6 +206,8 @@ struct AccountView: View {
         }
     }
 }
+
+// MARK: - 8. UI Components
 
 struct SettingRow: View {
     var icon: String

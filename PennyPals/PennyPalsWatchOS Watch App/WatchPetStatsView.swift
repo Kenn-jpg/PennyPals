@@ -14,7 +14,7 @@ struct WatchPetStatsView: View {
         VStack(spacing: 4) {
             Spacer(minLength: 0)
 
-            // --- Pet Character ---
+            // MARK: - 1. Pet Character
             ZStack {
                 Circle()
                     .fill(
@@ -36,7 +36,7 @@ struct WatchPetStatsView: View {
                     .frame(width: 44, height: 44)
             }
 
-            // --- Pet Name & Mood ---
+            // MARK: - 2. Pet Name & Mood
             VStack(spacing: 0) {
                 Text(connectivity.petName)
                     .font(.system(size: 14, weight: .bold))
@@ -55,7 +55,7 @@ struct WatchPetStatsView: View {
 
             Spacer(minLength: 0)
 
-            // --- Level Badge ---
+            // MARK: - 3. Level Badge
             HStack(spacing: 4) {
                 Image(systemName: "sparkles")
                     .font(.system(size: 10))
@@ -72,7 +72,7 @@ struct WatchPetStatsView: View {
                 in: Capsule()
             )
 
-            // --- XP Progress Bar ---
+            // MARK: - 4. XP Progress Bar
             VStack(spacing: 4) {
                 HStack {
                     Text("XP")
@@ -117,7 +117,7 @@ struct WatchPetStatsView: View {
                 in: RoundedRectangle(cornerRadius: 8)
             )
 
-            // --- Connection Status ---
+            // MARK: - 5. Connection Status
             if !connectivity.isConnected {
                 HStack(spacing: 4) {
                     Image(systemName: "iphone.slash")
@@ -133,7 +133,7 @@ struct WatchPetStatsView: View {
         .padding(.horizontal, 4)
     }
 
-    // MARK: - Computed Properties
+    // MARK: - 6. Computed Properties
 
     private var xpProgress: CGFloat {
         guard connectivity.petMaxXP > 0 else { return 0 }
@@ -152,7 +152,7 @@ struct WatchPetStatsView: View {
 
 
 
-// MARK: - Color Hex Extension (Watch-compatible, no UIKit)
+// MARK: - 7. Color Hex Extension
 
 extension Color {
     init(hex: String) {

@@ -9,11 +9,12 @@ import FirebaseAuth
 import SwiftUI
 
 struct InventoryView: View {
+    // MARK: - 1. Properties
+
     @Environment(\.dismiss) private var dismiss
 
     let category: String
     
-    // Inject ShopViewModel to handle inventory logic
     @EnvironmentObject var shopVM: ShopViewModel
 
     private var ownedItems: [ShopItemModel] {
@@ -29,9 +30,12 @@ struct InventoryView: View {
         GridItem(.flexible(), spacing: 16),
     ]
 
+    // MARK: - 2. Body
+
     var body: some View {
         NavigationStack {
             Group {
+                // MARK: - 4. Error Message
                 if let errorMessage = shopVM.errorMessage {
                     Text(errorMessage)
                         .font(.footnote)
@@ -39,6 +43,7 @@ struct InventoryView: View {
                         .padding()
                 }
 
+                // MARK: - 5. Content / Empty State
                 if ownedItems.isEmpty {
                     ContentUnavailableView(
                         "No \(category) Yet",
@@ -76,13 +81,13 @@ struct InventoryView: View {
         }
     }
 
-    // MARK: - Komponen Kartu Minimalis
+    // MARK: - 3. UI Components
     @ViewBuilder
     private func inventoryCard(for item: ShopItemModel) -> some View {
         let isEquipped = (category == "Backgrounds" ? shopVM.selectedBackgroundId == item.id : shopVM.selectedAccessoryId == item.id)
 
         VStack(spacing: 12) {
-            // Preview Item (Kotak Visual)
+            // MARK: - 6. Preview Visual
             ZStack {
                 if category == "Backgrounds" {
                     // Cek Gradient
@@ -136,7 +141,7 @@ struct InventoryView: View {
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .shadow(color: .black.opacity(0.05), radius: 5, y: 2)
 
-            // Info Text
+            // MARK: - 7. Detail Information
             VStack(spacing: 4) {
                 Text(item.name)
                     .font(.subheadline)
@@ -144,7 +149,7 @@ struct InventoryView: View {
                     .foregroundColor(.primary)
                     .lineLimit(1)
 
-                // Tombol Use / Equipped
+                // MARK: - 8. Equip Button
                 Button(action: {
                     shopVM.toggleEquipItem(item: item)
                 }) {

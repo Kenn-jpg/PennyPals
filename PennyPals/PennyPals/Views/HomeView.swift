@@ -18,9 +18,7 @@ struct HomeView: View {
     @State private var showTransactionModal = false
     @State private var showNewGoalModal = false
 
-    // Removed direct Firestore tracking of equipment because it is already handled by HomeViewModel
-
-    // --- Penalty Status Logic ---
+    // MARK: - 1. Penalty Status Logic
     private enum PenaltyStatus {
         case safe
         case warning
@@ -49,6 +47,8 @@ struct HomeView: View {
         return .safe
     }
 
+    // MARK: - 2. Body
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 16) {
@@ -69,32 +69,25 @@ struct HomeView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.pennyBackground.ignoresSafeArea())
             .onAppear {
-                // ✅ Memanggil method langsung tanpa menggunakan '$'
                 homeVM.checkDailyPenalty()
                 if let currentUser = authVM.currentUser {
                     homeVM.checkDailyHunger(currentUser: currentUser)
                 }
-
-                // HomeViewModel already listens to inventory changes and fetches shop items
             }
             .onChange(of: authVM.currentUser) { _, newUser in
                 if let user = newUser {
                     homeVM.checkDailyHunger(currentUser: user)
                 }
             }
-            // Modal Transaksi (Tabungan & Pengeluaran)
             .sheet(isPresented: $showTransactionModal) {
-                // Menangkap 2 value: amount dan isExpense dari Modal
                 AddSavingsModal { amount, isExpense in
                     if let currentUser = authVM.currentUser {
                         if isExpense {
-                            // Jika toggle Pengeluaran yang dipilih
                             homeVM.addExpense(
                                 amount: amount,
                                 currentUser: currentUser
                             )
                         } else {
-                            // ✅ Memanggil method langsung tanpa menggunakan '$'
                             homeVM.addSavings(
                                 amount: amount,
                                 currentUser: currentUser
@@ -107,7 +100,6 @@ struct HomeView: View {
                 SetNewGoalModal(
                     completedGoalName: homeVM.goal?.itemName ?? "Goal",
                     onSave: { itemName, targetAmount in
-                        // ✅ Memanggil method langsung tanpa menggunakan '$'
                         homeVM.setNewGoal(
                             itemName: itemName,
                             targetAmount: targetAmount
@@ -119,8 +111,11 @@ struct HomeView: View {
     }
 }
 
-// MARK: - UI Components
+// MARK: - 3. UI Components
+
 extension HomeView {
+
+    // MARK: - 4. Computed Properties
 
     private var petMessage: String {
         guard let petMood = homeVM.pet?.mood else {
@@ -149,6 +144,7 @@ extension HomeView {
         }
     }
 
+    // MARK: - 5. Header Section
     private var headerSection: some View {
         HStack {
             HStack {
@@ -200,6 +196,7 @@ extension HomeView {
         .padding(.horizontal)
     }
 
+    // MARK: - 6. Pet Section
     private var petSection: some View {
         VStack(spacing: 12) {
             Text(petMessage)
@@ -214,7 +211,6 @@ extension HomeView {
 
             ZStack(alignment: .topTrailing) {
                 ZStack {
-                    // Render Background Secera Dinamis
                     if let bg = homeVM.equippedBackground {
                         ZStack {
                             if bg.isGradient == true,
@@ -254,7 +250,7 @@ extension HomeView {
                             }
                         }
                         .frame(width: 200, height: 200)
-                        .clipped()  // Mencegah spots keluar lingkaran background
+                        .clipped()
                         .clipShape(Circle())
                         .shadow(
                             color: .black.opacity(0.08),
@@ -264,7 +260,6 @@ extension HomeView {
                         )
 
                     } else {
-                        // Default bulatan putih jika tidak ada background yang dipakai
                         Circle()
                             .fill(Color.white)
                             .frame(width: 200, height: 200)
@@ -276,21 +271,19 @@ extension HomeView {
                             )
                     }
 
-                    // Tampilan Pet Utama
                     PetView(
                         petType: homeVM.pet?.type ?? "Cat",
                         mood: homeVM.pet?.mood ?? "hungry",
                         size: 180
                     )
 
-                    // Aksesoris Pet
                     if let acc = homeVM.equippedAccessory {
                         Image(systemName: acc.imageName ?? "tshirt.fill")
                             .resizable()
                             .scaledToFit()
                             .frame(width: 85, height: 85)
                             .foregroundColor(.pennyPurple)
-                            .offset(y: -25)  // Sesuaikan posisi y agar aksesoris (misal topi/kacamata) pas di badan/kepala pet
+                            .offset(y: -25)
                     }
                 }
                 .offset(y: isBouncing ? -8 : 8)
@@ -318,6 +311,7 @@ extension HomeView {
         }
     }
 
+    // MARK: - 7. Dashboard Cards Section
     private var dashboardCardsSection: some View {
         VStack(spacing: 16) {
             VStack(alignment: .leading, spacing: 8) {
@@ -382,6 +376,7 @@ extension HomeView {
         .padding(.horizontal)
     }
 
+    // MARK: - 8. Penalty Card
     private var penaltyCard: some View {
         VStack(alignment: .center, spacing: 0) {
             HStack {
@@ -455,6 +450,7 @@ extension HomeView {
         )
     }
 
+    // MARK: - 9. Wishlist Card
     private var wishlistCard: some View {
         VStack(alignment: .center, spacing: 0) {
             let currentAmt = homeVM.goal?.currentAmount ?? 0
@@ -521,6 +517,7 @@ extension HomeView {
 
 }
 
+// MARK: - 10. Extensions
 extension Int {
     var formattedWithSeparator: String {
         let formatter = NumberFormatter()

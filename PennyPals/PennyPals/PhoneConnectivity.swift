@@ -8,8 +8,8 @@
 import WatchConnectivity
 import Foundation
 
-/// Singleton yang mengelola komunikasi iPhone → Apple Watch
-/// Mengirim data user & pet ke Watch setiap kali ada perubahan dari Firestore
+// Singleton yang mengelola komunikasi iPhone → Apple Watch
+// Mengirim data user & pet ke Watch setiap kali ada perubahan dari Firestore
 class PhoneConnectivity: NSObject {
     static let shared = PhoneConnectivity()
 
@@ -30,7 +30,7 @@ class PhoneConnectivity: NSObject {
 
     // MARK: - Send Data to Watch
 
-    /// Kirim data user ke Watch — panggil ini setiap kali Firestore snapshot update
+    // Kirim data user ke Watch — panggil ini setiap kali Firestore snapshot update
     func sendUserToWatch(
         username: String,
         email: String,
@@ -53,7 +53,7 @@ class PhoneConnectivity: NSObject {
         sendToWatch(data)
     }
 
-    /// Kirim data pet ke Watch — panggil ini setiap kali pet Firestore snapshot update
+    // Kirim data pet ke Watch — panggil ini setiap kali pet Firestore snapshot update
     func sendPetToWatch(
         name: String,
         level: Int,
@@ -74,7 +74,7 @@ class PhoneConnectivity: NSObject {
         sendToWatch(data)
     }
 
-    /// Kirim data inventory (backgrounds yang dimiliki) ke Watch
+    // Kirim data inventory (backgrounds yang dimiliki) ke Watch
     func sendInventoryToWatch(
         ownedBackgrounds: [[String: String]],
         selectedBackgroundId: String?
@@ -87,7 +87,7 @@ class PhoneConnectivity: NSObject {
         sendToWatch(data)
     }
 
-    /// Kirim instruksi ke Watch untuk hapus data karena user logout di iPhone
+    // Kirim instruksi ke Watch untuk hapus data karena user logout di iPhone
     func sendLogoutToWatch() {
         let data: [String: Any] = [
             "type": "logout"

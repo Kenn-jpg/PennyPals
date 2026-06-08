@@ -9,6 +9,7 @@ import FirebaseAuth
 import SwiftUI
 
 struct EditProfileView: View {
+    // MARK: - 1. Properties
     @EnvironmentObject var authVM: AuthViewModel
     @Environment(\.dismiss) private var dismiss
 
@@ -21,9 +22,11 @@ struct EditProfileView: View {
     @State private var isSaving = false
     @State private var localError: String?
 
+    // MARK: - 2. Body
     var body: some View {
         NavigationStack {
             VStack(spacing: 16) {
+                // MARK: - 3. Username Section
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Username")
                         .font(.caption.weight(.semibold))
@@ -38,6 +41,7 @@ struct EditProfileView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 16))
                 }
 
+                // MARK: - 4. Pet Name Section
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Pet Name")
                         .font(.caption.weight(.semibold))
@@ -50,6 +54,7 @@ struct EditProfileView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 16))
                 }
 
+                // MARK: - 5. Password Section
                 VStack(alignment: .leading, spacing: 8) {
                     Text("New Password")
                         .font(.caption.weight(.semibold))
@@ -68,6 +73,7 @@ struct EditProfileView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 16))
                 }
 
+                // MARK: - 6. Error Message
                 if let msg = (localError ?? authVM.errorMessage) {
                     Text(msg)
                         .font(.footnote)
@@ -75,6 +81,7 @@ struct EditProfileView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
+                // MARK: - 7. Save Button
                 Button {
                     Task { await save() }
                 } label: {
@@ -105,14 +112,8 @@ struct EditProfileView: View {
         }
     }
 
+    // MARK: - 8. Methods
     private func loadPetName() async {
-        // Just use authVM for logic, but pet fetching requires a query we can either put in HomeViewModel or AuthViewModel
-        // Since EditProfileView doesn't have HomeViewModel injected, we can read the existing petName from Firestore via authVM or we can just keep the name empty initially if we don't have it.
-        // Wait, since we are doing an MVVM fix, authVM or homeVM should provide it.
-        // I will add fetchPetName to AuthViewModel just for this UI.
-        
-        // Wait, HomeViewModel has `pet` and it is usually kept updated.
-        // But since this is a global view, we'll fetch it via authVM for now to keep things clean and MVVM compliant.
         if let petName = await authVM.fetchPetName() {
             self.petName = petName
         }
@@ -130,7 +131,6 @@ struct EditProfileView: View {
             in: .whitespacesAndNewlines
         )
 
-        // validasi password hanya kalau user isi
         if !newPassword.isEmpty || !confirmPassword.isEmpty {
             guard newPassword == confirmPassword else {
                 localError = "Password confirmation does not match."
@@ -145,17 +145,14 @@ struct EditProfileView: View {
         isSaving = true
         defer { isSaving = false }
 
-        // 1) update username (Firestore users)
         if !trimmedUsername.isEmpty {
             await authVM.updateUsername(trimmedUsername)
         }
 
-        // 2) update pet name (Firestore pets via authVM)
         if !trimmedPetName.isEmpty {
             await authVM.updatePetName(trimmedPetName)
         }
 
-        // 3) update password (FirebaseAuth)
         if !newPassword.isEmpty {
             await authVM.updatePassword(newPassword)
         }

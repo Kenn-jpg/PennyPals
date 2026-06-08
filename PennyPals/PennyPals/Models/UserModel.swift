@@ -8,48 +8,49 @@
 import FirebaseFirestore
 import Foundation
 
-/// Menyimpan informasi profil utama, metrik gamifikasi, dan status finansial pengguna secara keseluruhan.
+// Menyimpan informasi profil utama, metrik gamifikasi, dan status finansial pengguna secara keseluruhan.
 struct UserModel: Identifiable, Codable, Equatable {
-    /// ID unik dokumen di Firebase Firestore (diselaraskan dengan UID FirebaseAuth).
+    // MARK: - Properties
+
+    // ID unik dokumen di Firebase Firestore (diselaraskan dengan UID FirebaseAuth).
     @DocumentID var id: String?
 
-    /// Nama tampilan dari pengguna.
+    // Nama tampilan dari pengguna.
     var username: String
 
-    /// Alamat email aktif milik pengguna.
+    // Alamat email aktif milik pengguna.
     var email: String
 
-    /// Jumlah koin virtual yang dimiliki untuk berbelanja di Shop.
+    // Jumlah koin virtual yang dimiliki untuk berbelanja di Shop.
     var coins: Int
 
-    /// Jumlah hari berturut-turut pengguna disiplin menabung.
+    // Jumlah hari berturut-turut pengguna disiplin menabung.
     var streak: Int
 
-    /// Waktu terakhir kali pengguna login ke dalam aplikasi.
+    // Waktu terakhir kali pengguna login ke dalam aplikasi.
     var lastLoginDate: Date
 
-    /// Waktu saat akun pengguna pertama kali dibuat.
+    // Waktu saat akun pengguna pertama kali dibuat.
     var createdAt: Date
 
-    /// Total keseluruhan saldo uang yang telah berhasil ditabung.
+    // Total keseluruhan saldo uang yang telah berhasil ditabung.
     var totalSavings: Int
 
-    /// Menandakan apakah pengguna saat ini berstatus aman dari penalti poin XP.
+    // Menandakan apakah pengguna saat ini berstatus aman dari penalti poin XP.
     var isSafeFromPenalty: Bool
 
-    /// Batas waktu bagi sistem untuk mengecek konsistensi menabung pengguna berikutnya.
+    // Batas waktu bagi sistem untuk mengecek konsistensi menabung pengguna berikutnya.
     var nextPenaltyCheck: Date
 
-    /// Menandai apakah pengguna baru telah menyelesaikan alur perkenalan (Onboarding).
+    // Menandai apakah pengguna baru telah menyelesaikan alur perkenalan (Onboarding).
     var isOnboarded: Bool?
 
-    /// Waktu terakhir kali pengguna menabung (digunakan untuk mendeteksi streak harian).
+    // Waktu terakhir kali pengguna menabung (digunakan untuk mendeteksi streak harian).
     var lastSavingsDate: Date?
 
-
-    /// Background yang sedang dipakai user (jika nil, akan pakai background putih default)
+    // Background yang sedang dipakai user (jika nil, akan pakai background putih default)
     var equippedBackground: String?
 
-    /// Aksesoris yang sedang dipakai user (jika nil, tidak ada aksesoris)
+    // Aksesoris yang sedang dipakai user (jika nil, tidak ada aksesoris)
     var equippedAccessory: String?
 }

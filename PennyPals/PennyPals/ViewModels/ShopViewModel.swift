@@ -10,28 +10,32 @@ import FirebaseAuth
 import FirebaseFirestore
 import SwiftUI
 
-/// ViewModel yang mengelola seluruh data berkaitan dengan toko (Shop) dan inventori aset virtual pengguna.
-/// Bertanggung jawab untuk mengambil daftar item yang dijual, memproses transaksi pembelian,
-/// serta mengelola item yang digunakan (Equipped) seperti latar belakang dan aksesoris.
+// ViewModel yang mengelola seluruh data berkaitan dengan toko (Shop) dan inventori aset virtual pengguna.
+// Bertanggung jawab untuk mengambil daftar item yang dijual, memproses transaksi pembelian,
+// serta mengelola item yang digunakan (Equipped) seperti latar belakang dan aksesoris.
 @MainActor
 class ShopViewModel: ObservableObject {
-    /// Daftar lengkap item yang tersedia di toko, baik aksesoris maupun background.
+    // MARK: - Properties
+
+    // Daftar lengkap item yang tersedia di toko, baik aksesoris maupun background.
     @Published var shopItems: [ShopItemModel] = []
     
-    /// Kumpulan ID item yang telah berhasil dibeli oleh pengguna.
+    // Kumpulan ID item yang telah berhasil dibeli oleh pengguna.
     @Published var unlockedItemIds: [String] = []
     
-    /// Pesan error yang muncul jika ada masalah saat pembelian atau pengambilan data.
+    // Pesan error yang muncul jika ada masalah saat pembelian atau pengambilan data.
     @Published var errorMessage: String?
     
-    /// ID dari item latar belakang (Background) yang saat ini sedang aktif digunakan.
+    // ID dari item latar belakang (Background) yang saat ini sedang aktif digunakan.
     @Published var selectedBackgroundId: String?
     
-    /// ID dari item aksesoris (Accessory) yang saat ini sedang aktif digunakan.
+    // ID dari item aksesoris (Accessory) yang saat ini sedang aktif digunakan.
     @Published var selectedAccessoryId: String?
 
     private var db = Firestore.firestore()
     private var userId: String? { Auth.auth().currentUser?.uid }
+
+    // MARK: - Initialization
 
     init() {
         fetchShopItems()
@@ -48,8 +52,10 @@ class ShopViewModel: ObservableObject {
         }
     }
 
-    /// Mengambil seluruh data item toko dari database Firebase secara *real-time*.
-    /// Jika terjadi kesalahan atau data kosong, akan menggunakan daftar fallback bawaan.
+    // MARK: - 1. Data Fetching
+
+    // Mengambil seluruh data item toko dari database Firebase secara *real-time*.
+    // Jika terjadi kesalahan atau data kosong, akan menggunakan daftar fallback bawaan.
     func fetchShopItems() {
         // Data default sebagai fallback jika Firebase kosong/gagal
         let defaultItems = [
@@ -110,8 +116,8 @@ class ShopViewModel: ObservableObject {
         }
     }
 
-    /// Memantau data inventori milik pengguna saat ini dan mengsinkronisasikannya dengan WatchOS.
-    /// Ini memastikan item yang sudah dibeli dan digunakan langsung ter-update di UI.
+    // Memantau data inventori milik pengguna saat ini dan mengsinkronisasikannya dengan WatchOS.
+    // Ini memastikan item yang sudah dibeli dan digunakan langsung ter-update di UI.
     func fetchUserInventory() {
         guard let uid = userId else { return }
         db.collection("inventories").document(uid).addSnapshotListener {
@@ -145,11 +151,9 @@ class ShopViewModel: ObservableObject {
         }
     }
 
-    /// Memproses pembelian item baru menggunakan koin pengguna.
-    ///
-    /// - Parameters:
-    ///   - item: Objek `ShopItemModel` yang akan dibeli.
-    ///   - currentUserCoins: Jumlah saldo koin yang dimiliki pengguna saat ini.
+    // MARK: - 2. Purchase Operations
+
+    // Memproses pembelian item baru menggunakan koin pengguna.
     func purchaseItem(item: ShopItemModel, currentUserCoins: Int) {
         guard let uid = userId, let itemId = item.id else { return }
 
@@ -198,6 +202,8 @@ class ShopViewModel: ObservableObject {
         }
     }
 
+    // MARK: - 3. Equip Items
+
     func useBackground(item: ShopItemModel) {
         guard let uid = userId, let itemId = item.id else { return }
 
@@ -226,10 +232,7 @@ class ShopViewModel: ObservableObject {
         )
     }
 
-    /// Mengganti status pakai (Equip / Unequip) dari sebuah item.
-    /// Jika item sudah dipakai, maka fungsi ini akan melepaskannya. Jika belum, maka akan memakainya.
-    ///
-    /// - Parameter item: Objek `ShopItemModel` yang ingin dipasang atau dilepas.
+    // Mengganti status pakai (Equip / Unequip) dari sebuah item.
     func toggleEquipItem(item: ShopItemModel) {
         guard let uid = userId, let itemId = item.id else { return }
 

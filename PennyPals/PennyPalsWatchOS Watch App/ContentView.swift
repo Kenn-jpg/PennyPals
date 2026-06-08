@@ -27,21 +27,21 @@ struct ContentView: View {
 
     var body: some View {
         TabView {
-            // Tab 1: Pet Stats
+            // MARK: - 1. Pet Stats Tab
             WatchPetStatsView()
                 .containerBackground(
                     backgroundGradient,
                     for: .tabView
                 )
 
-            // Tab 2: Profile
+            // MARK: - 2. Profile Tab
             WatchProfileView()
                 .containerBackground(
                     backgroundGradient,
                     for: .tabView
                 )
 
-            // Tab 3: Settings
+            // MARK: - 3. Settings Tab
             WatchSettingsView()
                 .containerBackground(
                     backgroundGradient,
@@ -50,7 +50,7 @@ struct ContentView: View {
         }
         .tabViewStyle(.page)
         .onAppear {
-            // Request data terbaru saat Watch app dibuka
+        .onAppear {
             connectivity.requestRefresh()
         }
     }
