@@ -25,46 +25,63 @@ struct EditProfileView: View {
     // MARK: - 2. Body
     var body: some View {
         NavigationStack {
-            Form {
+            VStack(spacing: 24) {
                 // MARK: - 3. Profile Information
-                Section(header: Text("Profile Information")) {
+                VStack(spacing: 0) {
                     TextField("Username", text: $username)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
+                        .padding(.horizontal, 16)
+                        .frame(height: 52)
+                    
+                    Divider().padding(.leading, 16)
                     
                     TextField("Pet Name", text: $petName)
+                        .padding(.horizontal, 16)
+                        .frame(height: 52)
                 }
+                .background(Color(UIColor.systemBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
 
                 // MARK: - 4. Password Section
-                Section(header: Text("Security")) {
+                VStack(spacing: 0) {
                     SecureField("New Password", text: $newPassword)
+                        .padding(.horizontal, 16)
+                        .frame(height: 52)
+
+                    Divider().padding(.leading, 16)
+
                     SecureField("Confirm Password", text: $confirmPassword)
+                        .padding(.horizontal, 16)
+                        .frame(height: 52)
                 }
+                .background(Color(UIColor.systemBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
 
                 // MARK: - 5. Error Message
                 if let msg = (localError ?? authVM.errorMessage) {
-                    Section {
-                        Text(msg)
-                            .font(.footnote)
-                            .foregroundColor(.red)
-                    }
+                    Text(msg)
+                        .font(.footnote)
+                        .foregroundColor(.red)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
+                Spacer(minLength: 0)
+
                 // MARK: - 6. Save Button
-                Section {
-                    Button {
-                        Task { await save() }
-                    } label: {
-                        Text(isSaving ? "Saving..." : "Save Changes")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity, minHeight: 44)
-                    }
-                    .disabled(isSaving)
-                    .listRowBackground(isSaving ? Color.gray : Color.pennyPurple)
+                Button {
+                    Task { await save() }
+                } label: {
+                    Text(isSaving ? "Saving..." : "Save Changes")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity, minHeight: 52)
+                        .background(isSaving ? Color.gray : Color.pennyPurple)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
                 }
+                .disabled(isSaving)
             }
-            .scrollContentBackground(.hidden)
+            .padding(20)
             .background(Color.pennyBackground.ignoresSafeArea())
             .navigationTitle("Edit Profile")
             .navigationBarTitleDisplayMode(.inline)

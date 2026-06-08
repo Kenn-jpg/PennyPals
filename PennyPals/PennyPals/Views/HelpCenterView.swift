@@ -17,20 +17,20 @@ struct HelpCenterView: View {
 
                 VStack(spacing: 16) {
                     // MARK: - FAQ 1
-                    faqCard(
-                        question: "How do I hatch my pet?",
+                    FAQCardView(
+                        question: "1. How do I hatch my pet?",
                         answer: "Simply set a savings goal and start saving! Once you make your first deposit, your egg will hatch into a surprise PennyPal."
                     )
                     
                     // MARK: - FAQ 2
-                    faqCard(
-                        question: "What happens if I miss a day?",
+                    FAQCardView(
+                        question: "2. What happens if I miss a day?",
                         answer: "If you miss a day, your pet might become hungry or sad. Continuing to miss days could result in losing some XP, so keep your streak alive!"
                     )
                     
                     // MARK: - FAQ 3
-                    faqCard(
-                        question: "How do I buy accessories?",
+                    FAQCardView(
+                        question: "3. How do I buy accessories?",
                         answer: "Every time you save, you earn coins! Use these coins in the Shop tab to buy cute hats, glasses, and backgrounds for your pet."
                     )
                 }
@@ -45,17 +45,46 @@ struct HelpCenterView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    // Komponen Reusable untuk FAQ Card
-    private func faqCard(question: String, answer: String) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(question)
-                .font(.headline)
-                .foregroundColor(.pennyText)
+}
+
+// MARK: - FAQ Card Component
+struct FAQCardView: View {
+    let question: String
+    let answer: String
+    
+    @State private var isExpanded: Bool = false
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Button(action: {
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    isExpanded.toggle()
+                }
+            }) {
+                HStack {
+                    Text(question)
+                        .font(.headline)
+                        .foregroundColor(.pennyText)
+                        .multilineTextAlignment(.leading)
+                    
+                    Spacer()
+                    
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                        .foregroundColor(.pennyPurple)
+                        .fontWeight(.semibold)
+                }
+                .contentShape(Rectangle()) // Make the whole row tappable
+            }
+            .buttonStyle(PlainButtonStyle())
             
-            Text(answer)
-                .font(.body)
-                .foregroundColor(.pennySecondaryText)
-                .lineSpacing(4)
+            if isExpanded {
+                Text(answer)
+                    .font(.body)
+                    .foregroundColor(.pennySecondaryText)
+                    .lineSpacing(4)
+                    .padding(.top, 12)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(20)
