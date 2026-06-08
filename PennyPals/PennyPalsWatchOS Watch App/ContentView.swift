@@ -50,7 +50,6 @@ struct ContentView: View {
         }
         .tabViewStyle(.page)
         .onAppear {
-        .onAppear {
             connectivity.requestRefresh()
         }
     }
