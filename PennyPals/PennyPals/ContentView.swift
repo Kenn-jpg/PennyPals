@@ -89,6 +89,7 @@ struct ContentView: View {
                                     AccountView(onLogout: { authVM.logout() })
                                 }
                             }
+                            .tint(Color.pennyPurple)
                             .transition(.opacity)
                         } else {
                             TabView(selection: $selectedTab) {
