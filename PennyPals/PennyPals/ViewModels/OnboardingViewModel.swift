@@ -10,17 +10,21 @@ import FirebaseAuth
 import FirebaseFirestore
 import Foundation
 
-// ViewModel untuk mengelola proses onboarding pengguna baru di PennyPals.
-// Menangani pembuatan data pet awal, target wishlist, dan inisialisasi status user.
+/// ViewModel untuk mengelola alur pendaftaran perkenalan pengguna baru (Onboarding Setup).
+/// Bertanggung jawab menginisialisasi entitas awal hewan virtual, instansiasi wishlist pertama, dan pencatatan transaksi perdana.
 @MainActor
 class OnboardingViewModel: ObservableObject {
-    
-    // MARK: - Properties
+
     private var db = Firestore.firestore()
 
-    // MARK: - 1. Onboarding Process
-
-    // Menyelesaikan proses onboarding dan menyimpan semua data konfigurasi awal ke Firestore
+    /// Menyelesaikan proses onboarding dengan melakukan batch commit/instansiasi data relasional awal pengguna baru secara paralel ke Firestore.
+    /// - Parameters:
+    ///   - initialSavings: Saldo tabungan awal yang langsung disisihkan oleh pengguna.
+    ///   - targetAmount: Batas total uang yang ditargetkan untuk rencana wishlist pertama.
+    ///   - eggType: Jenis visual telur yang dipilih pengguna.
+    ///   - petName: Nama kustom pet virtual yang diberikan pengguna.
+    ///   - wishlistName: Nama item/barang impian yang ingin dicapai.
+    ///   - petType: Spesies/ras hewan peliharaan hasil tetasan telur (e.g., "Cat", "Dog").
     func completeOnboarding(
         initialSavings: Double,
         targetAmount: Double,
@@ -31,22 +35,23 @@ class OnboardingViewModel: ObservableObject {
     ) async {
         guard let uid = Auth.auth().currentUser?.uid else { return }
 
+        // Validasi batasan kalkulasi rasional finansial
         guard targetAmount > 0, initialSavings < targetAmount else {
-            print("Error: Target tidak valid atau tabungan awal sudah melampaui target.")
+            print(
+                "Error: Target tidak valid atau tabungan awal sudah melampaui target."
+            )
             return
         }
 
-        // Membuat model peliharaan dengan tipe hewan yang didapat (bukan tipe telurnya)
         let newPet = PetModel(
             userId: uid,
             name: petName,
-            type: petType,  // Menyimpan "Cat", "Dog", dsb. ke database
+            type: petType,
             xp: 0,
             level: 1,
             mood: "hungry"
         )
 
-        // Membuat model target wishlist pertama
         let initialGoal = GoalModel(
             userId: uid,
             itemName: wishlistName,
@@ -56,11 +61,11 @@ class OnboardingViewModel: ObservableObject {
         )
 
         do {
-            // 1. Simpan data pet & goal ke Firestore
+            // 1. Menyimpan skema koleksi dasar peliharaan dan target ke Firestore
             try db.collection("pets").addDocument(from: newPet)
             try db.collection("goals").addDocument(from: initialGoal)
 
-            // 2. Simpan transaksi tabungan awal jika lebih dari 0
+            // 2. Mencatat mutasi riwayat jika nominal tabungan awal bernilai positif (> 0)
             if initialSavings > 0 {
                 let initialTx = TransactionModel(
                     userId: uid,
@@ -71,7 +76,7 @@ class OnboardingViewModel: ObservableObject {
                 try db.collection("transactions").addDocument(from: initialTx)
             }
 
-            // 3. Update status user
+            // 3. Mengubah flag status kelulusan onboarding profil pada master record pengguna
             try await db.collection("users").document(uid).updateData([
                 "isOnboarded": true,
                 "totalSavings": initialSavings,

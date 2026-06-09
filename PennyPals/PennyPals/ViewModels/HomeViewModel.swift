@@ -11,68 +11,55 @@ import FirebaseFirestore
 import SwiftUI
 import WidgetKit
 
-// ViewModel pusat yang mengelola data utama di beranda (HomeView).
-// Mengatur status peliharaan (Pet), kemajuan tabungan (Goal), 
-// hingga memonitor status lapar dan penalti pada peliharaan.
+/// ViewModel pusat yang mengelola data utama di beranda (HomeView).
+/// Mengatur status peliharaan (Pet), kemajuan tabungan (Goal), hingga memonitor status lapar dan penalti pada peliharaan.
 @MainActor
 class HomeViewModel: ObservableObject {
-    // MARK: - Properties
-    
-    // Data peliharaan (Pet) milik pengguna yang sedang aktif.
+
+    /// Data peliharaan (Pet) milik pengguna yang sedang aktif.
     @Published var pet: PetModel?
-    
-    // Target tabungan (Goal) yang sedang aktif dikerjakan pengguna.
+
+    /// Target tabungan (Goal) yang sedang aktif dikerjakan pengguna.
     @Published var goal: GoalModel?
 
-
-    // Daftar item toko yang akan digunakan untuk mencari data visual item yang dilengkapi.
+    /// Daftar item toko yang akan digunakan untuk mencari data visual item yang dilengkapi.
     @Published var shopItems: [ShopItemModel] = []
-    
-    // ID background yang sedang aktif (Equipped).
+
+    /// ID background yang sedang aktif (Equipped).
     @Published var selectedBackgroundId: String? = nil
-    
-    // ID aksesori yang sedang aktif (Equipped).
+
+    /// ID aksesori yang sedang aktif (Equipped).
     @Published var selectedAccessoryId: String? = nil
 
     private var db = Firestore.firestore()
     private var userId: String? { Auth.auth().currentUser?.uid }
 
-    // Properti untuk menghitung frekuensi buka modal (memicu dizzy)
     private var modalOpenCount = 0
     private var lastModalOpenTime = Date()
 
-
-    
-    // Objek lengkap untuk background yang sedang aktif. 
-    // Berguna agar View bisa mengakses properti warna dan gradient.
+    /// Objek lengkap untuk background yang sedang aktif.
+    /// Berguna agar View bisa mengakses properti warna dan gradient.
     var equippedBackground: ShopItemModel? {
         shopItems.first {
             $0.id == selectedBackgroundId && $0.category == "Backgrounds"
         }
     }
 
-    // Objek lengkap untuk aksesoris yang sedang dipakai oleh peliharaan.
+    /// Objek lengkap untuk aksesoris yang sedang dipakai oleh peliharaan.
     var equippedAccessory: ShopItemModel? {
         shopItems.first {
             $0.id == selectedAccessoryId && $0.category == "Accessories"
         }
     }
 
-
-    // MARK: - Initialization
-
     init() {
         fetchPetData()
         fetchGoalData()
-        fetchShopItems()  // Panggil fungsi ambil data item toko
-        startInventoryListener()  // Panggil listener inventory secara real-time
+        fetchShopItems()
+        startInventoryListener()
     }
 
-    // MARK: - Methods
-
-    // MARK: - 1. Data Fetching & Listeners
-
-    // Mengambil data seluruh item toko dari Firestore secara *real-time* untuk mencocokkan ID item yang sedang dilengkapi.
+    /// Mengambil data seluruh item toko dari Firestore secara real-time untuk mencocokkan ID item yang sedang dilengkapi.
     func fetchShopItems() {
         db.collection("shopItems").addSnapshotListener { snapshot, error in
             if let error = error {
@@ -88,7 +75,7 @@ class HomeViewModel: ObservableObject {
         }
     }
 
-    // Membuka pendengar (listener) ke koleksi `inventories` pengguna untuk mendapatkan `selectedBackgroundId` dan `selectedAccessoryId` secara langsung.
+    /// Membuka pendengar (listener) ke koleksi `inventories` pengguna untuk mendapatkan `selectedBackgroundId` dan `selectedAccessoryId` secara langsung.
     func startInventoryListener() {
         guard let uid = userId else { return }
         db.collection("inventories").document(uid).addSnapshotListener {
@@ -109,8 +96,8 @@ class HomeViewModel: ObservableObject {
         }
     }
 
-    // Mengambil dan memonitor data Peliharaan (Pet) milik pengguna saat ini.
-    // Fungsi ini juga akan memperbarui data Widget dan WatchOS saat terjadi perubahan (misalnya Pet naik level).
+    /// Mengambil dan memonitor data Peliharaan (Pet) milik pengguna saat ini.
+    /// Fungsi ini juga akan memperbarui data Widget dan WatchOS saat terjadi perubahan (misalnya Pet naik level).
     func fetchPetData() {
         guard let uid = userId else { return }
         db.collection("pets").whereField("userId", isEqualTo: uid)
@@ -161,7 +148,7 @@ class HomeViewModel: ObservableObject {
             }
     }
 
-    // Memantau data Goal pengguna yang belum selesai (isCompleted = false).
+    /// Memantau data Goal pengguna yang belum selesai (isCompleted = false).
     func fetchGoalData() {
         guard let uid = userId else { return }
         db.collection("goals")
@@ -179,9 +166,10 @@ class HomeViewModel: ObservableObject {
             }
     }
 
-    // MARK: - 2. Savings & Goal Management
-
-    // Memasukkan data uang tabungan (Income) ke dalam sistem dan menghitung progress.
+    /// Memasukkan data uang tabungan (Income) ke dalam sistem, menghitung progress target, menambahkan XP peliharaan, dan mengatur streak.
+    /// - Parameters:
+    ///   - amount: Nominal tabungan yang dimasukkan pengguna.
+    ///   - currentUser: Model pengguna saat ini untuk referensi data historis (streak, dll).
     func addSavings(amount: Double, currentUser: UserModel) {
         guard let uid = userId,
             let currentPet = pet,
@@ -208,7 +196,7 @@ class HomeViewModel: ObservableObject {
             currentMaxXP = (newLevel + 1) * 200
         }
 
-        // Jika nabung >= Rp 500.000 mendadak terkejut
+        // Jika nabung >= Rp 500.000 mendadak terkejut (Easter Egg)
         let newMood = amount >= 500_000 ? "surprised" : "happy"
 
         db.collection("pets").document(petId).updateData([
@@ -261,20 +249,18 @@ class HomeViewModel: ObservableObject {
         )
         try? db.collection("transactions").addDocument(from: tx)
 
-        // 🔔 NOTIFICATIONS
-        // Hanya menyisakan penalty warning dan pembatalan daily reminder
-
-        // Jadwalkan peringatan penalti berdasarkan tanggal aman baru
+        // Penjadwalan Ulang Notifikasi
         NotificationManager.shared.schedulePenaltyWarning(
             nextPenaltyCheck: nextSafeDate,
             petName: currentPet.name
         )
-
-        // Cancel daily reminders karena sudah nabung hari ini
         NotificationManager.shared.cancelDailyRemindersForToday()
     }
 
-    // Membuat target tabungan (Goal) baru untuk pengguna.
+    /// Membuat target tabungan (Goal) baru untuk pengguna dan menandai goal sebelumnya selesai.
+    /// - Parameters:
+    ///   - itemName: Nama target/wishlist yang ingin dibeli.
+    ///   - targetAmount: Nominal target yang perlu dicapai.
     func setNewGoal(itemName: String, targetAmount: Double) {
         guard let uid = userId else { return }
         let batch = db.batch()
@@ -296,9 +282,7 @@ class HomeViewModel: ObservableObject {
         batch.commit()
     }
 
-    // MARK: - 3. Pet Logic & Penalties
-
-    // Melakukan pengecekan penalti harian untuk memotong XP jika terlewat batas.
+    /// Melakukan pengecekan penalti harian. Jika terlewat batas waktu aman, XP akan dipotong dan berpotensi memicu turun level.
     func checkDailyPenalty() {
         guard let uid = userId,
             let currentPet = pet,
@@ -370,11 +354,11 @@ class HomeViewModel: ObservableObject {
         }
     }
 
-    // Mengevaluasi kondisi kelaparan peliharaan setiap kali diakses berdasarkan waktu nabung.
+    /// Mengevaluasi kondisi kelaparan peliharaan setiap kali diakses berdasarkan kapan terakhir kali pengguna menabung.
+    /// - Parameter currentUser: Model pengguna saat ini.
     func checkDailyHunger(currentUser: UserModel) {
         guard let currentPet = pet, let petId = currentPet.id else { return }
 
-        // Jika pet sedang dihukum (sedih/menangis), biarkan status penalti tetap berjalan
         if currentPet.mood == "sad" || currentPet.mood == "cry" { return }
 
         let today = Calendar.current.startOfDay(for: Date())
@@ -406,17 +390,14 @@ class HomeViewModel: ObservableObject {
                 db.collection("pets").document(petId).updateData([
                     "mood": newMood
                 ])
-                // 🔔 Kirim notifikasi pet lapar
                 NotificationManager.shared.sendPetHungryNotification(
                     petName: currentPet.name
                 )
             }
-            // Jadwalkan pengingat malam jika belum nabung
             NotificationManager.shared.scheduleEveningReminder(
                 petName: currentPet.name
             )
         } else if isLateNight {
-            // Jangan timpa mood spesial (surprised/wink) menjadi sleepy secara instan
             let protectedMoods = ["surprised", "wink"]
             if !protectedMoods.contains(currentPet.mood)
                 && currentPet.mood != "sleepy"
@@ -426,8 +407,6 @@ class HomeViewModel: ObservableObject {
                 ])
             }
         } else {
-            // Mengembalikan ke happy secara tegas jika siang hari dan SUDAH menabung
-            // Pengecualian hanya untuk "surprised" atau "wink" agar ekspresi bahagianya bertahan
             let allowedMoods = ["happy", "surprised", "wink"]
             if !allowedMoods.contains(currentPet.mood) {
                 db.collection("pets").document(petId).updateData([
@@ -437,8 +416,8 @@ class HomeViewModel: ObservableObject {
         }
     }
 
-    // Menghitung seberapa sering pengguna membuka modal dalam waktu berdekatan.
-    // Jika dibuka terlalu sering (misal 4 kali dalam 30 detik), peliharaan akan menjadi pusing ("dizzy").
+    /// Menghitung seberapa sering pengguna membuka modal secara berturut-turut.
+    /// Jika terlalu cepat membuaka dan menutup modal (misal 4 kali dalam 30 detik), peliharaan akan memicu status "dizzy".
     func registerModalOpen() {
         guard let currentPet = pet, let petId = currentPet.id else { return }
         if currentPet.mood == "sad" || currentPet.mood == "cry" { return }
@@ -458,70 +437,63 @@ class HomeViewModel: ObservableObject {
         }
     }
 
-    // MARK: - 4. Transactions
-
-    // Mencatat pengeluaran pengguna (Expense) yang akan mengurangi saldo Goal.
+    /// Mencatat pengeluaran pengguna (Expense) yang akan mengurangi saldo Goal dan berpotensi memberikan penalti turun XP/Level pada peliharaan.
+    /// - Parameters:
+    ///   - amount: Nominal pengeluaran.
+    ///   - currentUser: Model pengguna saat ini.
     func addExpense(amount: Double, currentUser: UserModel) {
         guard let uid = userId,
             let currentPet = pet,
             let petId = currentPet.id
         else { return }
 
-        // Mencegah pengeluaran melebihi total saldo tabungan
         if amount > Double(currentUser.totalSavings) {
             return
         }
 
-        // 1. Hitung penalti XP berdasarkan jumlah uang yang di-spend (Misal: 1000 rupiah = 1 XP hilang)
+        // Hitung penalti XP berdasarkan jumlah uang yang di-spend
         let lostXP = Int(amount / 1000)
         var newXP = currentPet.xp - lostXP
         var newLevel = currentPet.level
 
-        // 2. Logika Level Down (Turun Level jika XP kurang dari 0)
+        // Logika Level Down (Turun Level jika XP kurang dari 0)
         while newXP < 0 {
             if newLevel > 0 {
                 newLevel -= 1
-                // XP maksimal di level sebelumnya
                 let previousMaxXP = (newLevel + 1) * 200
-                newXP = previousMaxXP + newXP  // newXP bernilai minus, jadi ini sama dengan menguranginya
+                newXP = previousMaxXP + newXP
             } else {
                 newXP = 0
                 break
             }
         }
 
-        // 3. Tentukan Mood Pet berdasarkan pengeluaran atau penurunan level
-        // Jika level turun, pet menangis ("cry"). Jika hanya pengeluaran biasa, pet sedih ("sad")
         let newMood = (newLevel < currentPet.level) ? "cry" : "sad"
 
-        // 4. Update data Pet di Firestore
         db.collection("pets").document(petId).updateData([
             "xp": newXP,
             "level": newLevel,
             "mood": newMood,
         ])
 
-        // 5. Update Tabungan User & Goal (Opsional: Jika pengeluaran memengaruhi progress Goal saat ini)
-        let newTotalSavings = max(0, currentUser.totalSavings - Int(amount))  // Pastikan tidak minus
+        let newTotalSavings = max(0, currentUser.totalSavings - Int(amount))
 
         var userUpdates: [String: Any] = [
             "totalSavings": newTotalSavings
         ]
 
-        // Hapus streak jika melakukan pengeluaran (Opsional: tegantung rules game kamu)
+        // Menghapus streak jika melakukan pengeluaran
         userUpdates["streak"] = 0
 
         db.collection("users").document(uid).updateData(userUpdates)
 
-        // Kurangi progress Goal jika ada goal yang aktif
         if let currentGoal = goal, let goalId = currentGoal.id {
-            let newGoalAmount = max(0, currentGoal.currentAmount - amount)  // Progress tidak boleh minus
+            let newGoalAmount = max(0, currentGoal.currentAmount - amount)
             db.collection("goals").document(goalId).updateData([
                 "currentAmount": newGoalAmount
             ])
         }
 
-        // 6. Catat Transaksi Pengeluaran
         let tx = TransactionModel(
             userId: uid,
             amount: amount,

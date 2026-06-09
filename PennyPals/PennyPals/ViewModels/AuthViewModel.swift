@@ -10,30 +10,27 @@ import FirebaseAuth
 import FirebaseFirestore
 import Foundation
 
-// ViewModel yang mengatur status autentikasi dan manajemen akun pengguna.
-// Berkomunikasi langsung dengan Firebase Authentication dan koleksi `users` di Firestore.
+/// ViewModel yang mengatur status autentikasi, manajemen sesi, dan profil akun pengguna.
+/// Berkomunikasi langsung dengan Firebase Authentication dan dokumen koleksi `users` di Firestore.
 @MainActor
 class AuthViewModel: ObservableObject {
-    // MARK: - Properties
 
-    // Status apakah pengguna saat ini sedang login atau tidak.
+    /// Status apakah pengguna saat ini sedang terautentikasi (login) atau tidak.
     @Published var isAuthenticated = false
-    
-    // Model data pengguna yang sedang login saat ini. Akan diperbarui otomatis jika ada perubahan di Firestore.
+
+    /// Model data pengguna yang sedang aktif. Diperbarui secara otomatis melalui listener real-time dari Firestore.
     @Published var currentUser: UserModel?
 
-    // Pesan error yang bisa ditampilkan di UI jika proses autentikasi gagal.
+    /// Pesan kesalahan lokal yang dapat diobservasi oleh View untuk memunculkan alert/error message.
     @Published var errorMessage: String?
+
     private var db = Firestore.firestore()
 
-    // MARK: - Initialization
+    init() {
+        checkAuthStatus()
+    }
 
-    init() { checkAuthStatus() }
-
-    // MARK: - 1. Session & Realtime Data
-
-    // Mengecek apakah ada *session* pengguna yang tersimpan secara lokal oleh Firebase Auth.
-    // Jika ada, akan otomatis mengambil data dari Firestore dan masuk ke aplikasi utama.
+    /// Memeriksa status sesi pengguna yang tersimpan secara lokal oleh Firebase Authentication.
     func checkAuthStatus() {
         if let user = Auth.auth().currentUser {
             self.isAuthenticated = true
@@ -43,9 +40,8 @@ class AuthViewModel: ObservableObject {
         }
     }
 
-    // MARK: - 2. Update Profile
-
-    // Memperbarui nama pengguna (username) dari akun yang sedang login di Firestore.
+    /// Memperbarui nama tampilan (username) dari pengguna yang sedang login di database Firestore.
+    /// - Parameter newUsername: Nama pengguna baru yang ingin disimpan.
     func updateUsername(_ newUsername: String) async {
         guard let uid = Auth.auth().currentUser?.uid else { return }
         do {
@@ -57,20 +53,23 @@ class AuthViewModel: ObservableObject {
         }
     }
 
-    // Mengganti kata sandi (password) dari akun pengguna saat ini di Firebase Authentication.
+    /// Memperbarui kata sandi pengguna saat ini di Firebase Authentication dengan enkripsi bawaan server.
+    /// - Parameter newPassword: Kata sandi baru yang memenuhi kriteria keamanan minimum.
     func updatePassword(_ newPassword: String) async {
         do {
             try await Auth.auth().currentUser?.updatePassword(to: newPassword)
         } catch let error as NSError {
             if error.code == AuthErrorCode.requiresRecentLogin.rawValue {
-                self.errorMessage = "For security reasons, please log out and log in again before changing your password."
+                self.errorMessage =
+                    "For security reasons, please log out and log in again before changing your password."
             } else {
                 self.errorMessage = error.localizedDescription
             }
         }
     }
 
-    // Memperbarui nama peliharaan (Pet Name) milik pengguna di dalam database.
+    /// Memperbarui nama panggilan dari hewan peliharaan (virtual pet) milik pengguna aktif di Firestore.
+    /// - Parameter newName: Nama baru untuk virtual pet.
     func updatePetName(_ newName: String) async {
         guard let uid = Auth.auth().currentUser?.uid else { return }
         do {
@@ -80,16 +79,18 @@ class AuthViewModel: ObservableObject {
                 .getDocuments()
 
             if let doc = snap.documents.first {
-                try await db.collection("pets").document(doc.documentID).updateData([
-                    "name": newName
-                ])
+                try await db.collection("pets").document(doc.documentID)
+                    .updateData([
+                        "name": newName
+                    ])
             }
         } catch {
             self.errorMessage = error.localizedDescription
         }
     }
 
-    // Mengambil nama peliharaan milik pengguna dari database Firestore.
+    /// Mengambil nama panggilan hewan peliharaan virtual yang terikat dengan ID pengguna dari Firestore.
+    /// - Returns: Mengembalikan string nama pet jika ditemukan, atau `nil` jika gagal/tidak ditemukan.
     func fetchPetName() async -> String? {
         guard let uid = Auth.auth().currentUser?.uid else { return nil }
         do {
@@ -99,7 +100,8 @@ class AuthViewModel: ObservableObject {
                 .getDocuments()
 
             if let doc = snap.documents.first,
-               let name = doc.data()["name"] as? String {
+                let name = doc.data()["name"] as? String
+            {
                 return name
             }
         } catch {
@@ -108,9 +110,10 @@ class AuthViewModel: ObservableObject {
         return nil
     }
 
-    // MARK: - 3. Authentication Operations
-
-    // Masuk (Login) menggunakan email dan kata sandi yang terdaftar.
+    /// Melakukan proses masuk log (Login) menggunakan kredensial email dan kata sandi via Firebase Auth.
+    /// - Parameters:
+    ///   - email: Alamat email terdaftar pengguna.
+    ///   - password: Kata sandi akun.
     func login(email: String, password: String) async {
         do {
             let result = try await Auth.auth().signIn(
@@ -124,18 +127,25 @@ class AuthViewModel: ObservableObject {
         }
     }
 
-    // Mendaftar akun baru (Register) di Firebase Authentication dan membuat dokumen baru di Firestore.
+    /// Mendaftarkan akun pengguna baru (Register) serta melakukan inisialisasi awal skema dokumen profil pada Firestore.
+    /// - Parameters:
+    ///   - email: Alamat email baru yang valid.
+    ///   - password: Kata sandi akun baru.
+    ///   - username: Nama tampilan awal yang dipilih pengguna.
     func register(email: String, password: String, username: String) async {
         do {
             let result = try await Auth.auth().createUser(
                 withEmail: email,
                 password: password
             )
+
+            // Inisialisasi tenggat waktu penalti (default: H+2 dari pendaftaran)
             let nextCheck = Calendar.current.date(
                 byAdding: .day,
                 value: 2,
                 to: Date()
             )!
+
             let newUser = UserModel(
                 id: result.user.uid,
                 username: username,
@@ -151,6 +161,7 @@ class AuthViewModel: ObservableObject {
                 equippedBackground: nil,
                 equippedAccessory: nil
             )
+
             try db.collection("users").document(result.user.uid).setData(
                 from: newUser
             )
@@ -158,7 +169,7 @@ class AuthViewModel: ObservableObject {
             self.currentUser = newUser
             self.isAuthenticated = true
 
-            // Aktifkan listener real-time langsung setelah register selesai
+            // Mengaktifkan real-time listener sinkronisasi data sesaat setelah registrasi sukses
             fetchUserData(uid: result.user.uid)
 
         } catch {
@@ -166,26 +177,29 @@ class AuthViewModel: ObservableObject {
         }
     }
 
-    // Mengeluarkan pengguna (Log out) dari aplikasi dan menghapus data sesi.
+    /// Melakukan proses keluar log (Log out) untuk menghapus token sesi lokal, data cached Apple Watch, serta membatalkan seluruh push notifications.
     func logout() {
         do {
             try Auth.auth().signOut()
             self.isAuthenticated = false
             self.currentUser = nil
-            // 📲 Beritahu WatchOS untuk menghapus data cached
+
+            // Sinkronisasi status logout ke Apple Watch ekosistem
             PhoneConnectivity.shared.sendLogoutToWatch()
-            // 🔕 Batalkan semua notifikasi saat logout
+
+            // Membatalkan penalti/reminder push notifications lokal saat sesi berakhir
             NotificationManager.shared.cancelAllNotifications()
         } catch {
             print("Logout error: \(error.localizedDescription)")
         }
     }
 
-
+    /// Mengubah atau memasang aset kosmetik dekoratif virtual (Background/Accessory) yang aktif pada profil pengguna.
+    /// - Parameters:
+    ///   - isBackground: Nilai boolean true untuk kategori Background, false untuk kategori Accessory.
+    ///   - itemName: Nama file/identifikasi aset kosmetik unik yang dipilih.
     func equipItem(isBackground: Bool, itemName: String) {
         guard let uid = Auth.auth().currentUser?.uid else { return }
-
-        // Tentukan field mana yang akan diupdate
         let field = isBackground ? "equippedBackground" : "equippedAccessory"
 
         db.collection("users").document(uid).updateData([
@@ -199,13 +213,13 @@ class AuthViewModel: ObservableObject {
         }
     }
 
+    /// Melakukan sinkronisasi data profil terenkripsi dari Firestore ke internal state secara real-time.
     private func fetchUserData(uid: String) {
-        // Tambahkan [weak self] agar tidak terjadi memory leak
+        // Menggunakan [weak self] untuk mencegah retain cycle / memory leak pada alokasi closure listener
         db.collection("users").document(uid).addSnapshotListener {
             [weak self] snapshot, error in
             guard let self = self else { return }
 
-            // Bungkus ke Main Thread agar SwiftUI sadar ada perubahan data!
             DispatchQueue.main.async {
                 if let error = error {
                     print("❌ Firestore Error: \(error.localizedDescription)")
@@ -219,11 +233,10 @@ class AuthViewModel: ObservableObject {
                 }
 
                 do {
-                    // Update currentUser yang akan memicu perubahan di HomeView
                     self.currentUser = try snapshot.data(as: UserModel.self)
                     print("✅ User data berhasil diupdate secara real-time!")
 
-                    // 📲 Forward data ke Apple Watch
+                    // Sinkronisasi pembaruan metrik gamifikasi secara instan ke WatchOS extension
                     if let user = self.currentUser {
                         PhoneConnectivity.shared.sendUserToWatch(
                             username: user.username,
@@ -237,8 +250,8 @@ class AuthViewModel: ObservableObject {
                     }
                 } catch {
                     print("❌ DECODING ERROR PADA USERMODEL: \(error)")
-                    // TIPS: Jangan panggil self.logout() dulu saat masih tahap development,
-                    // supaya kamu bisa melihat errornya di konsol Xcode tanpa terlempar ke layar login.
+                    // NOTE: Selama fase development, hindari memanggil self.logout() di sini
+                    // agar Anda dapat memeriksa galat decoding skema properti langsung pada konsol Xcode.
                 }
             }
         }
