@@ -8,23 +8,29 @@
 import FirebaseAuth
 import SwiftUI
 
+/// Antarmuka utama (Dashboard) aplikasi PennyPals.
+/// Menampilkan status hewan peliharaan, ringkasan saldo tabungan, XP, status penalti, dan target (wishlist).
 struct HomeView: View {
     @StateObject private var homeVM = HomeViewModel()
     @EnvironmentObject var authVM: AuthViewModel
 
+    /// Mengontrol animasi pantulan (bouncing) pada hewan peliharaan.
     @State private var isBouncing = false
 
-
+    /// Mengontrol visibilitas modal untuk menambah tabungan atau pengeluaran.
     @State private var showTransactionModal = false
+
+    /// Mengontrol visibilitas modal untuk menentukan target tabungan baru.
     @State private var showNewGoalModal = false
 
-    // MARK: - 1. Penalty Status Logic
+    /// Representasi status keamanan *streak* pengguna dari ancaman penalti.
     private enum PenaltyStatus {
         case safe
         case warning
         case danger
     }
 
+    /// Menghitung status penalti saat ini berdasarkan sisa waktu menuju batas akhir tabungan harian (`nextPenaltyCheck`).
     private var penaltyStatus: PenaltyStatus {
         guard let user = authVM.currentUser else { return .safe }
 
@@ -40,14 +46,13 @@ struct HomeView: View {
                 to: user.nextPenaltyCheck
             ).hour ?? 0
 
+        // Berikan status peringatan (warning) jika waktu tersisa kurang dari atau sama dengan 24 jam.
         if hoursRemaining <= 24 {
             return .warning
         }
 
         return .safe
     }
-
-    // MARK: - 2. Body
 
     var body: some View {
         NavigationStack {
@@ -81,7 +86,9 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showTransactionModal) {
                 AddSavingsModal(
-                    currentTotalSavings: Double(authVM.currentUser?.totalSavings ?? 0)
+                    currentTotalSavings: Double(
+                        authVM.currentUser?.totalSavings ?? 0
+                    )
                 ) { amount, isExpense in
                     if let currentUser = authVM.currentUser {
                         if isExpense {
@@ -113,12 +120,11 @@ struct HomeView: View {
     }
 }
 
-// MARK: - 3. UI Components
+// MARK: - UI Components
 
 extension HomeView {
 
-    // MARK: - 4. Computed Properties
-
+    /// Menghasilkan pesan teks interaktif dari peliharaan berdasarkan kondisi emosionalnya (mood).
     private var petMessage: String {
         guard let petMood = homeVM.pet?.mood else {
             return "I'm hungry — let's save! 🍓"
@@ -146,7 +152,7 @@ extension HomeView {
         }
     }
 
-    // MARK: - 5. Header Section
+    /// Bagian atas layar yang berisi ucapan selamat datang, level pet, dan koin pengguna.
     private var headerSection: some View {
         HStack {
             HStack {
@@ -198,7 +204,7 @@ extension HomeView {
         .padding(.horizontal)
     }
 
-    // MARK: - 6. Pet Section
+    /// Area tengah yang menampilkan grafis hewan peliharaan, background, aksesoris, dan pesan interaktif.
     private var petSection: some View {
         VStack(spacing: 12) {
             Text(petMessage)
@@ -230,7 +236,7 @@ extension HomeView {
                                 Color(hex: bg.colorHex ?? "#E8E8E8")
                             }
 
-                            // Render Bulatan/Spots jika ada
+                            // Render corak (spots) pada background jika tersedia
                             if let spotsHex = bg.spotsHex {
                                 VStack {
                                     HStack {
@@ -313,9 +319,11 @@ extension HomeView {
         }
     }
 
-    // MARK: - 7. Dashboard Cards Section
+    /// Kumpulan kartu informasi di bagian bawah layar (Total Savings, XP Progress, Penalty, Wishlist).
     private var dashboardCardsSection: some View {
         VStack(spacing: 16) {
+
+            // Kartu Total Tabungan
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Label("Total Savings", systemImage: "wallet.pass.fill")
@@ -336,6 +344,7 @@ extension HomeView {
                 in: RoundedRectangle(cornerRadius: 20)
             )
 
+            // Kartu XP Progress
             VStack(spacing: 8) {
                 HStack {
                     Text("\(homeVM.pet?.name ?? "Pet") XP")
@@ -358,13 +367,14 @@ extension HomeView {
                 in: RoundedRectangle(cornerRadius: 20)
             )
 
+            // Baris Kartu Penalti dan Target
             HStack(spacing: 16) {
                 penaltyCard
                 wishlistCard
             }
             .fixedSize(horizontal: false, vertical: true)
 
-
+            // Tombol Transaksi
             Button(action: {
                 showTransactionModal = true
                 homeVM.registerModalOpen()
@@ -378,7 +388,7 @@ extension HomeView {
         .padding(.horizontal)
     }
 
-    // MARK: - 8. Penalty Card
+    /// Kartu visual penanda status keamanan pengguna dari penalti poin.
     private var penaltyCard: some View {
         VStack(alignment: .center, spacing: 0) {
             HStack {
@@ -452,7 +462,7 @@ extension HomeView {
         )
     }
 
-    // MARK: - 9. Wishlist Card
+    /// Kartu visual yang merepresentasikan progres target tabungan (Wishlist).
     private var wishlistCard: some View {
         VStack(alignment: .center, spacing: 0) {
             let currentAmt = homeVM.goal?.currentAmount ?? 0
@@ -519,8 +529,10 @@ extension HomeView {
 
 }
 
-// MARK: - 10. Extensions
+// MARK: - Extensions
+
 extension Int {
+    /// Ekstensi untuk memformat nilai integer menjadi string mata uang menggunakan titik (.) sebagai pemisah ribuan.
     var formattedWithSeparator: String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal

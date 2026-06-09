@@ -7,27 +7,29 @@
 
 import SwiftUI
 
+/// Antarmuka Toko (Shop) tempat pengguna dapat membeli kosmetik peliharaan (aksesoris dan background) menggunakan koin virtual.
 struct ShopView: View {
-    // MARK: - 1. Properties
 
     @StateObject private var shopVM = ShopViewModel()
     @EnvironmentObject var authVM: AuthViewModel
 
+    /// Menyimpan status kategori tab yang sedang dipilih oleh pengguna.
     @State private var selectedCategory = "Accessories"
 
+    /// Kategori barang yang tersedia di dalam toko.
     let categories = ["Accessories", "Backgrounds"]
 
+    /// Konfigurasi layout grid dua kolom responsif.
     let columns = [
         GridItem(.flexible(), spacing: 16),
         GridItem(.flexible(), spacing: 16),
     ]
 
-    // MARK: - 2. Body
-
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // MARK: - 3. Header
+
+                // Bagian Header Toko dan Saldo Koin
                 HStack {
                     Text("Shop")
                         .font(.largeTitle.bold())
@@ -49,7 +51,7 @@ struct ShopView: View {
                 .padding(.top, 20)
                 .padding(.bottom, 16)
 
-                // MARK: - 4. Category Picker
+                // Tab Pemilih Kategori (Category Picker)
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
                         ForEach(categories, id: \.self) { category in
@@ -76,11 +78,11 @@ struct ShopView: View {
                             }
                         }
                     }
-                    .padding(.horizontal)
                 }
+                .padding(.horizontal)
                 .padding(.bottom, 20)
 
-                // MARK: - 5. Shop Grid Items
+                // Area Grid Produk Toko
                 ScrollView(showsIndicators: false) {
                     LazyVGrid(columns: columns, spacing: 16) {
                         ForEach(
@@ -95,7 +97,8 @@ struct ShopView: View {
                             let isBackground = item.category == "Backgrounds"
 
                             VStack(spacing: 0) {
-                                // MARK: - 6. Preview Icon
+
+                                // Visualisasi Ikon/Gambar Produk
                                 ZStack {
                                     if isBackground {
                                         if item.isGradient == true,
@@ -118,32 +121,32 @@ struct ShopView: View {
                                             )
                                         }
 
+                                        // Render Corak (Spots) pada Background
                                         if let spotsHex = item.spotsHex {
                                             VStack {
                                                 HStack {
-                                                    Circle().fill(
-                                                        Color(hex: spotsHex)
-                                                    ).frame(width: 40).offset(
-                                                        x: -10,
-                                                        y: -10
-                                                    )
+                                                    Circle()
+                                                        .fill(
+                                                            Color(hex: spotsHex)
+                                                        )
+                                                        .frame(width: 40)
+                                                        .offset(x: -10, y: -10)
                                                     Spacer()
                                                 }
                                                 Spacer()
                                                 HStack {
                                                     Spacer()
-                                                    Circle().fill(
-                                                        Color(hex: spotsHex)
-                                                    ).frame(width: 50).offset(
-                                                        x: 10,
-                                                        y: 15
-                                                    )
+                                                    Circle()
+                                                        .fill(
+                                                            Color(hex: spotsHex)
+                                                        )
+                                                        .frame(width: 50)
+                                                        .offset(x: 10, y: 15)
                                                 }
                                             }
                                         }
                                     } else {
                                         Color(hex: "#F3F0FF")
-
                                         Image(
                                             systemName: item.imageName
                                                 ?? "tshirt.fill"
@@ -157,7 +160,7 @@ struct ShopView: View {
                                 .frame(height: 100)
                                 .clipped()
 
-                                // MARK: - 7. Detail Information
+                                // Informasi Harga dan Tombol Beli
                                 VStack(spacing: 8) {
                                     Text(item.name)
                                         .font(.subheadline.weight(.bold))
@@ -176,7 +179,6 @@ struct ShopView: View {
                                             .foregroundColor(.pennyText)
                                     }
 
-                                    // MARK: - 8. Action Button
                                     Button {
                                         if !isOwned {
                                             shopVM.purchaseItem(

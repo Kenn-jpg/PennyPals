@@ -7,19 +7,15 @@
 
 import SwiftUI
 
-// MARK: - 1. Models
-
+/// Entitas penampung variasi telur virtual yang bisa dipilih pengguna.
 struct EggOption {
     let id: String
     let name: String
     let assetName: String
 }
 
-// MARK: - 2. Main View
-
+/// Antarmuka formulir pengenalan (Onboarding) bagi pengguna baru untuk mempersiapkan data peliharaan, target tabungan, dan telur pilihan mereka.
 struct OnboardingView: View {
-
-    // MARK: - 3. Properties
 
     @StateObject private var onboardingVM = OnboardingViewModel()
     @EnvironmentObject var authVM: AuthViewModel
@@ -30,8 +26,10 @@ struct OnboardingView: View {
     @Binding var wishlistName: String
     @Binding var targetAmountString: String
 
+    /// Closure yang memicu transisi keluar dari alur onboarding (misalnya beralih ke layar Hatching atau Home).
     var onStart: () -> Void
 
+    /// Daftar pilihan telur kosmetik yang tersedia.
     let eggs: [EggOption] = [
         EggOption(id: "rose", name: "Rosie", assetName: "PinkEgg01"),
         EggOption(id: "mint", name: "Sprout", assetName: "GreenEgg01"),
@@ -41,12 +39,13 @@ struct OnboardingView: View {
         EggOption(id: "peach", name: "Pip", assetName: "PeachEgg01"),
     ]
 
+    /// Kumpulan ras hewan yang akan didapat secara acak (gacha) ketika telur menetas.
     private let availablePets = ["Cat", "Dog", "Owl", "Pig", "Raccoon", "Seal"]
 
+    /// Batas limit logika tabungan untuk mencegah nilai yang tidak wajar.
     private let maxSavingsLimit: Double = 100_000_000
 
-    // MARK: - 4. Formatters
-
+    /// Formatter angka untuk memisahkan nominal ribuan dengan titik.
     private static let currencyFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
@@ -54,15 +53,14 @@ struct OnboardingView: View {
         return formatter
     }()
 
-    // MARK: - 5. Computed Properties
-
+    /// Status validasi kelengkapan form onboarding, yang mengatur apakah tombol "Start Saving" bisa ditekan.
     private var isFormValid: Bool {
         let initialAmount = Double(cleanNumericString(rawAmount)) ?? 0
         let targetAmount = Double(cleanNumericString(targetAmountString)) ?? 0
 
         guard initialAmount >= 0, initialAmount <= maxSavingsLimit,
-              targetAmount > 0, targetAmount <= maxSavingsLimit,
-              initialAmount < targetAmount
+            targetAmount > 0, targetAmount <= maxSavingsLimit,
+            initialAmount < targetAmount
         else { return false }
 
         return !selectedEgg.isEmpty
@@ -72,12 +70,10 @@ struct OnboardingView: View {
                 .isEmpty
     }
 
-    // MARK: - 6. Body
-
     var body: some View {
         VStack(spacing: 0) {
 
-            // Top Action Bar
+            // Bagian Tombol Log Out (Bar Atas)
             HStack {
                 Spacer()
                 Button(action: { authVM.logout() }) {
@@ -89,7 +85,7 @@ struct OnboardingView: View {
                 .padding(.top, 16)
             }
 
-            // Header Title
+            // Bagian Judul Header
             VStack(alignment: .leading, spacing: 4) {
                 Text("Let's set you up")
                     .font(.largeTitle.bold())
@@ -106,7 +102,7 @@ struct OnboardingView: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 32) {
 
-                    // Section 1: Initial Savings
+                    // Seksi Tabungan Awal
                     VStack(alignment: .leading, spacing: 12) {
                         SectionHeader(title: "INITIAL SAVINGS")
 
@@ -133,23 +129,28 @@ struct OnboardingView: View {
 
                         Divider()
 
-                        let currentAmount = Double(cleanNumericString(rawAmount)) ?? 0
+                        let currentAmount =
+                            Double(cleanNumericString(rawAmount)) ?? 0
                         if currentAmount >= maxSavingsLimit {
                             HintText(
                                 icon: "exclamationmark.triangle.fill",
-                                text: "Batas maksimal tabungan awal adalah Rp 100.000.000",
+                                text:
+                                    "Batas maksimal tabungan awal adalah Rp 100.000.000",
                                 isWarning: true
                             )
                         }
 
-                        // MARK: - Presets
+                        // Preset Tabungan Awal Cepat
                         HStack(spacing: 8) {
                             ForEach(
                                 ["100000", "500000", "1000000", "5000000"],
                                 id: \.self
                             ) { amount in
-                                let formattedPreset = formatCurrencyInput(amount)
-                                let isSelected = cleanNumericString(rawAmount) == amount
+                                let formattedPreset = formatCurrencyInput(
+                                    amount
+                                )
+                                let isSelected =
+                                    cleanNumericString(rawAmount) == amount
 
                                 Button(action: {
                                     withAnimation(.easeOut(duration: 0.2)) {
@@ -177,7 +178,7 @@ struct OnboardingView: View {
                         .padding(.top, 4)
                     }
 
-                    // Section 2: Wishlist Goal & Target Price
+                    // Seksi Target Tabungan dan Nominal
                     VStack(alignment: .leading, spacing: 16) {
                         SectionHeader(title: "YOUR FIRST WISHLIST GOAL")
 
@@ -195,26 +196,31 @@ struct OnboardingView: View {
                                 isNumeric: true
                             )
                             .onChange(of: targetAmountString) { _, newValue in
-                                targetAmountString = formatCurrencyInput(newValue)
+                                targetAmountString = formatCurrencyInput(
+                                    newValue
+                                )
                             }
                         }
                         .background(Color.gray.opacity(0.05))
                         .cornerRadius(12)
 
-                        // MARK: - Validation Warnings
-                        let currentInitial = Double(cleanNumericString(rawAmount)) ?? 0
-                        let currentTarget = Double(cleanNumericString(targetAmountString)) ?? 0
+                        let currentInitial =
+                            Double(cleanNumericString(rawAmount)) ?? 0
+                        let currentTarget =
+                            Double(cleanNumericString(targetAmountString)) ?? 0
 
-                        if currentTarget > 0 && currentInitial >= currentTarget {
+                        if currentTarget > 0 && currentInitial >= currentTarget
+                        {
                             HintText(
                                 icon: "exclamationmark.triangle.fill",
-                                text: "Tabungan awal tidak boleh melebihi harga target barang!",
+                                text:
+                                    "Tabungan awal tidak boleh melebihi harga target barang!",
                                 isWarning: true
                             )
                         }
                     }
 
-                    // Section 3: Pet Name
+                    // Seksi Nama Peliharaan
                     VStack(alignment: .leading, spacing: 12) {
                         SectionHeader(title: "YOUR PET NAME")
 
@@ -227,7 +233,7 @@ struct OnboardingView: View {
                         .cornerRadius(12)
                     }
 
-                    // Section 4: Choose Egg
+                    // Seksi Pilihan Varian Telur
                     VStack(alignment: .leading, spacing: 16) {
                         SectionHeader(title: "CHOOSE YOUR EGG")
 
@@ -246,7 +252,9 @@ struct OnboardingView: View {
                                             response: 0.3,
                                             dampingFraction: 0.6
                                         )
-                                    ) { selectedEgg = egg.id }
+                                    ) {
+                                        selectedEgg = egg.id
+                                    }
                                 }) {
                                     VStack(spacing: 8) {
                                         Image(egg.assetName)
@@ -299,15 +307,19 @@ struct OnboardingView: View {
                 .padding(.bottom, 24)
             }
 
-            // MARK: - Bottom Action Button
+            // Tombol Mulai (Submit)
             Button(action: {
                 Task {
                     let amount = Double(cleanNumericString(rawAmount)) ?? 0
-                    let targetAmount = Double(cleanNumericString(targetAmountString)) ?? 0
-                    let petName = petNameInput.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let targetAmount =
+                        Double(cleanNumericString(targetAmountString)) ?? 0
+                    let petName = petNameInput.trimmingCharacters(
+                        in: .whitespacesAndNewlines
+                    )
 
-                    // Mengacak ras pet sebelum disimpan (Gacha)
-                    let randomlyHatchedPet = availablePets.randomElement() ?? "Cat"
+                    // Mengundi ras pet dari daftar availablePets untuk memberikan kejutan ke pengguna.
+                    let randomlyHatchedPet =
+                        availablePets.randomElement() ?? "Cat"
 
                     await onboardingVM.completeOnboarding(
                         initialSavings: amount,
@@ -333,23 +345,25 @@ struct OnboardingView: View {
         .background(Color.pennyBackground.ignoresSafeArea())
     }
 
-    // MARK: - 7. Helper Methods
-
+    /// Memformat *string* raw angka agar dipisah dengan titik ribuan secara *real-time*.
     private func formatCurrencyInput(_ input: String) -> String {
         let digits = cleanNumericString(input)
         guard let doubleValue = Double(digits) else { return "" }
         let finalValue = min(doubleValue, maxSavingsLimit)
 
-        return Self.currencyFormatter.string(from: NSNumber(value: finalValue)) ?? ""
+        return Self.currencyFormatter.string(from: NSNumber(value: finalValue))
+            ?? ""
     }
 
+    /// Menghilangkan karakter non-angka (seperti pemisah ribuan) agar string bisa dikonversi menjadi format komputasi matematika (`Double`).
     private func cleanNumericString(_ input: String) -> String {
         return input.filter { $0.isNumber }
     }
 }
 
-// MARK: - 8. UI Components
+// MARK: - UI Components Bawaan
 
+/// Komponen untuk memisahkan grup antar kategori formulir dengan gaya teks *capitalized*.
 struct SectionHeader: View {
     let title: String
     var body: some View {
@@ -360,6 +374,7 @@ struct SectionHeader: View {
     }
 }
 
+/// Komponen teks bantuan kecil untuk memandu pengguna atau memberikan pesan *error* validasi ringan.
 struct HintText: View {
     let icon: String
     let text: String
@@ -375,6 +390,7 @@ struct HintText: View {
     }
 }
 
+/// Komponen input teks kustom tanpa garis kotak luar untuk desain *clean UI*.
 struct MinimalTextField: View {
     let icon: String
     let placeholder: String

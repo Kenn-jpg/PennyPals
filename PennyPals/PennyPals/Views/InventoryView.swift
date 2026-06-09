@@ -8,15 +8,16 @@
 import FirebaseAuth
 import SwiftUI
 
+/// Antarmuka yang menampilkan daftar aset kosmetik (Inventori) milik pengguna berdasarkan kategori tertentu.
 struct InventoryView: View {
-    // MARK: - 1. Properties
-
     @Environment(\.dismiss) private var dismiss
 
+    /// Kategori barang yang sedang diakses (Contoh: "Accessories" atau "Backgrounds").
     let category: String
-    
+
     @EnvironmentObject var shopVM: ShopViewModel
 
+    /// Kumpulan barang dari toko yang sudah berhasil dibeli dan dimiliki oleh pengguna saat ini.
     private var ownedItems: [ShopItemModel] {
         shopVM.shopItems.filter {
             $0.category == self.category
@@ -24,18 +25,15 @@ struct InventoryView: View {
         }
     }
 
-    // Konfigurasi Grid 2 Kolom
+    /// Konfigurasi tata letak dinamis berupa *Grid* dengan 2 kolom.
     private let gridColumns = [
         GridItem(.flexible(), spacing: 16),
         GridItem(.flexible(), spacing: 16),
     ]
 
-    // MARK: - 2. Body
-
     var body: some View {
         NavigationStack {
             Group {
-                // MARK: - 4. Error Message
                 if let errorMessage = shopVM.errorMessage {
                     Text(errorMessage)
                         .font(.footnote)
@@ -43,7 +41,6 @@ struct InventoryView: View {
                         .padding()
                 }
 
-                // MARK: - 5. Content / Empty State
                 if ownedItems.isEmpty {
                     ContentUnavailableView(
                         "No \(category) Yet",
@@ -75,22 +72,21 @@ struct InventoryView: View {
             .background(
                 Color(UIColor.secondarySystemBackground).ignoresSafeArea()
             )
-            .onAppear {
-                // shopVM already listens to inventory and items from its init
-            }
         }
     }
 
-    // MARK: - 3. UI Components
+    /// Komponen visual (Card) untuk menampilkan detail pratinjau barang inventori beserta tombol pakainya.
+    /// - Parameter item: Model barang toko (ShopItemModel) yang akan di-render.
     @ViewBuilder
     private func inventoryCard(for item: ShopItemModel) -> some View {
-        let isEquipped = (category == "Backgrounds" ? shopVM.selectedBackgroundId == item.id : shopVM.selectedAccessoryId == item.id)
+        let isEquipped =
+            (category == "Backgrounds"
+                ? shopVM.selectedBackgroundId == item.id
+                : shopVM.selectedAccessoryId == item.id)
 
         VStack(spacing: 12) {
-            // MARK: - 6. Preview Visual
             ZStack {
                 if category == "Backgrounds" {
-                    // Cek Gradient
                     if item.isGradient == true, let endColor = item.endColorHex
                     {
                         LinearGradient(
@@ -102,11 +98,9 @@ struct InventoryView: View {
                             endPoint: .bottom
                         )
                     } else {
-                        // Fallback warna solid
                         Color(hex: item.colorHex ?? "#E8E8E8")
                     }
 
-                    // Cek Spots (Bulatan)
                     if let spotsHex = item.spotsHex {
                         VStack {
                             HStack {
@@ -127,7 +121,6 @@ struct InventoryView: View {
                         }
                     }
                 } else {
-                    // Tampilan default untuk aksesoris
                     Color.white
                     Image(systemName: item.imageName ?? "tshirt.fill")
                         .resizable()
@@ -137,11 +130,10 @@ struct InventoryView: View {
                 }
             }
             .frame(height: 120)
-            .clipped()  // Pastikan spot tidak keluar batas
+            .clipped()
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .shadow(color: .black.opacity(0.05), radius: 5, y: 2)
 
-            // MARK: - 7. Detail Information
             VStack(spacing: 4) {
                 Text(item.name)
                     .font(.subheadline)
@@ -149,7 +141,6 @@ struct InventoryView: View {
                     .foregroundColor(.primary)
                     .lineLimit(1)
 
-                // MARK: - 8. Equip Button
                 Button(action: {
                     shopVM.toggleEquipItem(item: item)
                 }) {
@@ -174,5 +165,4 @@ struct InventoryView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.03), radius: 8, y: 4)
     }
-
 }
