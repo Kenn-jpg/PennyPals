@@ -8,20 +8,22 @@
 internal import Combine
 import SwiftUI
 
+/// Antarmuka animasi penetasan telur yang muncul saat pengguna pertama kali menyelesaikan Onboarding atau ketika telur siap berevolusi.
 struct HatchingView: View {
 
-    // MARK: - 1. Properties
-
+    /// ID yang mempresentasikan jenis warna/desain dari telur (misal: "rose", "mint", "sky").
     var eggId: String
+
+    /// Closure yang dieksekusi tepat setelah animasi progress penetasan mencapai 100% (1.0).
     var onComplete: () -> Void
 
     @State private var progress: Double = 0.0
     @State private var isBouncing = false
 
+    /// *Timer* terpusat pada *main thread* untuk merender perubahan progress bar animasi penetasan.
     let timer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
 
-    // MARK: - 2. Computed Properties
-
+    /// Properti terhitung (*Computed property*) untuk menentukan index frame sprite animasi berdasarkan persentase progress.
     private var currentFrameIndex: Int {
         let maxFrames = 7
         var index = Int(progress * Double(maxFrames)) + 1
@@ -32,6 +34,7 @@ struct HatchingView: View {
         return index
     }
 
+    /// Memetakan `eggId` yang dipilih pengguna pada Onboarding ke prefix aset Xcode untuk menampilkan urutan gambar (*sprite sequence*).
     private var currentImageName: String {
         let baseName: String
 
@@ -49,13 +52,11 @@ struct HatchingView: View {
         return "\(baseName)\(frameString)"
     }
 
-    // MARK: - 3. Body
-
     var body: some View {
         VStack(spacing: 40) {
             Spacer()
 
-            // MARK: - 4. Egg Graphic
+            // Animasi visual telur
             ZStack {
                 Image(currentImageName)
                     .resizable()
@@ -72,7 +73,7 @@ struct HatchingView: View {
                 }
             }
 
-            // MARK: - 5. Progress Section
+            // Indikator Progress Bar
             VStack(spacing: 16) {
                 Text("Hatching...")
                     .font(.headline)
@@ -94,7 +95,6 @@ struct HatchingView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.pennyBackground.ignoresSafeArea())
-
         .onReceive(timer) { _ in
             if progress < 1.0 {
                 progress += 0.02

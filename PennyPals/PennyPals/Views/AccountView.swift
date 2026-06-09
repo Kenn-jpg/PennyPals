@@ -7,22 +7,26 @@
 
 import SwiftUI
 
+/// Antarmuka utama untuk halaman profil pengguna (Account).
+/// Menampilkan informasi akun, metrik gamifikasi (koin, streak), dan navigasi ke pengaturan aplikasi.
 struct AccountView: View {
-    // MARK: - 1. Properties
 
+    /// Akses ke ViewModel otentikasi dari environment untuk mengambil data pengguna yang sedang login.
     @EnvironmentObject var authVM: AuthViewModel
+
+    /// Closure yang dipanggil ketika pengguna menekan tombol Log Out.
     var onLogout: () -> Void
+
     @State private var showInventory = false
     @State private var showBackgroundInventory = false
     @State private var showEditProfile = false
-    @StateObject private var shopVM = ShopViewModel()
 
-    // MARK: - 2. Body
+    /// ViewModel independen untuk mengelola logika penampilan inventori (aksesoris dan background).
+    @StateObject private var shopVM = ShopViewModel()
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // MARK: - 3. Header
                 HStack {
                     Text("Account")
                         .font(.largeTitle.bold())
@@ -35,7 +39,8 @@ struct AccountView: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 24) {
-                        // MARK: - 4. Profile Card
+
+                        // Kartu Profil Utama
                         VStack(spacing: 16) {
                             Circle().fill(
                                 LinearGradient(
@@ -101,7 +106,7 @@ struct AccountView: View {
                             y: 4
                         )
 
-                        // MARK: - 5. Settings List
+                        // Daftar Menu Pengaturan
                         VStack(alignment: .leading, spacing: 8) {
                             Text("SETTINGS")
                                 .font(.caption.weight(.semibold))
@@ -124,7 +129,9 @@ struct AccountView: View {
 
                                 Divider().padding(.leading, 56)
 
-                                Button(action: { showBackgroundInventory = true }) {
+                                Button(action: {
+                                    showBackgroundInventory = true
+                                }) {
                                     SettingRow(
                                         icon: "moon.fill",
                                         color: .indigo,
@@ -157,7 +164,7 @@ struct AccountView: View {
                             )
                         }
 
-                        // MARK: - 6. Support List
+                        // Daftar Menu Bantuan (Support)
                         VStack(alignment: .leading, spacing: 8) {
                             Text("SUPPORT")
                                 .font(.caption.weight(.semibold))
@@ -173,10 +180,12 @@ struct AccountView: View {
                                     )
                                 }
                                 .buttonStyle(.plain)
-                                
+
                                 Divider().padding(.leading, 56)
-                                
-                                NavigationLink(destination: TermsOfServiceView()) {
+
+                                NavigationLink(
+                                    destination: TermsOfServiceView()
+                                ) {
                                     SettingRow(
                                         icon: "doc.text.fill",
                                         color: .gray,
@@ -194,7 +203,7 @@ struct AccountView: View {
                             )
                         }
 
-                        // MARK: - 7. Logout Button
+                        // Tombol Keluar (Log Out)
                         Button(action: onLogout) {
                             Text("Log Out")
                                 .font(.headline)
@@ -219,12 +228,12 @@ struct AccountView: View {
     }
 }
 
-// MARK: - 8. UI Components
-
+/// Komponen baris (row) kustom yang digunakan untuk menampilkan menu dengan ikon seragam pada daftar pengaturan.
 struct SettingRow: View {
     var icon: String
     var color: Color
     var title: String
+
     var body: some View {
         HStack(spacing: 16) {
             ZStack {

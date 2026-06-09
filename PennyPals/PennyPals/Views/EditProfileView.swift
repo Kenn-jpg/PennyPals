@@ -8,8 +8,10 @@
 import FirebaseAuth
 import SwiftUI
 
+/// Antarmuka untuk mengubah data profil pengguna (seperti username, nama peliharaan, dan kata sandi).
+/// Berkomunikasi dengan Firestore dan FirebaseAuth melalui `AuthViewModel`.
 struct EditProfileView: View {
-    // MARK: - 1. Properties
+
     @EnvironmentObject var authVM: AuthViewModel
     @Environment(\.dismiss) private var dismiss
 
@@ -22,76 +24,115 @@ struct EditProfileView: View {
     @State private var isSaving = false
     @State private var localError: String?
 
-    // MARK: - 2. Body
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
-                    
-                    // MARK: - 3. Avatar Section
+
+                    // Bagian Avatar Visual
                     ZStack {
                         Circle()
                             .fill(
                                 LinearGradient(
-                                    colors: [Color.pennyPurple.opacity(0.6), Color.pennyPurple],
+                                    colors: [
+                                        Color.pennyPurple.opacity(0.6),
+                                        Color.pennyPurple,
+                                    ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 )
                             )
                             .frame(width: 100, height: 100)
-                            .shadow(color: Color.pennyPurple.opacity(0.3), radius: 10, x: 0, y: 5)
-                            
-                        // Menampilkan inisial user (2 huruf pertama) di tengah lingkaran
-                        Text(username.isEmpty ? "US" : String(username.prefix(2)).uppercased())
-                            .font(.system(size: 36, weight: .bold, design: .rounded))
-                            .foregroundColor(.white)
+                            .shadow(
+                                color: Color.pennyPurple.opacity(0.3),
+                                radius: 10,
+                                x: 0,
+                                y: 5
+                            )
+
+                        Text(
+                            username.isEmpty
+                                ? "US" : String(username.prefix(2)).uppercased()
+                        )
+                        .font(
+                            .system(size: 36, weight: .bold, design: .rounded)
+                        )
+                        .foregroundColor(.white)
                     }
                     .padding(.top, 16)
 
-                    // MARK: - 4. Profile Information Section
+                    // Bagian Informasi Pribadi
                     VStack(alignment: .leading, spacing: 8) {
                         Text("PERSONAL INFO")
                             .font(.caption)
                             .fontWeight(.bold)
                             .foregroundColor(.pennySecondaryText)
                             .padding(.leading, 16)
-                        
+
                         VStack(spacing: 0) {
-                            inputRow(icon: "person.fill", placeholder: "Username", text: $username)
-                            
+                            inputRow(
+                                icon: "person.fill",
+                                placeholder: "Username",
+                                text: $username
+                            )
+
                             Divider().padding(.leading, 56)
-                            
-                            inputRow(icon: "pawprint.fill", placeholder: "Pet Name", text: $petName)
+
+                            inputRow(
+                                icon: "pawprint.fill",
+                                placeholder: "Pet Name",
+                                text: $petName
+                            )
                         }
                         .background(Color(UIColor.systemBackground))
                         .clipShape(RoundedRectangle(cornerRadius: 16))
-                        .shadow(color: Color.black.opacity(0.03), radius: 8, x: 0, y: 4)
+                        .shadow(
+                            color: Color.black.opacity(0.03),
+                            radius: 8,
+                            x: 0,
+                            y: 4
+                        )
                     }
 
-                    // MARK: - 5. Password Section
+                    // Bagian Keamanan (Password)
                     VStack(alignment: .leading, spacing: 8) {
                         Text("SECURITY")
                             .font(.caption)
                             .fontWeight(.bold)
                             .foregroundColor(.pennySecondaryText)
                             .padding(.leading, 16)
-                        
+
                         VStack(spacing: 0) {
-                            inputRow(icon: "lock.fill", placeholder: "New Password", text: $newPassword, isSecure: true)
-                            
+                            inputRow(
+                                icon: "lock.fill",
+                                placeholder: "New Password",
+                                text: $newPassword,
+                                isSecure: true
+                            )
+
                             Divider().padding(.leading, 56)
-                            
-                            inputRow(icon: "lock.rotation", placeholder: "Confirm Password", text: $confirmPassword, isSecure: true)
+
+                            inputRow(
+                                icon: "lock.rotation",
+                                placeholder: "Confirm Password",
+                                text: $confirmPassword,
+                                isSecure: true
+                            )
                         }
                         .background(Color(UIColor.systemBackground))
                         .clipShape(RoundedRectangle(cornerRadius: 16))
-                        .shadow(color: Color.black.opacity(0.03), radius: 8, x: 0, y: 4)
+                        .shadow(
+                            color: Color.black.opacity(0.03),
+                            radius: 8,
+                            x: 0,
+                            y: 4
+                        )
                     }
 
-                    // MARK: - 6. Error Message & Button Group
+                    // Tampilan Pesan Error dan Tombol Simpan
                     VStack(spacing: 12) {
                         let currentError = localError ?? authVM.errorMessage
-                        
+
                         HStack(spacing: 8) {
                             Image(systemName: "exclamationmark.triangle.fill")
                             Text(currentError ?? " ")
@@ -102,7 +143,6 @@ struct EditProfileView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .opacity(currentError != nil ? 1 : 0)
 
-                        // MARK: - 7. Save Button (Premium Gradient)
                         Button {
                             Task { await save() }
                         } label: {
@@ -116,7 +156,10 @@ struct EditProfileView: View {
                                             Color.gray
                                         } else {
                                             LinearGradient(
-                                                colors: [Color.pink.opacity(0.6), Color.pennyPurple],
+                                                colors: [
+                                                    Color.pink.opacity(0.6),
+                                                    Color.pennyPurple,
+                                                ],
                                                 startPoint: .topLeading,
                                                 endPoint: .bottomTrailing
                                             )
@@ -124,7 +167,14 @@ struct EditProfileView: View {
                                     }
                                 )
                                 .clipShape(RoundedRectangle(cornerRadius: 16))
-                                .shadow(color: Color.pennyPurple.opacity(isSaving ? 0 : 0.3), radius: 10, x: 0, y: 5)
+                                .shadow(
+                                    color: Color.pennyPurple.opacity(
+                                        isSaving ? 0 : 0.3
+                                    ),
+                                    radius: 10,
+                                    x: 0,
+                                    y: 5
+                                )
                         }
                         .disabled(isSaving)
                     }
@@ -149,14 +199,19 @@ struct EditProfileView: View {
         }
     }
 
-    // MARK: - Reusable Input Row Component
-    private func inputRow(icon: String, placeholder: String, text: Binding<String>, isSecure: Bool = false) -> some View {
+    /// Komponen antarmuka teks dinamis (dapat berupa `TextField` biasa atau `SecureField`) untuk mengelola input profil.
+    private func inputRow(
+        icon: String,
+        placeholder: String,
+        text: Binding<String>,
+        isSecure: Bool = false
+    ) -> some View {
         HStack(spacing: 16) {
             Image(systemName: icon)
                 .font(.system(size: 16))
                 .foregroundColor(.pennyPurple.opacity(0.7))
                 .frame(width: 24)
-            
+
             if isSecure {
                 SecureField(placeholder, text: text)
             } else {
@@ -169,13 +224,14 @@ struct EditProfileView: View {
         .frame(height: 54)
     }
 
-    // MARK: - 8. Methods
+    /// Mengambil nama hewan peliharaan secara asinkron dari Firebase Firestore.
     private func loadPetName() async {
         if let petName = await authVM.fetchPetName() {
             self.petName = petName
         }
     }
 
+    /// Menyimpan dan memvalidasi perubahan data pengguna secara bertahap ke Firebase Authentication & Firestore.
     @MainActor
     private func save() async {
         localError = nil
@@ -218,9 +274,4 @@ struct EditProfileView: View {
             dismiss()
         }
     }
-}
-
-#Preview {
-    EditProfileView()
-        //.environmentObject(AuthViewModel()) // Uncomment jika ingin di-preview dengan Mock VM
 }
