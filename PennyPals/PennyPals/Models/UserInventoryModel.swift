@@ -8,22 +8,21 @@
 import FirebaseFirestore
 import Foundation
 
-// Mendata seluruh kepemilikan aset virtual (seperti aksesoris dan background) yang dimiliki seorang pengguna.
+/// Mendata seluruh kepemilikan aset virtual (seperti aksesoris dan background) yang dimiliki seorang pengguna.
 struct UserInventoryModel: Identifiable, Codable, Equatable {
-    // MARK: - Properties
 
-    // ID unik dokumen di Firebase Firestore.
+    /// ID unik dokumen di Firebase Firestore.
     @DocumentID var id: String?
 
-    // ID pengguna pemilik inventori ini.
+    /// ID pengguna pemilik inventori ini.
     var userId: String
 
-    // Kumpulan array berisi ID dari `ShopItemModel` yang telah berhasil dibeli (unlocked).
+    /// Kumpulan array berisi ID dari `ShopItemModel` yang telah berhasil dibeli (unlocked).
     var unlockedItemIds: [String]
 
-    // ID dari background yang saat ini sedang aktif atau dipakai di HomeView.
+    /// ID dari background yang saat ini sedang aktif dipakai di HomeView.
     var selectedBackgroundId: String?
 
-    // ID dari aksesoris yang saat ini sedang aktif atau dipakai di HomeView.
+    /// ID dari aksesoris yang saat ini sedang aktif dipakai di HomeView.
     var selectedAccessoryId: String?
 }

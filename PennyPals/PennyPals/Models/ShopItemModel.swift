@@ -8,34 +8,33 @@
 import FirebaseFirestore
 import Foundation
 
-// Merepresentasikan sebuah produk virtual yang bisa dibeli pengguna di dalam toko (Shop).
+/// Merepresentasikan sebuah produk virtual yang bisa dibeli pengguna di dalam toko (Shop).
 struct ShopItemModel: Identifiable, Codable, Equatable {
-    // MARK: - Properties
 
-    // ID unik dokumen di Firebase Firestore.
+    /// ID unik dokumen di Firebase Firestore.
     @DocumentID var id: String?
 
-    // Nama kosmetik atau barang virtual.
+    /// Nama kosmetik atau barang virtual.
     var name: String
 
-    // Kelompok kategori barang (contoh: "Accessories", "Backgrounds").
+    /// Kelompok kategori barang (contoh: "Accessories", "Backgrounds").
     var category: String
 
-    // Harga item yang harus dibayar menggunakan koin virtual (`coins`).
+    /// Harga item yang harus dibayar menggunakan koin virtual.
     var price: Int
 
-    // Properti kode warna Hex opsional, umumnya digunakan untuk kustomisasi warna telur atau warna dasar background.
+    /// Kode warna Hex opsional, umumnya digunakan untuk kustomisasi warna telur atau warna dasar background.
     var colorHex: String?
 
-    // Properti kode warna Hex opsional untuk memberikan pola/corak pada telur atau background.
+    /// Kode warna Hex opsional untuk memberikan pola/corak pada telur atau background.
     var spotsHex: String?
 
-    // Nama file gambar aset yang dipanggil dari Xcode Assets Catalog (contoh: "tshirt.fill").
+    /// Nama file gambar aset yang dipanggil dari Xcode Assets Catalog (contoh: "tshirt.fill").
     var imageName: String?
 
-    // Menandakan apakah latar belakang menggunakan efek warna degradasi (gradient).
+    /// Menandakan apakah latar belakang menggunakan efek warna degradasi (gradient).
     var isGradient: Bool?
 
-    // Properti kode warna Hex ujung/akhir jika properti `isGradient` bernilai true.
+    /// Kode warna Hex ujung/akhir jika properti `isGradient` bernilai true.
     var endColorHex: String?
 }

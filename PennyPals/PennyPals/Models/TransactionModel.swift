@@ -8,27 +8,25 @@
 import FirebaseFirestore
 import Foundation
 
-// Merepresentasikan transaksi keuangan yang dicatat oleh pengguna,
-// baik itu menabung, pengeluaran, maupun pengurangan saldo akibat penalti.
+/// Merepresentasikan transaksi keuangan yang dicatat oleh pengguna (menabung, pengeluaran, atau penalti).
 struct TransactionModel: Identifiable, Codable, Equatable {
-    // MARK: - Properties
 
-    // ID unik dokumen di Firebase Firestore.
+    /// ID unik dokumen di Firebase Firestore.
     @DocumentID var id: String?
 
-    // ID pengguna pemilik transaksi ini.
+    /// ID pengguna pemilik transaksi ini.
     var userId: String
 
-    // Nominal uang yang ditransaksikan.
+    /// Nominal uang yang ditransaksikan.
     var amount: Double
 
-    // Tanggal dan waktu transaksi dilakukan.
+    /// Tanggal dan waktu transaksi dilakukan.
     var date: Date
 
-    // Jenis kategori transaksi (pemasukan/pengeluaran/penalti).
+    /// Jenis kategori transaksi (pemasukan, pengeluaran, atau penalti).
     var type: TransactionType
 
-    // Kategori valid untuk sebuah transaksi.
+    /// Kategori valid untuk sebuah transaksi.
     enum TransactionType: String, Codable, Equatable {
         case deposit
         case penalty
