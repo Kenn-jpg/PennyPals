@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-// MARK: - Egg Graphics (Tetap menggunakan Shape karena sudah bagus)
+/// Bentuk (Shape) kustom untuk menghasilkan siluet dasar yang menyerupai bentuk telur.
 struct EggShape: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
@@ -23,9 +23,15 @@ struct EggShape: Shape {
     }
 }
 
+/// Komponen visual yang merender telur peliharaan sebelum menetas, lengkap dengan kustomisasi warna dasar dan warna corak.
 struct EggView: View {
+    /// Kode warna hex untuk warna dasar telur.
     var color: String
+
+    /// Kode warna hex untuk motif/corak pada telur.
     var spots: String
+
+    /// Ukuran dimensi dari telur.
     var size: CGFloat
 
     var body: some View {
@@ -47,17 +53,21 @@ struct EggView: View {
     }
 }
 
-// MARK: - Pet Graphics (DIUBAH MENGGUNAKAN ASSET)
+/// Komponen visual yang bertugas memanggil dan menampilkan aset 2D hewan peliharaan berdasarkan jenis dan kondisinya.
 struct PetView: View {
-    var petType: String  // "Cat", "Dog", "Owl", "Pig", "Raccoon", "Seal"
-    var mood: String  // "happy", "sad", "hungry", dll
+    /// Jenis spesies hewan peliharaan (contoh: "Cat", "Dog", "Owl", dsb).
+    var petType: String
+
+    /// Kondisi emosional hewan peliharaan (contoh: "happy", "sad", "hungry") yang didapat dari database.
+    var mood: String
+
+    /// Ukuran dimensi hewan peliharaan yang akan dirender di layar.
     var size: CGFloat
 
-    // Mapping mood dari HomeVM/Pet ke nama suffix Asset
+    /// Memetakan string mood dari database menjadi akhiran (suffix) penamaan aset gambar di Xcode.
     private var moodSuffix: String {
         switch mood.lowercased() {
         case "happy": return "Laugh"
-
         case "sad": return "Sad"
         case "hungry": return "TongueOut"
         case "angry": return "Angry"
@@ -66,11 +76,11 @@ struct PetView: View {
         case "sleepy": return "Sleepy"
         case "surprised": return "Surprised"
         case "wink": return "WinkTongueOut"
-        default: return "Laugh"  // Default fallback jika mood tidak dikenali
+        default: return "Laugh"
         }
     }
 
-    // Gabungan jenis pet dan suffix (Contoh: "Cat" + "Laugh" = "CatLaugh")
+    /// Menggabungkan jenis peliharaan dan suffix mood untuk mendapatkan nama aset final (Contoh: "Cat" + "Laugh" = "CatLaugh").
     private var assetName: String {
         return "\(petType)\(moodSuffix)"
     }
@@ -80,7 +90,6 @@ struct PetView: View {
             .resizable()
             .scaledToFit()
             .frame(width: size, height: size)
-            // Fallback image jika nama aset ternyata salah / belum masuk Xcode
             .overlay {
                 if UIImage(named: assetName) == nil {
                     Text("Asset\nMissing")

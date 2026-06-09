@@ -7,20 +7,24 @@
 
 import SwiftUI
 
+/// Modal antarmuka yang muncul untuk merayakan pencapaian target sebelumnya dan mendorong pengguna menentukan target (Wishlist) baru.
 struct SetNewGoalModal: View {
     @Environment(\.dismiss) var dismiss
 
+    /// Nama target yang baru saja berhasil diselesaikan oleh pengguna.
     var completedGoalName: String
+
+    /// Closure yang dipanggil saat target baru berhasil disimpan, mengirimkan nama barang (String) dan nominal (Double).
     var onSave: (String, Double) -> Void
 
     @State private var itemName: String = ""
     @State private var targetAmountString: String = ""
     @State private var showConfetti: Bool = false
 
-    // Konstanta Batas Maksimal (Rp 100 Juta)
+    /// Batas maksimal nominal uang yang dapat diatur sebagai target tabungan baru.
     private let maxTargetLimit: Double = 100_000_000
 
-    // Validasi form: nama tidak kosong dan nominal valid
+    /// Properti terhitung yang memastikan field nama tidak kosong dan nominal berada pada rentang yang diizinkan.
     private var isFormValid: Bool {
         let cleanDigits = cleanNumericString(targetAmountString)
         guard let amount = Double(cleanDigits),
@@ -34,17 +38,14 @@ struct SetNewGoalModal: View {
     var body: some View {
         VStack(spacing: 0) {
 
-            // --- CELEBRATION HEADER ---
             VStack(spacing: 14) {
                 ZStack {
-                    // Lingkaran luar (Glow Effect)
                     Circle()
                         .fill(Color(hex: "#34C759").opacity(0.15))
                         .frame(width: 88, height: 88)
                         .scaleEffect(showConfetti ? 1.0 : 0.6)
                         .opacity(showConfetti ? 1.0 : 0.0)
 
-                    // Lingkaran dalam dengan Gradient
                     Circle()
                         .fill(
                             LinearGradient(
@@ -89,7 +90,6 @@ struct SetNewGoalModal: View {
                 }
             }
 
-            // --- DIVIDER VISUAL ---
             HStack(spacing: 12) {
                 Rectangle()
                     .fill(Color.pennySecondaryText.opacity(0.15))
@@ -97,7 +97,7 @@ struct SetNewGoalModal: View {
                 Text("SET NEW GOAL")
                     .font(.caption.weight(.bold))
                     .foregroundColor(.pennySecondaryText.opacity(0.8))
-                    .tracking(1)  // Menambah jarak antar huruf agar estetik
+                    .tracking(1)
                 Rectangle()
                     .fill(Color.pennySecondaryText.opacity(0.15))
                     .frame(height: 1)
@@ -105,10 +105,7 @@ struct SetNewGoalModal: View {
             .padding(.horizontal, 32)
             .padding(.bottom, 24)
 
-            // --- FORM AREA ---
             VStack(spacing: 20) {
-
-                // 1. Input Nama Barang
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Item Name")
                         .font(.footnote.weight(.semibold))
@@ -119,7 +116,6 @@ struct SetNewGoalModal: View {
                             .font(.body)
                             .foregroundColor(.pennyPurple)
 
-                        // Placeholder diperbarui agar lebih natural
                         TextField("What are you saving for?", text: $itemName)
                             .font(.body.weight(.medium))
                             .foregroundColor(.pennyText)
@@ -144,7 +140,6 @@ struct SetNewGoalModal: View {
                     )
                 }
 
-                // 2. Input Target Nominal
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Target Price")
                         .font(.footnote.weight(.semibold))
@@ -181,7 +176,6 @@ struct SetNewGoalModal: View {
                             )
                     )
 
-                    // Pesan peringatan jika melebihi batas
                     let currentAmount =
                         Double(cleanNumericString(targetAmountString)) ?? 0
                     if currentAmount >= maxTargetLimit {
@@ -200,9 +194,7 @@ struct SetNewGoalModal: View {
 
             Spacer()
 
-            // --- ACTION BUTTONS ---
             VStack(spacing: 12) {
-                // SAVE BUTTON
                 Button(action: {
                     let cleanAmount = cleanNumericString(targetAmountString)
                     if let amount = Double(cleanAmount) {
@@ -223,7 +215,6 @@ struct SetNewGoalModal: View {
                 .disabled(!isFormValid)
                 .opacity(isFormValid ? 1.0 : 0.5)
 
-                // SKIP BUTTON
                 Button(action: {
                     dismiss()
                 }) {
@@ -236,15 +227,12 @@ struct SetNewGoalModal: View {
             .padding(.horizontal, 32)
             .padding(.bottom, 24)
         }
-        .background(Color.pennyBackground.ignoresSafeArea())  // Menyesuaikan warna base app Anda
-
-        // Mengubah presentasi modal agar tidak menutupi seluruh layar penuh
+        .background(Color.pennyBackground.ignoresSafeArea())
         .presentationDetents([.fraction(0.65)])
         .presentationDragIndicator(.visible)
     }
 
-    // --- HELPER LOGIC FUNCTIONS ---
-
+    /// Memformat input nominal harga target menjadi format uang yang nyaman dibaca (dengan titik) secara *real-time*.
     private func formatDynamicCurrency(_ input: String) {
         let digits = input.filter { $0.isNumber }
         if digits.isEmpty {
@@ -270,6 +258,7 @@ struct SetNewGoalModal: View {
         }
     }
 
+    /// Membersihkan *string* dari karakter selain angka agar bisa dikonversi menjadi tipe data `Double`.
     private func cleanNumericString(_ input: String) -> String {
         return input.filter { $0.isNumber }
     }

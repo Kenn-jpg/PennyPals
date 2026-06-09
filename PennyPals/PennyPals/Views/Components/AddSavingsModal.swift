@@ -7,24 +7,30 @@
 
 import SwiftUI
 
+/// Modal antarmuka (View) yang memungkinkan pengguna untuk mencatat transaksi baru, baik berupa penambahan tabungan (Savings) maupun pengeluaran (Expense).
 struct AddSavingsModal: View {
     @Environment(\.dismiss) var dismiss
-    
+
+    /// Total saldo tabungan pengguna saat ini, digunakan untuk validasi agar pengeluaran tidak melebihi saldo.
     var currentTotalSavings: Double
+
+    /// Closure yang dipanggil ketika pengguna berhasil menyimpan form.
+    /// Mengirimkan dua nilai: nominal transaksi (Double) dan status pengeluaran (Bool - `true` jika pengeluaran).
     var onSave: (Double, Bool) -> Void
 
     @State private var amountString: String = ""
-    // 2. Add State to differentiate between Savings and Expense
+
+    /// Status pemilih (Picker) untuk menentukan jenis transaksi (false = Tabungan, true = Pengeluaran).
     @State private var isExpense: Bool = false
 
-    // Maximum Input Limit Constant
+    /// Batas maksimal nominal uang yang dapat diinputkan dalam satu kali transaksi.
     private let maxSavingsLimit: Double = 100_000_000
 
-    // Form validation to control the save button status
+    /// Validasi dinamis untuk menentukan apakah tombol simpan dapat ditekan atau tidak.
     private var isFormValid: Bool {
         let cleanDigits = cleanNumericString(amountString)
         guard let amount = Double(cleanDigits),
-              amount > 0 && amount <= maxSavingsLimit
+            amount > 0 && amount <= maxSavingsLimit
         else {
             return false
         }
@@ -36,15 +42,13 @@ struct AddSavingsModal: View {
 
     var body: some View {
         VStack(spacing: 20) {
-            // 3. Add Segmented Picker to select transaction type
             Picker("Transaction Type", selection: $isExpense) {
                 Text("Savings").tag(false)
                 Text("Expense").tag(true)
             }
             .pickerStyle(.segmented)
             .padding(.top, 10)
-            
-            // Dynamic title based on selection
+
             Text(isExpense ? "Add Expense" : "Add Savings")
                 .font(.title3.bold())
                 .foregroundColor(.pennyText)
@@ -53,24 +57,25 @@ struct AddSavingsModal: View {
                 HStack(spacing: 8) {
                     Text("Rp")
                         .font(.headline.bold())
-                        // The color of Rp changes to red if it is an expense
                         .foregroundColor(isExpense ? .red : .pennyPurple)
 
-                    // Dynamic placeholder based on selection
-                    TextField(isExpense ? "Expense Amount" : "Savings Amount", text: $amountString)
-                        .keyboardType(.numberPad)
-                        .font(.title3.weight(.semibold))
-                        .foregroundColor(.pennyText)
-                        .onChange(of: amountString) { _, newValue in
-                            formatDynamicCurrency(newValue)
-                        }
+                    TextField(
+                        isExpense ? "Expense Amount" : "Savings Amount",
+                        text: $amountString
+                    )
+                    .keyboardType(.numberPad)
+                    .font(.title3.weight(.semibold))
+                    .foregroundColor(.pennyText)
+                    .onChange(of: amountString) { _, newValue in
+                        formatDynamicCurrency(newValue)
+                    }
                 }
                 .padding()
                 .background(Color(UIColor.secondarySystemBackground))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
 
-                // Warning message if it exceeds the limit or savings
-                let currentAmount = Double(cleanNumericString(amountString)) ?? 0
+                let currentAmount =
+                    Double(cleanNumericString(amountString)) ?? 0
                 if isExpense && currentAmount > currentTotalSavings {
                     Text("⚠️ Saldo tabungan tidak mencukupi!")
                         .font(.caption2)
@@ -87,12 +92,10 @@ struct AddSavingsModal: View {
             Button(action: {
                 let cleanAmount = cleanNumericString(amountString)
                 if let amount = Double(cleanAmount) {
-                    // 4. Send amount data and expense status to HomeScreen
                     onSave(amount, isExpense)
                 }
                 dismiss()
             }) {
-                // Dynamic button text based on selection
                 Text(isExpense ? "Save Expense" : "Save Savings")
                     .frame(maxWidth: .infinity)
             }
@@ -102,13 +105,11 @@ struct AddSavingsModal: View {
         }
         .padding(.horizontal, 32)
         .padding(.vertical, 30)
-        // Increased height slightly to 340 to accommodate the Segmented Picker above it
         .presentationDetents([.height(340)])
         .presentationDragIndicator(.visible)
     }
 
-    // --- HELPER LOGIC FUNCTIONS ---
-
+    /// Memformat teks input pengguna menjadi format mata uang dengan pemisah ribuan (titik) secara *real-time*.
     private func formatDynamicCurrency(_ input: String) {
         let digits = input.filter { $0.isNumber }
 
@@ -137,6 +138,7 @@ struct AddSavingsModal: View {
         }
     }
 
+    /// Menghapus karakter non-numerik dari teks (seperti titik pemisah ribuan) untuk keperluan kalkulasi matematis.
     private func cleanNumericString(_ input: String) -> String {
         return input.filter { $0.isNumber }
     }
