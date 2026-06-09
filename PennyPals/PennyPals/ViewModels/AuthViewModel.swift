@@ -8,7 +8,7 @@
 internal import Combine
 import FirebaseAuth
 import FirebaseFirestore
-import SwiftUI
+import Foundation
 
 // ViewModel yang mengatur status autentikasi dan manajemen akun pengguna.
 // Berkomunikasi langsung dengan Firebase Authentication dan koleksi `users` di Firestore.

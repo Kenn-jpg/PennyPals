@@ -8,7 +8,7 @@
 internal import Combine
 import FirebaseAuth
 import FirebaseFirestore
-import SwiftUI
+import Foundation
 
 // ViewModel yang mengelola seluruh data berkaitan dengan toko (Shop) dan inventori aset virtual pengguna.
 // Bertanggung jawab untuk mengambil daftar item yang dijual, memproses transaksi pembelian,

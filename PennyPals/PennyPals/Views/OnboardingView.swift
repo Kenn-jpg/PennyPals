@@ -24,15 +24,11 @@ struct OnboardingView: View {
     @StateObject private var onboardingVM = OnboardingViewModel()
     @EnvironmentObject var authVM: AuthViewModel
 
-
-
     @State private var petNameInput: String = ""
     @Binding var rawAmount: String
     @Binding var selectedEgg: String
     @Binding var wishlistName: String
     @Binding var targetAmountString: String
-
-
 
     var onStart: () -> Void
 
@@ -64,9 +60,9 @@ struct OnboardingView: View {
         let initialAmount = Double(cleanNumericString(rawAmount)) ?? 0
         let targetAmount = Double(cleanNumericString(targetAmountString)) ?? 0
 
-        guard initialAmount > 0, initialAmount <= maxSavingsLimit,
-            targetAmount > 0, targetAmount <= maxSavingsLimit,
-            initialAmount <= targetAmount
+        guard initialAmount >= 0, initialAmount <= maxSavingsLimit,
+              targetAmount > 0, targetAmount <= maxSavingsLimit,
+              initialAmount < targetAmount
         else { return false }
 
         return !selectedEgg.isEmpty
@@ -137,13 +133,11 @@ struct OnboardingView: View {
 
                         Divider()
 
-                        let currentAmount =
-                            Double(cleanNumericString(rawAmount)) ?? 0
+                        let currentAmount = Double(cleanNumericString(rawAmount)) ?? 0
                         if currentAmount >= maxSavingsLimit {
                             HintText(
                                 icon: "exclamationmark.triangle.fill",
-                                text:
-                                    "Batas maksimal tabungan awal adalah Rp 100.000.000",
+                                text: "Batas maksimal tabungan awal adalah Rp 100.000.000",
                                 isWarning: true
                             )
                         }
@@ -154,11 +148,8 @@ struct OnboardingView: View {
                                 ["100000", "500000", "1000000", "5000000"],
                                 id: \.self
                             ) { amount in
-                                let formattedPreset = formatCurrencyInput(
-                                    amount
-                                )
-                                let isSelected =
-                                    cleanNumericString(rawAmount) == amount
+                                let formattedPreset = formatCurrencyInput(amount)
+                                let isSelected = cleanNumericString(rawAmount) == amount
 
                                 Button(action: {
                                     withAnimation(.easeOut(duration: 0.2)) {
@@ -204,25 +195,20 @@ struct OnboardingView: View {
                                 isNumeric: true
                             )
                             .onChange(of: targetAmountString) { _, newValue in
-                                targetAmountString = formatCurrencyInput(
-                                    newValue
-                                )
+                                targetAmountString = formatCurrencyInput(newValue)
                             }
                         }
                         .background(Color.gray.opacity(0.05))
                         .cornerRadius(12)
 
                         // MARK: - Validation Warnings
-                        let currentInitial =
-                            Double(cleanNumericString(rawAmount)) ?? 0
-                        let currentTarget =
-                            Double(cleanNumericString(targetAmountString)) ?? 0
+                        let currentInitial = Double(cleanNumericString(rawAmount)) ?? 0
+                        let currentTarget = Double(cleanNumericString(targetAmountString)) ?? 0
 
-                        if currentTarget > 0 && currentInitial > currentTarget {
+                        if currentTarget > 0 && currentInitial >= currentTarget {
                             HintText(
                                 icon: "exclamationmark.triangle.fill",
-                                text:
-                                    "Tabungan awal tidak boleh melebihi harga target barang!",
+                                text: "Tabungan awal harus lebih kecil dari harga target. Kalau sudah terkumpul semua, buat apa nabung lagi? 😉",
                                 isWarning: true
                             )
                         }
@@ -317,15 +303,11 @@ struct OnboardingView: View {
             Button(action: {
                 Task {
                     let amount = Double(cleanNumericString(rawAmount)) ?? 0
-                    let targetAmount =
-                        Double(cleanNumericString(targetAmountString)) ?? 0
-                    let petName = petNameInput.trimmingCharacters(
-                        in: .whitespacesAndNewlines
-                    )
+                    let targetAmount = Double(cleanNumericString(targetAmountString)) ?? 0
+                    let petName = petNameInput.trimmingCharacters(in: .whitespacesAndNewlines)
 
                     // Mengacak ras pet sebelum disimpan (Gacha)
-                    let randomlyHatchedPet =
-                        availablePets.randomElement() ?? "Cat"
+                    let randomlyHatchedPet = availablePets.randomElement() ?? "Cat"
 
                     await onboardingVM.completeOnboarding(
                         initialSavings: amount,
@@ -355,13 +337,10 @@ struct OnboardingView: View {
 
     private func formatCurrencyInput(_ input: String) -> String {
         let digits = cleanNumericString(input)
-        guard let doubleValue = Double(digits), doubleValue > 0 else {
-            return ""
-        }
+        guard let doubleValue = Double(digits) else { return "" }
         let finalValue = min(doubleValue, maxSavingsLimit)
 
-        return Self.currencyFormatter.string(from: NSNumber(value: finalValue))
-            ?? ""
+        return Self.currencyFormatter.string(from: NSNumber(value: finalValue)) ?? ""
     }
 
     private func cleanNumericString(_ input: String) -> String {

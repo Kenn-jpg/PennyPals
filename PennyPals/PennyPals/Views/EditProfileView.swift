@@ -26,7 +26,7 @@ struct EditProfileView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 32) {
+                VStack(spacing: 24) {
                     
                     // MARK: - 3. Avatar Section
                     ZStack {
@@ -46,7 +46,7 @@ struct EditProfileView: View {
                             .font(.system(size: 36, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
                     }
-                    .padding(.top, 16) // Padding diperkecil untuk mengurangi dead space
+                    .padding(.top, 16)
 
                     // MARK: - 4. Profile Information Section
                     VStack(alignment: .leading, spacing: 8) {
@@ -88,45 +88,46 @@ struct EditProfileView: View {
                         .shadow(color: Color.black.opacity(0.03), radius: 8, x: 0, y: 4)
                     }
 
-                    // MARK: - 6. Error Message
-                    if let msg = (localError ?? authVM.errorMessage) {
+                    // MARK: - 6. Error Message & Button Group
+                    VStack(spacing: 12) {
+                        let currentError = localError ?? authVM.errorMessage
+                        
                         HStack(spacing: 8) {
                             Image(systemName: "exclamationmark.triangle.fill")
-                            Text(msg)
+                            Text(currentError ?? " ")
                         }
                         .font(.footnote)
                         .foregroundColor(.red)
                         .padding(.horizontal, 16)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                    }
+                        .opacity(currentError != nil ? 1 : 0)
 
-                    Spacer(minLength: 20)
-
-                    // MARK: - 7. Save Button (Premium Gradient)
-                    Button {
-                        Task { await save() }
-                    } label: {
-                        Text(isSaving ? "Saving..." : "Save Changes")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity, minHeight: 54)
-                            .background(
-                                Group {
-                                    if isSaving {
-                                        Color.gray
-                                    } else {
-                                        LinearGradient(
-                                            colors: [Color.pink.opacity(0.6), Color.pennyPurple],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
+                        // MARK: - 7. Save Button (Premium Gradient)
+                        Button {
+                            Task { await save() }
+                        } label: {
+                            Text(isSaving ? "Saving..." : "Save Changes")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity, minHeight: 54)
+                                .background(
+                                    Group {
+                                        if isSaving {
+                                            Color.gray
+                                        } else {
+                                            LinearGradient(
+                                                colors: [Color.pink.opacity(0.6), Color.pennyPurple],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        }
                                     }
-                                }
-                            )
-                            .clipShape(RoundedRectangle(cornerRadius: 16))
-                            .shadow(color: Color.pennyPurple.opacity(isSaving ? 0 : 0.3), radius: 10, x: 0, y: 5)
+                                )
+                                .clipShape(RoundedRectangle(cornerRadius: 16))
+                                .shadow(color: Color.pennyPurple.opacity(isSaving ? 0 : 0.3), radius: 10, x: 0, y: 5)
+                        }
+                        .disabled(isSaving)
                     }
-                    .disabled(isSaving)
                     .padding(.bottom, 24)
                 }
                 .padding(.horizontal, 20)

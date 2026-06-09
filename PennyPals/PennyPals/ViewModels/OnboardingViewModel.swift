@@ -31,6 +31,11 @@ class OnboardingViewModel: ObservableObject {
     ) async {
         guard let uid = Auth.auth().currentUser?.uid else { return }
 
+        guard targetAmount > 0, initialSavings < targetAmount else {
+            print("Error: Target tidak valid atau tabungan awal sudah melampaui target.")
+            return
+        }
+
         // Membuat model peliharaan dengan tipe hewan yang didapat (bukan tipe telurnya)
         let newPet = PetModel(
             userId: uid,

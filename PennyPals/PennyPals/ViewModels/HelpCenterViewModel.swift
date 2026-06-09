@@ -2,8 +2,11 @@
 //  HelpCenterViewModel.swift
 //  PennyPals
 //
+//  Created by Kelompok 8 on 08/06/26.
+//
 
 import Foundation
+internal import Combine
 
 class HelpCenterViewModel: ObservableObject {
     @Published var faqList: [FAQModel] = []
