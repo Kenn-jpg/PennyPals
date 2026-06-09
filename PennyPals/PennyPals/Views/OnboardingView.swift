@@ -208,7 +208,7 @@ struct OnboardingView: View {
                         if currentTarget > 0 && currentInitial >= currentTarget {
                             HintText(
                                 icon: "exclamationmark.triangle.fill",
-                                text: "Tabungan awal harus lebih kecil dari harga target. Kalau sudah terkumpul semua, buat apa nabung lagi? 😉",
+                                text: "Tabungan awal tidak boleh melebihi harga target barang!",
                                 isWarning: true
                             )
                         }
