@@ -15,7 +15,7 @@ enum TabItem: String, CaseIterable {
     case home = "Home"
     case shop = "Shop"
     case account = "Account"
-    
+
     var icon: String {
         switch self {
         case .home: return "house.fill"
@@ -71,11 +71,18 @@ struct ContentView: View {
                                 get: { selectedTab },
                                 set: { if let val = $0 { selectedTab = val } }
                             )
-                            
+
                             NavigationSplitView {
-                                List(TabItem.allCases, id: \.self, selection: listSelection) { tab in
+                                List(
+                                    TabItem.allCases,
+                                    id: \.self,
+                                    selection: listSelection
+                                ) { tab in
                                     NavigationLink(value: tab) {
-                                        Label(tab.rawValue, systemImage: tab.icon)
+                                        Label(
+                                            tab.rawValue,
+                                            systemImage: tab.icon
+                                        )
                                     }
                                 }
                                 .navigationTitle("PennyPals")

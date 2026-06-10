@@ -155,30 +155,7 @@ extension HomeView {
     /// Bagian atas layar yang berisi ucapan selamat datang, level pet, dan koin pengguna.
     private var headerSection: some View {
         HStack {
-            HStack {
-                Circle().fill(
-                    LinearGradient(
-                        colors: [Color(hex: "#FF8FB5"), .pennyPurple],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                ).frame(width: 44, height: 44).overlay(
-                    Text(
-                        String(
-                            authVM.currentUser?.username.prefix(2) ?? "JM"
-                        ).uppercased()
-                    ).font(.headline).foregroundColor(.white)
-                )
-                VStack(alignment: .leading) {
-                    Text("Welcome back")
-                        .font(.caption)
-                        .foregroundColor(.pennySecondaryText)
-                    Text(authVM.currentUser?.username ?? "Loading...")
-                        .font(.headline)
-                        .foregroundColor(.pennyText)
-                }
-            }
-            Spacer()
+            // BAGIAN KIRI: Level dan Koin
             HStack {
                 Label(
                     "Lv \(homeVM.pet?.level ?? 0)",
@@ -199,6 +176,36 @@ extension HomeView {
                 .padding(.vertical, 6)
                 .background(.thinMaterial, in: Capsule())
                 .foregroundColor(.pennyText)
+            }
+
+            Spacer()
+
+            // BAGIAN KANAN: Username dan Profile Picture
+            HStack(spacing: 12) {
+                Text(authVM.currentUser?.username ?? "Loading...")
+                    .font(.headline)
+                    .foregroundColor(.pennyText)
+                    .lineLimit(1)
+
+                // Navigasi ke AccountView ketika Profile Picture ditekan
+                NavigationLink(
+                    destination: AccountView(onLogout: { authVM.logout() })
+                ) {
+                    Circle().fill(
+                        LinearGradient(
+                            colors: [Color(hex: "#FF8FB5"), .pennyPurple],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    ).frame(width: 44, height: 44).overlay(
+                        Text(
+                            String(
+                                authVM.currentUser?.username.prefix(2) ?? "JM"
+                            ).uppercased()
+                        ).font(.headline).foregroundColor(.white)
+                    )
+                }
+                .buttonStyle(.plain)
             }
         }
         .padding(.horizontal)
