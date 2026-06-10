@@ -5,13 +5,12 @@
 //  Created by Kelompok 8 on 28/05/26.
 //
 
-import Testing
+import XCTest
 
 @testable import PennyPals
 
-struct OnboardingViewModelTests {
+final class OnboardingViewModelTests: XCTestCase {
 
-    @Test("Pembuatan Goal Awal (Wishlist) dari Setup Tabungan")
     func testInitialGoalCreation() {
         let initialSavings: Double = 500000
 
@@ -23,21 +22,22 @@ struct OnboardingViewModelTests {
             isCompleted: false
         )
 
-        #expect(
-            initialGoal.currentAmount == 500000,
+        XCTAssertEqual(
+            initialGoal.currentAmount,
+            500000,
             "Tabungan awal harus tercatat akurat"
         )
-        #expect(
-            initialGoal.targetAmount == 5_000_000,
+        XCTAssertEqual(
+            initialGoal.targetAmount,
+            5_000_000,
             "Target default adalah 5 juta"
         )
-        #expect(
-            initialGoal.isCompleted == false,
+        XCTAssertFalse(
+            initialGoal.isCompleted,
             "Goal tidak boleh langsung selesai"
         )
     }
 
-    @Test("Status Selesai (Completed) Saat Tabungan Memenuhi Target")
     func testGoalCompletionLogic() {
         var goal = GoalModel(
             userId: "user_123",
@@ -55,8 +55,8 @@ struct OnboardingViewModelTests {
             goal.isCompleted = true
         }
 
-        #expect(
-            goal.isCompleted == true,
+        XCTAssertTrue(
+            goal.isCompleted,
             "Status goal harus berubah menjadi selesai (true)"
         )
     }

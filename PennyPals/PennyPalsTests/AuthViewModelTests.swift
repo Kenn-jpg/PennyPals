@@ -5,27 +5,24 @@
 //  Created by Kelompok 8 on 28/05/26.
 //
 
-import Foundation
-import Testing
+import XCTest
 
 @testable import PennyPals
 
-struct AuthViewModelTests {
+final class AuthViewModelTests: XCTestCase {
 
-    @Test("Validasi State Awal Otentikasi")
     func testInitialAuthState() {
         // Simulasi state sebelum Firebase selesai memuat
         let isAuthenticated = false
         let currentUser: UserModel? = nil
 
-        #expect(isAuthenticated == false, "Secara default user belum login")
-        #expect(
-            currentUser == nil,
+        XCTAssertFalse(isAuthenticated, "Secara default user belum login")
+        XCTAssertNil(
+            currentUser,
             "Data currentUser harus nil saat baru dibuka"
         )
     }
 
-    @Test("Pembuatan Model User Baru Saat Register")
     func testNewUserCreation() {
         let mockUid = "user_999"
         let mockEmail = "jamie@example.com"
@@ -48,15 +45,14 @@ struct AuthViewModelTests {
             )!
         )
 
-        #expect(newUser.coins == 0, "Koin awal harus 0")
-        #expect(newUser.streak == 0, "Streak awal harus 0")
-        #expect(
-            newUser.isSafeFromPenalty == true,
+        XCTAssertEqual(newUser.coins, 0, "Koin awal harus 0")
+        XCTAssertEqual(newUser.streak, 0, "Streak awal harus 0")
+        XCTAssertTrue(
+            newUser.isSafeFromPenalty,
             "User baru harus aman dari penalti"
         )
     }
 
-    @Test("Logika Equip Item (Background & Aksesoris)")
     func testEquipItemLogic() {
         var user = UserModel(
             id: "user_1",
@@ -73,31 +69,43 @@ struct AuthViewModelTests {
             equippedBackground: nil,
             equippedAccessory: nil
         )
-        
+
         // Equip Background
         let isBackground = true
         let itemName = "bg_forest"
-        
+
         if isBackground {
             user.equippedBackground = itemName
         } else {
             user.equippedAccessory = itemName
         }
-        
-        #expect(user.equippedBackground == "bg_forest", "Background harus di-equip dengan benar")
-        #expect(user.equippedAccessory == nil, "Aksesoris tidak boleh berubah")
-        
+
+        XCTAssertEqual(
+            user.equippedBackground,
+            "bg_forest",
+            "Background harus di-equip dengan benar"
+        )
+        XCTAssertNil(user.equippedAccessory, "Aksesoris tidak boleh berubah")
+
         // Equip Accessory
         let isBackground2 = false
         let itemName2 = "acc_glasses"
-        
+
         if isBackground2 {
             user.equippedBackground = itemName2
         } else {
             user.equippedAccessory = itemName2
         }
-        
-        #expect(user.equippedAccessory == "acc_glasses", "Aksesoris harus di-equip dengan benar")
-        #expect(user.equippedBackground == "bg_forest", "Background tidak boleh hilang saat equip aksesoris")
+
+        XCTAssertEqual(
+            user.equippedAccessory,
+            "acc_glasses",
+            "Aksesoris harus di-equip dengan benar"
+        )
+        XCTAssertEqual(
+            user.equippedBackground,
+            "bg_forest",
+            "Background tidak boleh hilang saat equip aksesoris"
+        )
     }
 }
