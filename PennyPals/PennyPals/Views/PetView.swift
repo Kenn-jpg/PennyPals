@@ -1,135 +1,3 @@
-                                                                    hnghasilkan pesan teks interaktif dari peliharaan berdasarkan kondisi emosionalnya (mood).
-                                                                    private var petMessage: String {
-                                                                        guard let petMood = homeVM.pet?.mood else {
-                                                                            return "I'm hungry — let's save! 🍓"
-                                                                        }
-
-                                                                        switch petMood {
-                                                                        case "happy": return "Yay! Thanks for saving! 🍓"
-                                                                        case "surprised": return "Whoa! That's a huge saving! 🤩"
-                                                                        case "wink": return "Looking good! Thanks for the gift! 😉"
-                                                                        case "sleepy": return "Yawn... I'm so sleepy 😴"
-                                                                        case "dizzy": return "Whoa, I'm getting dizzy! 😵‍💫"
-                                                                        case "sad": return "I missed you... T_T"
-                                                                        case "cry": return "My level dropped... Waaah! 😭"
-                                                                        case "angry": return "You ignored me! I'm starving! 😡"
-                                                                        case "hungry": return "I'm hungry — let's save! 🍓"
-                                                                        default:
-                                                                            if let user = authVM.currentUser,
-                                                                                let lastSave = user.lastSavingsDate
-                                                                            {
-                                                                                if Calendar.current.isDate(lastSave, inSameDayAs: Date()) {
-                                                                                    return "Yay! Thanks for saving! 🍓"
-                                                                                }
-                                                                            }
-                                                                            return "I'm hungry — let's save! 🍓"
-                                                                        }
-                                                                    }
-
-                                                                    /// Bagian atas layar yang berisi ucapan selamat datang, level pet, dan koin pengguna.
-                                                                    private var headerSection: some View {
-                                                                        HStack {
-                                                                            HStack {
-                                                                                // Profile Picture dijadikan Button yang memicu aksi redirect
-                                                                                Button(action: {
-                                                                                    onProfilePictureTapped?()
-                                                                                }) {
-                                                                                    Circle().fill(
-                                                                                        LinearGradient(
-                                                                                            colors: [Color(hex: "#FF8FB5"), .pennyPurple],
-                                                                                            startPoint: .topLeading,
-                                                                                            endPoint: .bottomTrailing
-                                                                                        )
-                                                                                    ).frame(width: 44, height: 44).overlay(
-                                                                                        Text(
-                                                                                            String(
-                                                                                                authVM.currentUser?.username.prefix(2) ?? "JM"
-                                                                                            ).uppercased()
-                                                                                        ).font(.headline).foregroundColor(.white)
-                                                                                    )
-                                                                                }
-                                                                                .buttonStyle(PlainButtonStyle())
-
-                                                                                VStack(alignment: .leading) {
-                                                                                    Text("Welcome back")
-                                                                                        .font(.caption)
-                                                                                        .foregroundColor(.pennySecondaryText)
-                                                                                    Text(authVM.currentUser?.username ?? "Loading...")
-                                                                                        .font(.headline)
-                                                                                        .foregroundColor(.pennyText)
-                                                                                }
-                                                                            }
-                                                                            Spacer()
-                                                                            HStack {
-                                                                                Label(
-                                                                                    "Lv \(homeVM.pet?.level ?? 0)",
-                                                                                    systemImage: "sparkles"
-                                                                                )
-                                                                                .font(.footnote.weight(.semibold))
-                                                                                .padding(.horizontal, 10)
-                                                                                .padding(.vertical, 6)
-                                                                                .background(.thinMaterial, in: Capsule())
-                                                                                .foregroundColor(.pennyText)
-
-                                                                                Label(
-                                                                                    "\(authVM.currentUser?.coins ?? 0)",
-                                                                                    systemImage: "bitcoinsign.circle.fill"
-                                                                                )
-                                                                                .font(.footnote.weight(.semibold))
-                                                                                .padding(.horizontal, 10)
-                                                                                .padding(.vertical, 6)
-                                                                                .background(.thinMaterial, in: Capsule())
-                                                                                .foregroundColor(.pennyText)
-                                                                            }
-                                                                        }
-                                                                        .padding(.horizontal)
-                                                                    }
-
-                                                                    /// Area tengah yang menampilkan grafis hewan peliharaan, background, aksesoris, dan pesan interaktif.
-                                                                    private var petSection: some View {
-                                                                        VStack(spacing: 12) {
-                                                                            Text(petMessage)
-                                                                                .font(.subheadline.weight(.medium))
-                                                                                .foregroundColor(.pennyText)
-                                                                                .padding()
-                                                                                .background(
-                                                                                    Color(UIColor.systemBackground),
-                                                                                    in: RoundedRectangle(cornerRadius: 16)
-                                                                                )
-                                                                                .shadow(color: .black.opacity(0.05), radius: 5, y: 2)
-
-                                                                            ZStack(alignment: .topTrailing) {
-                                                                                ZStack {
-                                                                                    if let bg = homeVM.equippedBackground {
-                                                                                        ZStack {
-                                                                                            if bg.isGradient == true,
-                                                                                                let endColor = bg.endColorHex
-                                                                                            {
-                                                                                                LinearGradient(
-                                                                                                    colors: [
-                                                                                                        Color(hex: bg.colorHex ?? "#E8E8E8"),
-                                                                                                        Color(hex: endColor),
-                                                                                                    ],
-                                                                                                    startPoint: .top,
-                                                                                                    endPoint: .bottom
-                                                                                                )
-                                                                                            } else {
-                                                                                                Color(hex: bg.colorHex ?? "#E8E8E8")
-                                                                                            }
-
-                                                                                            // Render corak (spots) pada background jika tersedia
-                                                                                            if let spotsHex = bg.spotsHex {
-                                                                                                VStack {
-                                                                                                    HStack {
-                                                                                                        Circle()
-                                                                                                            .fill(Color(hex: spotsHex))
-                                                                                                            .frame(width: 40)
-                                                                                                            .offset(x: -10, y: -10)
-                                                                                                        Spacer()
-                                                                                                    }
-                                                                                                    Spacer()
-                                                                                                    HStack {
-                                                                                                        Spacer()
                                                                                                         Circle()
                                                                                                             .fill(Color(hex: spotsHex))
                                                                                                             .frame(width: 50)
@@ -272,3 +140,74 @@ struct PennyPalsWidgetEntryView : View {
                         .foregroundColor(Color(red: 155/255, green: 124/255, blue: 255/255))
                 }
                 
+                hnghasilkan pesan teks interaktif dari peliharaan berdasarkan kondisi emosionalnya (mood).
+                private var petMessage: String {
+                    guard let petMood = homeVM.pet?.mood else {
+                        return "I'm hungry — let's save! 🍓"
+                    }
+
+                    switch petMood {
+                    case "happy": return "Yay! Thanks for saving! 🍓"
+                    case "surprised": return "Whoa! That's a huge saving! 🤩"
+                    case "wink": return "Looking good! Thanks for the gift! 😉"
+                    case "sleepy": return "Yawn... I'm so sleepy 😴"
+                    case "dizzy": return "Whoa, I'm getting dizzy! 😵‍💫"
+                    case "sad": return "I missed you... T_T"
+                    case "cry": return "My level dropped... Waaah! 😭"
+                    case "angry": return "You ignored me! I'm starving! 😡"
+                    case "hungry": return "I'm hungry — let's save! 🍓"
+                    default:
+                        if let user = authVM.currentUser,
+                            let lastSave = user.lastSavingsDate
+                        {
+                            if Calendar.current.isDate(lastSave, inSameDayAs: Date()) {
+                                return "Yay! Thanks for saving! 🍓"
+                            }
+                        }
+                        return "I'm hungry — let's save! 🍓"
+                    }
+                }
+
+                /// Bagian atas layar yang berisi ucapan selamat datang, level pet, dan koin pengguna.
+                private var headerSection: some View {
+                    HStack {
+                        HStack {
+                            // Profile Picture dijadikan Button yang memicu aksi redirect
+                            Button(action: {
+                                onProfilePictureTapped?()
+                            }) {
+                                Circle().fill(
+                                    LinearGradient(
+                                        colors: [Color(hex: "#FF8FB5"), .pennyPurple],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                ).frame(width: 44, height: 44).overlay(
+                                    Text(
+                                        String(
+                                            authVM.currentUser?.username.prefix(2) ?? "JM"
+                                        ).uppercased()
+                                    ).font(.headline).foregroundColor(.white)
+                                )
+                            }
+                            .buttonStyle(PlainButtonStyle())
+
+                            VStack(alignment: .leading) {
+                                Text("Welcome back")
+                                    .font(.caption)
+                                    .foregroundColor(.pennySecondaryText)
+                                Text(authVM.currentUser?.username ?? "Loading...")
+                                    .font(.headline)
+                                    .foregroundColor(.pennyText)
+                            }
+                        }
+                        Spacer()
+                        HStack {
+                            Label(
+                                "Lv \(homeVM.pet?.level ?? 0)",
+                                systemImage: "sparkles"
+                            )
+                            .font(.footnote.weight(.semibold))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(.thinMaterial, in: Capsule())
