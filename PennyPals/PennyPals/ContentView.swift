@@ -89,7 +89,12 @@ struct ContentView: View {
                             } detail: {
                                 switch selectedTab {
                                 case .home:
-                                    HomeView()
+                                    // Menyertakan closure penanganan klik profil untuk iPad layout
+                                    HomeView(onProfilePictureTapped: {
+                                        withAnimation {
+                                            selectedTab = .account
+                                        }
+                                    })
                                 case .shop:
                                     ShopView()
                                 case .account:
@@ -100,11 +105,16 @@ struct ContentView: View {
                             .transition(.opacity)
                         } else {
                             TabView(selection: $selectedTab) {
-                                HomeView()
-                                    .tabItem {
-                                        Label("Home", systemImage: "house.fill")
+                                // Menyertakan closure penanganan klik profil untuk iPhone layout
+                                HomeView(onProfilePictureTapped: {
+                                    withAnimation {
+                                        selectedTab = .account
                                     }
-                                    .tag(TabItem.home)
+                                })
+                                .tabItem {
+                                    Label("Home", systemImage: "house.fill")
+                                }
+                                .tag(TabItem.home)
 
                                 ShopView()
                                     .tabItem {

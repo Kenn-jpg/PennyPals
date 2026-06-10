@@ -23,6 +23,9 @@ struct HomeView: View {
     /// Mengontrol visibilitas modal untuk menentukan target tabungan baru.
     @State private var showNewGoalModal = false
 
+    /// Callback closure untuk mendeteksi ketukan pada foto profil dan mengarahkan ke halaman akun.
+    var onProfilePictureTapped: (() -> Void)? = nil
+
     /// Representasi status keamanan *streak* pengguna dari ancaman penalti.
     private enum PenaltyStatus {
         case safe
@@ -155,7 +158,37 @@ extension HomeView {
     /// Bagian atas layar yang berisi ucapan selamat datang, level pet, dan koin pengguna.
     private var headerSection: some View {
         HStack {
-            // BAGIAN KIRI: Level dan Koin
+            HStack {
+                // Profile Picture dijadikan Button yang memicu aksi redirect
+                Button(action: {
+                    onProfilePictureTapped?()
+                }) {
+                    Circle().fill(
+                        LinearGradient(
+                            colors: [Color(hex: "#FF8FB5"), .pennyPurple],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    ).frame(width: 44, height: 44).overlay(
+                        Text(
+                            String(
+                                authVM.currentUser?.username.prefix(2) ?? "JM"
+                            ).uppercased()
+                        ).font(.headline).foregroundColor(.white)
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+
+                VStack(alignment: .leading) {
+                    Text("Welcome back")
+                        .font(.caption)
+                        .foregroundColor(.pennySecondaryText)
+                    Text(authVM.currentUser?.username ?? "Loading...")
+                        .font(.headline)
+                        .foregroundColor(.pennyText)
+                }
+            }
+            Spacer()
             HStack {
                 Label(
                     "Lv \(homeVM.pet?.level ?? 0)",
@@ -176,36 +209,6 @@ extension HomeView {
                 .padding(.vertical, 6)
                 .background(.thinMaterial, in: Capsule())
                 .foregroundColor(.pennyText)
-            }
-
-            Spacer()
-
-            // BAGIAN KANAN: Username dan Profile Picture
-            HStack(spacing: 12) {
-                Text(authVM.currentUser?.username ?? "Loading...")
-                    .font(.headline)
-                    .foregroundColor(.pennyText)
-                    .lineLimit(1)
-
-                // Navigasi ke AccountView ketika Profile Picture ditekan
-                NavigationLink(
-                    destination: AccountView(onLogout: { authVM.logout() })
-                ) {
-                    Circle().fill(
-                        LinearGradient(
-                            colors: [Color(hex: "#FF8FB5"), .pennyPurple],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    ).frame(width: 44, height: 44).overlay(
-                        Text(
-                            String(
-                                authVM.currentUser?.username.prefix(2) ?? "JM"
-                            ).uppercased()
-                        ).font(.headline).foregroundColor(.white)
-                    )
-                }
-                .buttonStyle(.plain)
             }
         }
         .padding(.horizontal)
