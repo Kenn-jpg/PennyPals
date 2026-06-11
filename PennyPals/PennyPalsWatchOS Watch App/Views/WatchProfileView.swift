@@ -2,13 +2,11 @@
 //  WatchProfileView.swift
 //  PennyPalsWatchOS Watch App
 //
-//  Created by Kelompok 8 on 03/06/26.
-//
 
 import SwiftUI
 
 struct WatchProfileView: View {
-    @EnvironmentObject var connectivity: IOSConnectivity
+    @EnvironmentObject var viewModel: WatchViewModel
 
     var body: some View {
         VStack(spacing: 4) {
@@ -28,14 +26,14 @@ struct WatchProfileView: View {
                 )
                 .frame(width: 36, height: 36)
                 .overlay(
-                    Text(avatarInitials)
+                    Text(viewModel.avatarInitials)
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white)
                 )
                 .shadow(color: Color.black.opacity(0.1), radius: 2, y: 1)
 
             // MARK: - 2. Name
-            Text(connectivity.username)
+            Text(viewModel.user.username)
                 .font(.system(size: 14, weight: .bold))
                 .foregroundColor(Color(hex: "#2A2440"))
                 .lineLimit(1)
@@ -47,14 +45,14 @@ struct WatchProfileView: View {
             HStack(spacing: 6) {
                 StatBadge(
                     icon: "bitcoinsign.circle.fill",
-                    value: "\(connectivity.coins)",
+                    value: "\(viewModel.user.coins)",
                     label: "Coins",
                     color: Color(hex: "#9B7CFF")
                 )
 
                 StatBadge(
                     icon: "flame.fill",
-                    value: "\(connectivity.streak)d",
+                    value: "\(viewModel.user.streak)d",
                     label: "Streak",
                     color: Color(hex: "#FF8F50")
                 )
@@ -73,7 +71,7 @@ struct WatchProfileView: View {
                 }
 
                 HStack {
-                    Text("Rp \(connectivity.totalSavings.formattedWithDot)")
+                    Text("Rp \(viewModel.user.totalSavings.formattedWithDot)")
                         .font(.system(size: 12, weight: .bold))
                         .foregroundColor(Color(hex: "#2A2440"))
                         .minimumScaleFactor(0.8)
@@ -89,13 +87,13 @@ struct WatchProfileView: View {
 
             // MARK: - 5. Penalty Status
             HStack(spacing: 4) {
-                Image(systemName: penaltyIcon)
+                Image(systemName: viewModel.penaltyIcon)
                     .font(.system(size: 9))
-                    .foregroundColor(penaltyColor)
+                    .foregroundColor(viewModel.penaltyColor)
 
-                Text(penaltyText)
+                Text(viewModel.penaltyText)
                     .font(.system(size: 9, weight: .medium))
-                    .foregroundColor(penaltyColor)
+                    .foregroundColor(viewModel.penaltyColor)
 
                 Spacer()
             }
@@ -107,11 +105,11 @@ struct WatchProfileView: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 6)
-                    .stroke(penaltyColor.opacity(0.3), lineWidth: 1)
+                    .stroke(viewModel.penaltyColor.opacity(0.3), lineWidth: 1)
             )
 
             // MARK: - 6. Connection Status
-            if !connectivity.isConnected {
+            if !viewModel.isConnected {
                 HStack(spacing: 4) {
                     Image(systemName: "iphone.slash")
                         .font(.system(size: 8))
@@ -125,47 +123,9 @@ struct WatchProfileView: View {
         }
         .padding(.horizontal, 4)
     }
-
-    // MARK: - 7. Computed Properties
-
-    private var avatarInitials: String {
-        String(connectivity.username.prefix(2)).uppercased()
-    }
-
-    private var penaltyIcon: String {
-        if !connectivity.isSafeFromPenalty {
-            return "xmark.shield.fill"
-        }
-        let hoursRemaining = Calendar.current.dateComponents(
-            [.hour], from: Date(), to: connectivity.nextPenaltyCheck
-        ).hour ?? 0
-        if hoursRemaining <= 24 {
-            return "exclamationmark.triangle.fill"
-        }
-        return "checkmark.shield.fill"
-    }
-
-    private var penaltyColor: Color {
-        if !connectivity.isSafeFromPenalty { return .red }
-        let hoursRemaining = Calendar.current.dateComponents(
-            [.hour], from: Date(), to: connectivity.nextPenaltyCheck
-        ).hour ?? 0
-        if hoursRemaining <= 24 { return .orange }
-        return .green
-    }
-
-    private var penaltyText: String {
-        if !connectivity.isSafeFromPenalty { return "Penalty Active" }
-        let hoursRemaining = Calendar.current.dateComponents(
-            [.hour], from: Date(), to: connectivity.nextPenaltyCheck
-        ).hour ?? 0
-        if hoursRemaining <= 24 { return "Save soon!" }
-        return "Safe ✓"
-    }
 }
 
-// MARK: - 8. Stat Badge Component
-
+// MARK: - Stat Badge Component
 struct StatBadge: View {
     var icon: String
     var value: String
@@ -195,8 +155,7 @@ struct StatBadge: View {
     }
 }
 
-// MARK: - 9. Number Formatter Extension
-
+// MARK: - Number Formatter Extension
 extension Int {
     var formattedWithDot: String {
         let formatter = NumberFormatter()
