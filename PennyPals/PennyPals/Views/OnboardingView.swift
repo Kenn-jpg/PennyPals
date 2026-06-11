@@ -7,68 +7,15 @@
 
 import SwiftUI
 
-/// Entitas penampung variasi telur virtual yang bisa dipilih pengguna.
-struct EggOption {
-    let id: String
-    let name: String
-    let assetName: String
-}
-
 /// Antarmuka formulir pengenalan (Onboarding) bagi pengguna baru untuk mempersiapkan data peliharaan, target tabungan, dan telur pilihan mereka.
+/// View ini hanya bertanggung jawab atas tampilan UI — seluruh state, validasi, dan logika bisnis dikelola oleh OnboardingViewModel.
 struct OnboardingView: View {
 
-    @StateObject private var onboardingVM = OnboardingViewModel()
+    @EnvironmentObject var onboardingVM: OnboardingViewModel
     @EnvironmentObject var authVM: AuthViewModel
-
-    @State private var petNameInput: String = ""
-    @Binding var rawAmount: String
-    @Binding var selectedEgg: String
-    @Binding var wishlistName: String
-    @Binding var targetAmountString: String
 
     /// Closure yang memicu transisi keluar dari alur onboarding (misalnya beralih ke layar Hatching atau Home).
     var onStart: () -> Void
-
-    /// Daftar pilihan telur kosmetik yang tersedia.
-    let eggs: [EggOption] = [
-        EggOption(id: "rose", name: "Rosie", assetName: "PinkEgg01"),
-        EggOption(id: "mint", name: "Sprout", assetName: "GreenEgg01"),
-        EggOption(id: "sky", name: "Bloo", assetName: "BlueEgg01"),
-        EggOption(id: "sun", name: "Sunny", assetName: "YellowEgg01"),
-        EggOption(id: "lilac", name: "Vio", assetName: "PurpleEgg01"),
-        EggOption(id: "peach", name: "Pip", assetName: "PeachEgg01"),
-    ]
-
-    /// Kumpulan ras hewan yang akan didapat secara acak (gacha) ketika telur menetas.
-    private let availablePets = ["Cat", "Dog", "Owl", "Pig", "Raccoon", "Seal"]
-
-    /// Batas limit logika tabungan untuk mencegah nilai yang tidak wajar.
-    private let maxSavingsLimit: Double = 100_000_000
-
-    /// Formatter angka untuk memisahkan nominal ribuan dengan titik.
-    private static let currencyFormatter: NumberFormatter = {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.groupingSeparator = "."
-        return formatter
-    }()
-
-    /// Status validasi kelengkapan form onboarding, yang mengatur apakah tombol "Start Saving" bisa ditekan.
-    private var isFormValid: Bool {
-        let initialAmount = Double(cleanNumericString(rawAmount)) ?? 0
-        let targetAmount = Double(cleanNumericString(targetAmountString)) ?? 0
-
-        guard initialAmount >= 0, initialAmount <= maxSavingsLimit,
-            targetAmount > 0, targetAmount <= maxSavingsLimit,
-            initialAmount < targetAmount
-        else { return false }
-
-        return !selectedEgg.isEmpty
-            && !wishlistName.trimmingCharacters(in: .whitespacesAndNewlines)
-                .isEmpty
-            && !petNameInput.trimmingCharacters(in: .whitespacesAndNewlines)
-                .isEmpty
-    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -112,7 +59,7 @@ struct OnboardingView: View {
                                 .foregroundColor(.pennySecondaryText)
                                 .padding(.bottom, 4)
 
-                            TextField("0", text: $rawAmount)
+                            TextField("0", text: $onboardingVM.rawAmount)
                                 .keyboardType(.numberPad)
                                 .font(
                                     .system(
@@ -122,16 +69,14 @@ struct OnboardingView: View {
                                     )
                                 )
                                 .foregroundColor(.pennyText)
-                                .onChange(of: rawAmount) { _, newValue in
-                                    rawAmount = formatCurrencyInput(newValue)
+                                .onChange(of: onboardingVM.rawAmount) { _, newValue in
+                                    onboardingVM.rawAmount = onboardingVM.formatCurrencyInput(newValue)
                                 }
                         }
 
                         Divider()
 
-                        let currentAmount =
-                            Double(cleanNumericString(rawAmount)) ?? 0
-                        if currentAmount >= maxSavingsLimit {
+                        if onboardingVM.isInitialAmountOverLimit {
                             HintText(
                                 icon: "exclamationmark.triangle.fill",
                                 text:
@@ -146,15 +91,13 @@ struct OnboardingView: View {
                                 ["100000", "500000", "1000000", "5000000"],
                                 id: \.self
                             ) { amount in
-                                let formattedPreset = formatCurrencyInput(
-                                    amount
-                                )
+                                let formattedPreset = onboardingVM.formatCurrencyInput(amount)
                                 let isSelected =
-                                    cleanNumericString(rawAmount) == amount
+                                    onboardingVM.cleanNumericString(onboardingVM.rawAmount) == amount
 
                                 Button(action: {
                                     withAnimation(.easeOut(duration: 0.2)) {
-                                        rawAmount = formattedPreset
+                                        onboardingVM.rawAmount = formattedPreset
                                     }
                                 }) {
                                     Text(formattedPreset)
@@ -186,31 +129,23 @@ struct OnboardingView: View {
                             MinimalTextField(
                                 icon: "bag",
                                 placeholder: "Nama barang (Contoh: Laptop)",
-                                text: $wishlistName
+                                text: $onboardingVM.wishlistName
                             )
                             Divider().padding(.leading, 32)
                             MinimalTextField(
                                 icon: "tag",
                                 placeholder: "Target harga nominal (Rp)",
-                                text: $targetAmountString,
+                                text: $onboardingVM.targetAmountString,
                                 isNumeric: true
                             )
-                            .onChange(of: targetAmountString) { _, newValue in
-                                targetAmountString = formatCurrencyInput(
-                                    newValue
-                                )
+                            .onChange(of: onboardingVM.targetAmountString) { _, newValue in
+                                onboardingVM.targetAmountString = onboardingVM.formatCurrencyInput(newValue)
                             }
                         }
                         .background(Color.gray.opacity(0.05))
                         .cornerRadius(12)
 
-                        let currentInitial =
-                            Double(cleanNumericString(rawAmount)) ?? 0
-                        let currentTarget =
-                            Double(cleanNumericString(targetAmountString)) ?? 0
-
-                        if currentTarget > 0 && currentInitial >= currentTarget
-                        {
+                        if onboardingVM.isInitialExceedsTarget {
                             HintText(
                                 icon: "exclamationmark.triangle.fill",
                                 text:
@@ -227,7 +162,7 @@ struct OnboardingView: View {
                         MinimalTextField(
                             icon: "pawprint",
                             placeholder: "Nama pet kamu (Contoh: Mochi)",
-                            text: $petNameInput
+                            text: $onboardingVM.petNameInput
                         )
                         .background(Color.gray.opacity(0.05))
                         .cornerRadius(12)
@@ -243,8 +178,8 @@ struct OnboardingView: View {
                             ],
                             spacing: 16
                         ) {
-                            ForEach(eggs, id: \.id) { egg in
-                                let isSelected = selectedEgg == egg.id
+                            ForEach(onboardingVM.eggs, id: \.id) { egg in
+                                let isSelected = onboardingVM.selectedEgg == egg.id
 
                                 Button(action: {
                                     withAnimation(
@@ -253,7 +188,7 @@ struct OnboardingView: View {
                                             dampingFraction: 0.6
                                         )
                                     ) {
-                                        selectedEgg = egg.id
+                                        onboardingVM.selectedEgg = egg.id
                                     }
                                 }) {
                                     VStack(spacing: 8) {
@@ -263,7 +198,7 @@ struct OnboardingView: View {
                                             .frame(width: 60, height: 60)
                                             .scaleEffect(isSelected ? 1.1 : 1.0)
                                             .opacity(
-                                                selectedEgg.isEmpty
+                                                onboardingVM.selectedEgg.isEmpty
                                                     || isSelected ? 1.0 : 0.5
                                             )
 
@@ -310,25 +245,7 @@ struct OnboardingView: View {
             // Tombol Mulai (Submit)
             Button(action: {
                 Task {
-                    let amount = Double(cleanNumericString(rawAmount)) ?? 0
-                    let targetAmount =
-                        Double(cleanNumericString(targetAmountString)) ?? 0
-                    let petName = petNameInput.trimmingCharacters(
-                        in: .whitespacesAndNewlines
-                    )
-
-                    // Mengundi ras pet dari daftar availablePets untuk memberikan kejutan ke pengguna.
-                    let randomlyHatchedPet =
-                        availablePets.randomElement() ?? "Cat"
-
-                    await onboardingVM.completeOnboarding(
-                        initialSavings: amount,
-                        targetAmount: targetAmount,
-                        eggType: selectedEgg,
-                        petName: petName,
-                        wishlistName: wishlistName,
-                        petType: randomlyHatchedPet
-                    )
+                    await onboardingVM.completeOnboarding()
                     onStart()
                 }
             }) {
@@ -339,25 +256,10 @@ struct OnboardingView: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 16)
             .padding(.top, 8)
-            .disabled(!isFormValid)
-            .opacity(isFormValid ? 1.0 : 0.5)
+            .disabled(!onboardingVM.isFormValid)
+            .opacity(onboardingVM.isFormValid ? 1.0 : 0.5)
         }
         .background(Color.pennyBackground.ignoresSafeArea())
-    }
-
-    /// Memformat *string* raw angka agar dipisah dengan titik ribuan secara *real-time*.
-    private func formatCurrencyInput(_ input: String) -> String {
-        let digits = cleanNumericString(input)
-        guard let doubleValue = Double(digits) else { return "" }
-        let finalValue = min(doubleValue, maxSavingsLimit)
-
-        return Self.currencyFormatter.string(from: NSNumber(value: finalValue))
-            ?? ""
-    }
-
-    /// Menghilangkan karakter non-angka (seperti pemisah ribuan) agar string bisa dikonversi menjadi format komputasi matematika (`Double`).
-    private func cleanNumericString(_ input: String) -> String {
-        return input.filter { $0.isNumber }
     }
 }
 

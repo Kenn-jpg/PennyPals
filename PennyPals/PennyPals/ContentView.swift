@@ -30,10 +30,9 @@ struct ContentView: View {
 
     @State private var stage: AppStage = .app
     @State private var selectedTab: TabItem = .home
-    @State private var initialSavings: String = ""
-    @State private var selectedEggId: String = "rose"
-    @State private var wishlistName: String = ""
-    @State private var targetAmountString: String = ""
+
+    /// ViewModel onboarding dimiliki oleh ContentView agar ID telur yang dipilih tetap bisa diakses oleh HatchingView.
+    @StateObject private var onboardingVM = OnboardingViewModel()
 
     var body: some View {
         Group {
@@ -42,10 +41,6 @@ struct ContentView: View {
                     switch stage {
                     case .onboarding:
                         OnboardingView(
-                            rawAmount: $initialSavings,
-                            selectedEgg: $selectedEggId,
-                            wishlistName: $wishlistName,
-                            targetAmountString: $targetAmountString,
                             onStart: {
                                 // Transisikan ke hatching terlebih dahulu secara lokal
                                 // agar blok .onReceive tidak memotong urutan animasi saat Firestore terupdate!
@@ -54,11 +49,12 @@ struct ContentView: View {
                                 }
                             }
                         )
+                        .environmentObject(onboardingVM)
                         .transition(.move(edge: .trailing))
 
                     case .hatching:
                         HatchingView(
-                            eggId: selectedEggId,
+                            eggId: onboardingVM.selectedEgg,
                             onComplete: {
                                 withAnimation(.spring()) { stage = .app }
                             }
@@ -154,11 +150,8 @@ struct ContentView: View {
 
             } else {
                 LoginView(onLoginSuccess: { _ in
-                    // Reset semua state input form saat ada user baru login
-                    self.initialSavings = ""
-                    self.selectedEggId = "rose"
-                    self.wishlistName = ""
-                    self.targetAmountString = ""
+                    // Reset semua state input form onboarding saat ada user baru login
+                    onboardingVM.resetForm()
                 })
                 .transition(.opacity)
             }
